@@ -6,7 +6,7 @@ const fallbackStats = [
   { target: 0, label: "Total Schools" },
   { target: 0, label: "Total Riders" },
   { target: 0, label: "Total Sessions" },
-  { target: 0, label: "Total Miles" },
+  { target: 0, label: "Total Minutes" },
 ];
 
 const StatsBar = () => {
@@ -22,7 +22,7 @@ const StatsBar = () => {
             { target: Number(fields["Total Schools"] ?? 0), label: "Total Schools" },
             { target: Number(fields["Total Riders"] ?? 0), label: "Total Riders" },
             { target: Number(fields["Total Sessions"] ?? 0), label: "Total Sessions" },
-            { target: Number(fields["Total Miles"] ?? 0), label: "Total Miles" },
+            { target: Number(fields["Total Minutes"] ?? 0), label: "Total Minutes" },
           ]);
         }
       })
