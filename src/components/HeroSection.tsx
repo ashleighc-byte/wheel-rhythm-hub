@@ -42,8 +42,8 @@ const HeroSection = () => {
             transition={{ delay: 0.5, duration: 0.5 }}
             className="max-w-lg font-body text-lg leading-relaxed text-secondary-foreground/80"
           >
-            A bike league with no pressure. No schedule. Just ride on your own terms.
-            Sign up at a time that suits you.
+            Ride whenever you want, wherever you want. No commitments, no stress—just
+            you and your bike. Join in whenever it works for you.
           </motion.p>
 
           <motion.div
