@@ -91,5 +91,9 @@ export async function fetchLeaderboard() {
   return callAirtable('School Stats', 'GET', { sort: 'Total Sessions' });
 }
 
+export async function fetchGlobalDashboard() {
+  return callAirtable('Global Dashboard', 'GET', { maxRecords: 1 });
+}
+
 export { callAirtable };
 export type { AirtableRecord, AirtableResponse };
