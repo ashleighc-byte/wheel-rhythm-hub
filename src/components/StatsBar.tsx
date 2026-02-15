@@ -2,15 +2,27 @@ import { useEffect, useState } from "react";
 import AnimatedCounter from "./AnimatedCounter";
 import { fetchGlobalDashboard } from "@/lib/airtable";
 
-const fallbackStats = [
+interface StatItem {
+  target: number;
+  label: string;
+  formatted?: string;
+}
+
+const fallbackStats: StatItem[] = [
   { target: 0, label: "Total Schools" },
   { target: 0, label: "Total Riders" },
   { target: 0, label: "Total Sessions" },
-  { target: 0, label: "Total Minutes" },
+  { target: 0, label: "Total Minutes", formatted: "0:00" },
 ];
 
+function formatDuration(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  return `${hours}:${mins.toString().padStart(2, "0")}`;
+}
+
 const StatsBar = () => {
-  const [stats, setStats] = useState(fallbackStats);
+  const [stats, setStats] = useState<StatItem[]>(fallbackStats);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,11 +30,12 @@ const StatsBar = () => {
       .then((res) => {
         if (res.records.length > 0) {
           const fields = res.records[0].fields;
+          const rawMinutes = Number(fields["Total Minutes"] ?? 0);
           setStats([
             { target: Number(fields["Total Schools"] ?? 0), label: "Total Schools" },
             { target: Number(fields["Total Riders"] ?? 0), label: "Total Riders" },
             { target: Number(fields["Total Sessions"] ?? 0), label: "Total Sessions" },
-            { target: Number(fields["Total Minutes"] ?? 0), label: "Total Minutes" },
+            { target: rawMinutes, label: "Total Hours", formatted: formatDuration(rawMinutes) },
           ]);
         }
       })
@@ -40,9 +53,20 @@ const StatsBar = () => {
           See how your school ranks against others. Competition is friendly, but the bragging rights are real.
         </p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-          {stats.map((stat) => (
-            <AnimatedCounter key={stat.label} target={stat.target} label={stat.label} />
-          ))}
+          {stats.map((stat) =>
+            stat.formatted ? (
+              <div key={stat.label} className="stat-card px-6 py-8 text-center">
+                <div className="font-display text-4xl font-bold text-accent md:text-5xl">
+                  {stat.formatted}
+                </div>
+                <div className="mt-2 font-display text-xs font-semibold uppercase tracking-widest text-accent/80">
+                  {stat.label}
+                </div>
+              </div>
+            ) : (
+              <AnimatedCounter key={stat.label} target={stat.target} label={stat.label} />
+            )
+          )}
         </div>
       </div>
     </section>
