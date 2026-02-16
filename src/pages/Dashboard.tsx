@@ -50,6 +50,7 @@ const Dashboard = () => {
       const f = rec.fields;
 
       const schoolIds = f["School"] as string[] | undefined;
+      const sessionIds = f["Session Reflections"] as string[] | undefined;
 
       const studentData: StudentData = {
         name: String(f["Full Name"] ?? ""),
@@ -65,7 +66,7 @@ const Dashboard = () => {
       const [orgsRes, allStudentsRes, sessionsRes] = await Promise.all([
         callAirtable("Organisations", "GET"),
         callAirtable("Student Registration", "GET"),
-        fetchSessionReflections(rec.id),
+        fetchSessionReflections(sessionIds),
       ]);
 
       // Resolve school name
