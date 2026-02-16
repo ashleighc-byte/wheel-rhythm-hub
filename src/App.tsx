@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import PrePilotSurvey from "./pages/PrePilotSurvey";
+import FourWeekCheckIn from "./pages/FourWeekCheckIn";
 import NotFound from "./pages/NotFound";
 import Leaderboards from "./pages/Leaderboards";
 import Info from "./pages/Info";
@@ -95,6 +96,7 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/info" element={<ProtectedRoute><Info /></ProtectedRoute>} />
             <Route path="/post-pilot-survey" element={<ProtectedRoute><PostPilotSurvey /></ProtectedRoute>} />
+            <Route path="/four-week-check-in" element={<SurveyRoute><FourWeekCheckIn /></SurveyRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

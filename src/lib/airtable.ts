@@ -144,6 +144,18 @@ export async function hasCompletedPrePilotSurvey(email: string): Promise<boolean
   return Array.isArray(linkedSurveys) && linkedSurveys.length > 0;
 }
 
+export async function hasCompletedFourWeekCheckIn(email: string): Promise<boolean> {
+  const students = await fetchStudents(email);
+  if (!students.records.length) return false;
+  const studentRecordId = students.records[0].id;
+  const formula = `AND(FIND("${studentRecordId}", ARRAYJOIN({Student Name})), {Survey Type} = "4 Week Check In")`;
+  const result = await callAirtable("Surveys & Student Voice", "GET", {
+    filterByFormula: formula,
+    maxRecords: 1,
+  });
+  return result.records.length > 0;
+}
+
 export async function fetchSchoolStats() {
   return callAirtable('School Stats', 'GET');
 }
