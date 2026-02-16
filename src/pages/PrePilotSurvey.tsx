@@ -193,7 +193,7 @@ const PrePilotSurvey = () => {
         "Q7 - Do you think you\u2019d cycle more virtually or in real life?": cyclingPreference,
         "Q8 - Thinking about movement or being active\u2026 what would you LIKE to change or improve for yourself?":
           goals,
-        "Q8 - Would you want to ride with friends at other schools?": rideFriends,
+        
         "Anything else you want us to know?": anythingElse || "",
       };
 
@@ -428,21 +428,6 @@ const PrePilotSurvey = () => {
                 ))}
               </div>
 
-              <div className="space-y-2">
-                <Label className="font-display text-xs uppercase tracking-wider text-accent-foreground">
-                  Would you want to ride with friends at other schools?
-                </Label>
-                <RadioGroup value={rideFriends} onValueChange={setRideFriends}>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="Yes" id="friends-yes" />
-                    <Label htmlFor="friends-yes" className="font-body text-sm text-accent-foreground cursor-pointer">Yes</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="No" id="friends-no" />
-                    <Label htmlFor="friends-no" className="font-body text-sm text-accent-foreground cursor-pointer">No</Label>
-                  </div>
-                </RadioGroup>
-              </div>
 
               <div className="space-y-2">
                 <Label className="font-display text-xs uppercase tracking-wider text-accent-foreground">
@@ -484,7 +469,7 @@ const PrePilotSurvey = () => {
           ) : (
             <Button
               onClick={handleSubmit}
-              disabled={!steps[step].valid || !rideFriends || submitting}
+              disabled={!steps[step].valid || submitting}
               className="tape-element-green transition-transform hover:rotate-0 hover:scale-105"
             >
               {submitting ? (
