@@ -1,17 +1,53 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { callAirtable } from "@/lib/airtable";
 
-const schools = [
-  { rank: 1, name: "Lincoln High School", sessions: 2847 },
-  { rank: 2, name: "Roosevelt Middle School", sessions: 2634 },
-  { rank: 3, name: "Washington Elementary", sessions: 2156 },
-  { rank: 4, name: "Jefferson Academy", sessions: 1923 },
-  { rank: 5, name: "Madison Prep", sessions: 1687 },
-  { rank: 6, name: "Hamilton Charter", sessions: 1544 },
-  { rank: 7, name: "Franklin Institute", sessions: 1423 },
-  { rank: 8, name: "Kennedy High School", sessions: 1298 },
-];
+interface SchoolRow {
+  rank: number;
+  name: string;
+  riders: number;
+}
 
 const SchoolLeaderboard = () => {
+  const [schools, setSchools] = useState<SchoolRow[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      callAirtable("Organisations", "GET"),
+      callAirtable("Student Registration", "GET"),
+    ])
+      .then(([orgsRes, studentsRes]) => {
+        // Build a map of org record ID → name
+        const orgMap = new Map<string, string>();
+        for (const r of orgsRes.records) {
+          orgMap.set(r.id, String(r.fields["Organisation Name"] ?? "Unknown"));
+        }
+
+        // Group students by school, count riders
+        const countMap = new Map<string, number>();
+        for (const r of studentsRes.records) {
+          const schoolIds = r.fields["School"];
+          if (Array.isArray(schoolIds) && schoolIds.length > 0) {
+            const schoolId = schoolIds[0];
+            countMap.set(schoolId, (countMap.get(schoolId) ?? 0) + 1);
+          }
+        }
+
+        // Merge and sort
+        const rows: SchoolRow[] = Array.from(countMap.entries())
+          .map(([id, riders]) => ({
+            name: orgMap.get(id) ?? id,
+            riders,
+            rank: 0,
+          }))
+          .sort((a, b) => b.riders - a.riders)
+          .map((r, i) => ({ ...r, rank: i + 1 }));
+
+        setSchools(rows);
+      })
+      .catch(console.error);
+  }, []);
+
   return (
     <div className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
       <div className="leaderboard-header px-6 py-4">
@@ -21,7 +57,7 @@ const SchoolLeaderboard = () => {
         <div className="flex items-center font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">
           <span className="w-16">Rank</span>
           <span className="flex-1">School</span>
-          <span className="text-right">Sessions Logged</span>
+          <span className="text-right">Riders</span>
         </div>
       </div>
       <div className="divide-y divide-muted">
@@ -41,7 +77,7 @@ const SchoolLeaderboard = () => {
               {school.name}
             </span>
             <span className="font-display text-2xl font-bold text-primary">
-              {school.sessions.toLocaleString()}
+              {school.riders}
             </span>
           </motion.div>
         ))}
