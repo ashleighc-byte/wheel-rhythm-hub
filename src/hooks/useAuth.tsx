@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef, createContext, useContext, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { validateStudentApproval } from "@/lib/airtable";
+import { validateUserApproval, fetchUserRole } from "@/lib/airtable";
+
+type AppRole = 'admin' | 'student' | null;
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
+  role: AppRole;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -13,31 +16,36 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
+  role: null,
   loading: true,
   signOut: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
+  const [role, setRole] = useState<AppRole>(null);
   const [loading, setLoading] = useState(true);
   const checkedEmails = useRef<Set<string>>(new Set());
 
-  const checkApprovalAndSignOut = async (userSession: Session | null) => {
+  const checkApprovalAndAssignRole = async (userSession: Session | null) => {
     if (!userSession?.user?.email) return;
     const email = userSession.user.email;
-    // Only check once per email per session
     if (checkedEmails.current.has(email)) return;
     checkedEmails.current.add(email);
 
     try {
-      const { approved } = await validateStudentApproval(email);
+      const { approved } = await validateUserApproval(email);
       if (!approved) {
         await supabase.auth.signOut();
         setSession(null);
+        setRole(null);
+        return;
       }
+      // Assign/fetch role via edge function
+      const userRole = await fetchUserRole(userSession);
+      setRole(userRole);
     } catch {
-      // If check fails, allow access
-      console.error("Approval check failed on auth state change");
+      console.error("Approval/role check failed on auth state change");
     }
   };
 
@@ -45,17 +53,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
-        setLoading(false);
         if (_event === 'SIGNED_IN') {
-          // Defer to avoid blocking auth state
-          setTimeout(() => checkApprovalAndSignOut(session), 0);
+          setTimeout(() => checkApprovalAndAssignRole(session), 0);
+        }
+        if (_event === 'SIGNED_OUT') {
+          setRole(null);
+          setLoading(false);
         }
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setLoading(false);
+      if (session) {
+        checkApprovalAndAssignRole(session).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -67,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ session, user: session?.user ?? null, loading, signOut }}
+      value={{ session, user: session?.user ?? null, role, loading, signOut }}
     >
       {children}
     </AuthContext.Provider>

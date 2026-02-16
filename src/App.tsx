@@ -18,23 +18,28 @@ import PostPilotSurvey from "./pages/PostPilotSurvey";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, user, loading } = useAuth();
+  const { session, user, role, loading } = useAuth();
   const [surveyChecked, setSurveyChecked] = useState(false);
   const [surveyDone, setSurveyDone] = useState(false);
 
   useEffect(() => {
     if (!user?.email) return;
+    // Admins (teachers) skip the survey entirely
+    if (role === 'admin') {
+      setSurveyDone(true);
+      setSurveyChecked(true);
+      return;
+    }
     hasCompletedPrePilotSurvey(user.email)
       .then((done) => {
         setSurveyDone(done);
         setSurveyChecked(true);
       })
       .catch(() => {
-        // If check fails, allow access
         setSurveyDone(true);
         setSurveyChecked(true);
       });
-  }, [user?.email]);
+  }, [user?.email, role]);
 
   if (loading || (!surveyChecked && session)) {
     return (
