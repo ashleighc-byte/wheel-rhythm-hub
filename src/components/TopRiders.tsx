@@ -1,15 +1,45 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bike, MapPin } from "lucide-react";
+import { Bike, Clock } from "lucide-react";
+import { fetchStudents } from "@/lib/airtable";
 
-const riders = [
-  { rank: 1, name: "Sarah Martinez", school: "Lincoln High", rides: 156, miles: 782 },
-  { rank: 2, name: "Jake Thompson", school: "Roosevelt Middle", rides: 142, miles: 698 },
-  { rank: 3, name: "Emily Chen", school: "Washington Elementary", rides: 138, miles: 654 },
-  { rank: 4, name: "Marcus Johnson", school: "Jefferson Academy", rides: 127, miles: 612 },
-  { rank: 5, name: "Aisha Patel", school: "Madison Prep", rides: 119, miles: 578 },
-];
+interface Rider {
+  rank: number;
+  name: string;
+  school: string;
+  sessions: number;
+  totalTime: string;
+}
 
 const TopRiders = () => {
+  const [riders, setRiders] = useState<Rider[]>([]);
+
+  useEffect(() => {
+    fetchStudents()
+      .then((res) => {
+        const mapped = res.records
+          .map((r) => ({
+            name: String(r.fields["Full Name"] ?? ""),
+            school: String(r.fields["School"] ?? ""),
+            sessions: Number(r.fields["Count (Session Reflections)"] ?? 0),
+            totalTime: String(r.fields["Total Time (h:mm)"] ?? "0:00"),
+            totalMinutes: Number(r.fields["Total minutes Rollup (from Session Reflections)"] ?? 0),
+          }))
+          .filter((r) => r.sessions > 0)
+          .sort((a, b) => b.totalMinutes - a.totalMinutes)
+          .slice(0, 5)
+          .map((r, i) => ({
+            rank: i + 1,
+            name: r.name,
+            school: r.school,
+            sessions: r.sessions,
+            totalTime: r.totalTime,
+          }));
+        setRiders(mapped);
+      })
+      .catch(console.error);
+  }, []);
+
   return (
     <div className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
       <div className="leaderboard-header px-6 py-4">
@@ -35,10 +65,10 @@ const TopRiders = () => {
               </div>
               <div className="mt-1 flex gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <Bike className="h-3 w-3" /> {rider.rides} rides
+                  <Bike className="h-3 w-3" /> {rider.sessions} sessions
                 </span>
                 <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" /> {rider.miles} mi
+                  <Clock className="h-3 w-3" /> {rider.totalTime}
                 </span>
               </div>
             </div>
