@@ -73,6 +73,44 @@ export async function validateStudentApproval(email: string): Promise<{ approved
   return { approved: false };
 }
 
+export async function validateTeacherApproval(email: string): Promise<{ approved: boolean }> {
+  const formula = `{Email} = '${email}'`;
+  const result = await callAirtable('Organisations', 'GET', {
+    filterByFormula: formula,
+    maxRecords: 1,
+  });
+  return { approved: result.records.length > 0 };
+}
+
+export async function validateUserApproval(email: string): Promise<{ approved: boolean; role: 'admin' | 'student'; studentName?: string }> {
+  // Check teacher first
+  const teacher = await validateTeacherApproval(email);
+  if (teacher.approved) {
+    return { approved: true, role: 'admin' };
+  }
+  // Check student
+  const student = await validateStudentApproval(email);
+  if (student.approved) {
+    return { approved: true, role: 'student', studentName: student.studentName };
+  }
+  return { approved: false, role: 'student' };
+}
+
+export async function fetchUserRole(session: { access_token: string }): Promise<'admin' | 'student' | null> {
+  const url = `${SUPABASE_URL}/functions/v1/assign-role`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.role || null;
+}
+
 export async function fetchSessionReflections(sessionRecordIds?: string[]) {
   const options: any = {};
   if (sessionRecordIds?.length) {

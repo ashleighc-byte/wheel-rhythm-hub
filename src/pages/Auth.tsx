@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
-import { validateStudentApproval } from "@/lib/airtable";
+import { validateUserApproval } from "@/lib/airtable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,12 +18,12 @@ const Auth = () => {
 
   const checkApproval = async (userEmail: string): Promise<boolean> => {
     try {
-      const { approved } = await validateStudentApproval(userEmail);
+      const { approved } = await validateUserApproval(userEmail);
       if (!approved) {
         await supabase.auth.signOut();
         toast({
           title: "Not registered yet",
-          description: "Your school email isn't approved. Please complete the registration form first, then try again once your consent status is active.",
+          description: "Your email isn't approved. Please complete the registration form first, then try again once your status is active.",
           variant: "destructive",
         });
         return false;
@@ -59,11 +59,11 @@ const Auth = () => {
         if (error) throw error;
         await checkApproval(email);
       } else {
-        const { approved } = await validateStudentApproval(email);
+        const { approved } = await validateUserApproval(email);
         if (!approved) {
           toast({
             title: "Not registered yet",
-            description: "Your school email isn't in our system. Please complete the registration form first.",
+            description: "Your email isn't in our system. Please complete the registration or teacher onboarding form first.",
             variant: "destructive",
           });
           return;
