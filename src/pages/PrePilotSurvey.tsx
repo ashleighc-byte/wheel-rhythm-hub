@@ -166,7 +166,6 @@ const PrePilotSurvey = () => {
         "Student Name": [student.id],
         "Survey Type": "Pre-Pilot",
         "Current Sport Involvement": sportInvolvement,
-        "Active Mins Score": parseInt(activeDays),
         "Q2 - On days when you ARE active, about how long do you move for altogether?": activeDuration,
         "Q# - Confidence Score": parseInt(confidence),
         "Q3 \u2013 Right now, how confident do you feel trying things that involve movement?":
