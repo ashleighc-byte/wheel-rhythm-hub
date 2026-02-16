@@ -1,32 +1,153 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bike, Clock, Flame, TrendingUp, Trophy, Activity } from "lucide-react";
+import { Bike, Clock, MapPin, TrendingUp, Trophy, Activity, Plus } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import AnimatedCounter from "@/components/AnimatedCounter";
-
-// Mock data for now - will be replaced with Airtable data
-const mockStudent = {
-  name: "Sarah Martinez",
-  school: "Lincoln High School",
-  totalMinutes: 2340,
-  totalSessions: 156,
-  totalCalories: 18720,
-  totalDistance: 782,
-  rank: 1,
-  feelingTrend: "+12%",
-};
-
-const mockSessions = [
-  { id: 1, date: "2026-02-14", minutes: 30, distance: 12.5, calories: 280, feelingBefore: 3, feelingAfter: 5 },
-  { id: 2, date: "2026-02-12", minutes: 25, distance: 10.2, calories: 230, feelingBefore: 2, feelingAfter: 4 },
-  { id: 3, date: "2026-02-10", minutes: 35, distance: 14.8, calories: 320, feelingBefore: 4, feelingAfter: 5 },
-  { id: 4, date: "2026-02-08", minutes: 20, distance: 8.1, calories: 180, feelingBefore: 2, feelingAfter: 4 },
-  { id: 5, date: "2026-02-06", minutes: 40, distance: 16.3, calories: 360, feelingBefore: 3, feelingAfter: 5 },
-];
+import SessionFeedbackForm from "@/components/SessionFeedbackForm";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { fetchStudents, fetchSessionReflections, callAirtable } from "@/lib/airtable";
 
 const moodEmojis = ["😞", "😕", "😐", "🙂", "😁"];
 
+interface StudentData {
+  name: string;
+  school: string;
+  totalSessions: number;
+  totalKm: number;
+  totalMinutes: number;
+  totalTimeFormatted: string;
+  recordId: string;
+}
+
+interface SessionRow {
+  id: string;
+  date: string;
+  km: number;
+  minutes: string;
+  feelingBefore: number;
+  feelingAfter: number;
+  reflection: string;
+}
+
 const Dashboard = () => {
+  const { user } = useAuth();
+  const [student, setStudent] = useState<StudentData | null>(null);
+  const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [schoolRank, setSchoolRank] = useState<number | null>(null);
+  const [schoolName, setSchoolName] = useState("");
+  const [moodImprovement, setMoodImprovement] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [logOpen, setLogOpen] = useState(false);
+
+  const loadData = async () => {
+    if (!user?.email) return;
+    setLoading(true);
+    try {
+      // Fetch student record
+      const studentsRes = await fetchStudents(user.email);
+      if (studentsRes.records.length === 0) return;
+      const rec = studentsRes.records[0];
+      const f = rec.fields;
+
+      const schoolIds = f["School"] as string[] | undefined;
+
+      const studentData: StudentData = {
+        name: String(f["Full Name"] ?? ""),
+        school: "",
+        totalSessions: Number(f["Count (Session Reflections)"] ?? 0),
+        totalKm: Number(f["Total km  Rollup (from Session Reflections)"] ?? 0),
+        totalMinutes: Number(f["Total minutes Rollup (from Session Reflections)"] ?? 0),
+        totalTimeFormatted: String(f["Total Time (h:mm)"] ?? "0:00"),
+        recordId: rec.id,
+      };
+
+      // Fetch school name + all students for ranking
+      const [orgsRes, allStudentsRes, sessionsRes] = await Promise.all([
+        callAirtable("Organisations", "GET"),
+        callAirtable("Student Registration", "GET"),
+        fetchSessionReflections(rec.id),
+      ]);
+
+      // Resolve school name
+      if (schoolIds?.length) {
+        const org = orgsRes.records.find((o) => o.id === schoolIds[0]);
+        studentData.school = org ? String(org.fields["Organisation Name"] ?? "") : "";
+        setSchoolName(studentData.school);
+
+        // Calculate rank within school
+        const schoolmates = allStudentsRes.records
+          .filter((s) => {
+            const sSchool = s.fields["School"] as string[] | undefined;
+            return sSchool?.[0] === schoolIds[0];
+          })
+          .map((s) => ({
+            id: s.id,
+            totalMinutes: Number(s.fields["Total minutes Rollup (from Session Reflections)"] ?? 0),
+          }))
+          .sort((a, b) => b.totalMinutes - a.totalMinutes);
+
+        const rank = schoolmates.findIndex((s) => s.id === rec.id) + 1;
+        setSchoolRank(rank > 0 ? rank : null);
+      }
+
+      setStudent(studentData);
+
+      // Map sessions
+      const mapped: SessionRow[] = sessionsRes.records
+        .map((s) => ({
+          id: s.id,
+          date: String(s.fields["Auto date"] ?? s.createdTime).slice(0, 10),
+          km: Number(s.fields["Total km "] ?? 0),
+          minutes: String(s.fields["Total minutes"] ?? "0:00"),
+          feelingBefore: Number(s.fields["How did you feel before you jumped on the bike?"] ?? 0),
+          feelingAfter: Number(s.fields["How did you feel after your bike session today?"] ?? 0),
+          reflection: String(s.fields["What did you enjoy or not enjoy about today's session?"] ?? ""),
+        }))
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 10);
+
+      setSessions(mapped);
+
+      // Mood improvement: average change
+      if (mapped.length > 0) {
+        const avgChange =
+          mapped.reduce((sum, s) => sum + (s.feelingAfter - s.feelingBefore), 0) / mapped.length;
+        setMoodImprovement(avgChange >= 0 ? `+${avgChange.toFixed(1)}` : avgChange.toFixed(1));
+      }
+    } catch (err) {
+      console.error("Dashboard load error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [user?.email]);
+
+  const handleLogClose = (open: boolean) => {
+    setLogOpen(open);
+    if (!open) {
+      // Reload data after logging a ride
+      loadData();
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="font-display text-xl uppercase tracking-wider text-foreground animate-pulse">
+            Loading your dashboard...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const firstName = student?.name.split(" ")[0] ?? "Rider";
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -36,23 +157,32 @@ const Dashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 flex flex-wrap items-center justify-between gap-4"
         >
-          <h1 className="text-4xl text-foreground md:text-5xl">
-            Hey, {mockStudent.name.split(" ")[0]}! 👋
-          </h1>
-          <p className="mt-2 font-body text-lg text-muted-foreground">
-            {mockStudent.school} · Rank #{mockStudent.rank}
-          </p>
+          <div>
+            <h1 className="text-4xl text-foreground md:text-5xl">
+              Hey, {firstName}! 👋
+            </h1>
+            <p className="mt-2 font-body text-lg text-muted-foreground">
+              {student?.school}{schoolRank ? ` · Rank #${schoolRank}` : ""}
+            </p>
+          </div>
+          <Button
+            onClick={() => setLogOpen(true)}
+            className="tape-element-green flex items-center gap-2 text-lg transition-transform hover:rotate-0 hover:scale-105"
+          >
+            <Plus className="h-5 w-5" />
+            Log a Ride
+          </Button>
         </motion.div>
 
         {/* Stats grid */}
         <div className="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            { icon: Clock, value: mockStudent.totalMinutes, label: "Total Minutes", color: "text-primary" },
-            { icon: Bike, value: mockStudent.totalSessions, label: "Sessions", color: "text-primary" },
-            { icon: Flame, value: mockStudent.totalCalories, label: "Calories", color: "text-primary" },
-            { icon: TrendingUp, value: mockStudent.totalDistance, label: "Miles", color: "text-primary" },
+            { icon: Bike, value: student?.totalSessions ?? 0, label: "Total Rides" },
+            { icon: MapPin, value: Math.round(student?.totalKm ?? 0), label: "Total KM" },
+            { icon: Clock, value: student?.totalTimeFormatted ?? "0:00", label: "Total Time", isFormatted: true },
+            { icon: TrendingUp, value: moodImprovement ?? "—", label: "Avg Mood Change", isFormatted: true },
           ].map((stat, i) => (
             <motion.div
               key={stat.label}
@@ -61,9 +191,9 @@ const Dashboard = () => {
               transition={{ delay: i * 0.1 }}
               className="stat-card flex flex-col items-center px-4 py-6"
             >
-              <stat.icon className={`mb-2 h-6 w-6 ${stat.color}`} />
+              <stat.icon className="mb-2 h-6 w-6 text-primary" />
               <div className="font-display text-3xl font-bold text-accent md:text-4xl">
-                {stat.value.toLocaleString()}
+                {stat.isFormatted ? stat.value : Number(stat.value).toLocaleString()}
               </div>
               <div className="mt-1 font-display text-[10px] font-semibold uppercase tracking-widest text-accent/70">
                 {stat.label}
@@ -72,7 +202,7 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Mood trend + Rank card */}
+        {/* Rank + Mood cards */}
         <div className="mb-10 grid gap-4 md:grid-cols-2">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -81,14 +211,19 @@ const Dashboard = () => {
             className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
           >
             <div className="flex items-center gap-2 font-display text-lg font-bold uppercase text-foreground">
-              <Activity className="h-5 w-5 text-primary" />
-              Mood Improvement
+              <Trophy className="h-5 w-5 text-primary" />
+              School Rank
             </div>
-            <div className="mt-4 font-display text-5xl font-bold text-primary">
-              {mockStudent.feelingTrend}
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="font-display text-5xl font-bold text-primary">
+                {schoolRank ? `#${schoolRank}` : "—"}
+              </span>
+              <span className="font-body text-muted-foreground">
+                at {schoolName || "your school"}
+              </span>
             </div>
             <p className="mt-2 font-body text-sm text-muted-foreground">
-              Your mood after sessions has been consistently improving!
+              Keep riding to climb the leaderboard!
             </p>
           </motion.div>
 
@@ -99,15 +234,14 @@ const Dashboard = () => {
             className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
           >
             <div className="flex items-center gap-2 font-display text-lg font-bold uppercase text-foreground">
-              <Trophy className="h-5 w-5 text-primary" />
-              Your Rank
+              <Activity className="h-5 w-5 text-primary" />
+              Mood Improvement
             </div>
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className="font-display text-5xl font-bold text-primary">#{mockStudent.rank}</span>
-              <span className="font-body text-muted-foreground">at {mockStudent.school}</span>
+            <div className="mt-4 font-display text-5xl font-bold text-primary">
+              {moodImprovement ?? "—"}
             </div>
             <p className="mt-2 font-body text-sm text-muted-foreground">
-              Keep riding to climb the leaderboard!
+              Average mood change before vs after riding (1–5 scale)
             </p>
           </motion.div>
         </div>
@@ -121,44 +255,60 @@ const Dashboard = () => {
         >
           <div className="leaderboard-header flex items-center justify-between px-6 py-4">
             <h3 className="text-xl tracking-wider">Recent Sessions</h3>
-            <a href="/log" className="tape-element py-1 px-4 text-xs no-underline">
+            <button
+              onClick={() => setLogOpen(true)}
+              className="tape-element py-1 px-4 text-xs no-underline cursor-pointer"
+            >
               LOG NEW SESSION
-            </a>
+            </button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-[3px] border-secondary bg-accent">
-                  <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Date</th>
-                  <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Minutes</th>
-                  <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Distance</th>
-                  <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Calories</th>
-                  <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Mood</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-muted">
-                {mockSessions.map((session, i) => (
-                  <motion.tr
-                    key={session.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 + i * 0.05 }}
-                    className="transition-colors hover:bg-muted"
-                  >
-                    <td className="px-4 py-4 font-body text-sm text-foreground">{session.date}</td>
-                    <td className="px-4 py-4 font-display text-lg font-bold text-primary">{session.minutes}</td>
-                    <td className="px-4 py-4 font-body text-sm text-foreground">{session.distance} mi</td>
-                    <td className="px-4 py-4 font-body text-sm text-foreground">{session.calories}</td>
-                    <td className="px-4 py-4 text-lg">
-                      {moodEmojis[session.feelingBefore - 1]} → {moodEmojis[session.feelingAfter - 1]}
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {sessions.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <Bike className="mx-auto mb-4 h-12 w-12 text-muted-foreground/40" />
+              <p className="font-display text-lg uppercase text-muted-foreground">No rides logged yet</p>
+              <p className="mt-2 font-body text-sm text-muted-foreground">
+                Log your first ride to see your stats here!
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-[3px] border-secondary bg-accent">
+                    <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Date</th>
+                    <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">KM</th>
+                    <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Time</th>
+                    <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Mood</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-muted">
+                  {sessions.map((session, i) => (
+                    <motion.tr
+                      key={session.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.6 + i * 0.05 }}
+                      className="transition-colors hover:bg-muted"
+                    >
+                      <td className="px-4 py-4 font-body text-sm text-foreground">{session.date}</td>
+                      <td className="px-4 py-4 font-display text-lg font-bold text-primary">{session.km}</td>
+                      <td className="px-4 py-4 font-body text-sm text-foreground">{session.minutes}</td>
+                      <td className="px-4 py-4 text-lg">
+                        {session.feelingBefore > 0 && session.feelingAfter > 0
+                          ? `${moodEmojis[session.feelingBefore - 1]} → ${moodEmojis[session.feelingAfter - 1]}`
+                          : "—"}
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </motion.div>
       </div>
+
+      {/* Session logging dialog */}
+      <SessionFeedbackForm open={logOpen} onOpenChange={handleLogClose} />
     </div>
   );
 };
