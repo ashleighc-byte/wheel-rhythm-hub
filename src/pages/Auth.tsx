@@ -57,9 +57,9 @@ const Auth = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="email" className="font-display text-xs uppercase tracking-wider text-secondary-foreground">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="tape-element inline-flex w-full flex-col gap-1 rotate-[-2deg]">
+            <Label htmlFor="email" className="font-display text-xs uppercase tracking-wider text-accent-foreground">
               School Email
             </Label>
             <Input
@@ -69,11 +69,11 @@ const Auth = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@school.nz"
               required
-              className="mt-1 border-[2px] border-primary bg-card"
+              className="border-2 border-secondary bg-accent/30 font-display text-accent-foreground placeholder:text-accent-foreground/50 focus-visible:ring-secondary"
             />
           </div>
-          <div>
-            <Label htmlFor="password" className="font-display text-xs uppercase tracking-wider text-secondary-foreground">
+          <div className="tape-element inline-flex w-full flex-col gap-1 rotate-[1deg]">
+            <Label htmlFor="password" className="font-display text-xs uppercase tracking-wider text-accent-foreground">
               Password
             </Label>
             <Input
@@ -84,7 +84,7 @@ const Auth = () => {
               placeholder="••••••••"
               required
               minLength={6}
-              className="mt-1 border-[2px] border-primary bg-card"
+              className="border-2 border-secondary bg-accent/30 font-display text-accent-foreground placeholder:text-accent-foreground/50 focus-visible:ring-secondary"
             />
           </div>
 
