@@ -76,7 +76,7 @@ export async function validateStudentApproval(email: string): Promise<{ approved
 export async function fetchSessionReflections(studentRecordId?: string) {
   const options: any = {};
   if (studentRecordId) {
-    options.filterByFormula = `FIND("${studentRecordId}", ARRAYJOIN({Linked Student}))`;
+    options.filterByFormula = `FIND("${studentRecordId}", ARRAYJOIN({Student Registration}))`;
   }
   return callAirtable('Session Reflections', 'GET', options);
 }
