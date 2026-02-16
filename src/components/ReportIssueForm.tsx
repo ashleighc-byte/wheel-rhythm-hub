@@ -27,11 +27,11 @@ interface ReportIssueFormProps {
 }
 
 const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { toast } = useToast();
 
-  const [studentRecordId, setStudentRecordId] = useState<string | null>(null);
-  const [studentName, setStudentName] = useState("");
+  const [submitterRecordId, setSubmitterRecordId] = useState<string | null>(null);
+  const [submitterName, setSubmitterName] = useState("");
   const [onBehalf, setOnBehalf] = useState("");
   const [feedbackType, setFeedbackType] = useState("");
   const [description, setDescription] = useState("");
@@ -39,15 +39,32 @@ const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
   const [photo, setPhoto] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const isAdmin = role === 'admin';
+
   useEffect(() => {
     if (!user?.email || !open) return;
-    fetchStudents(user.email).then((res) => {
-      if (res.records.length > 0) {
-        setStudentRecordId(res.records[0].id);
-        setStudentName(String(res.records[0].fields["Full Name"] ?? ""));
-      }
-    });
-  }, [user?.email, open]);
+
+    if (isAdmin) {
+      // Fetch from Organisations table for teachers
+      callAirtable('Organisations', 'GET', {
+        filterByFormula: `{Email} = '${user.email}'`,
+        maxRecords: 1,
+      }).then((res) => {
+        if (res.records.length > 0) {
+          setSubmitterRecordId(res.records[0].id);
+          setSubmitterName(String(res.records[0].fields["Name"] ?? res.records[0].fields["Full Name"] ?? user.email));
+        }
+      });
+    } else {
+      // Fetch from Student Registration for students
+      fetchStudents(user.email).then((res) => {
+        if (res.records.length > 0) {
+          setSubmitterRecordId(res.records[0].id);
+          setSubmitterName(String(res.records[0].fields["Full Name"] ?? ""));
+        }
+      });
+    }
+  }, [user?.email, open, isAdmin]);
 
   const resetForm = () => {
     setOnBehalf("");
@@ -69,11 +86,12 @@ const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
         "Severity": severity,
       };
 
-      if (studentRecordId) {
-        fields["Submitted By"] = [studentRecordId];
+      if (submitterRecordId) {
+        fields["Submitted By"] = [submitterRecordId];
       }
 
-      if (onBehalf.trim()) {
+      // Only include "on behalf of" for admin form
+      if (isAdmin && onBehalf.trim()) {
         fields["If your name is not listed above, type it here"] = onBehalf.trim();
       }
 
@@ -121,7 +139,7 @@ const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display text-xl uppercase text-foreground">
             <AlertTriangle className="h-5 w-5 text-primary" />
-            Report an Issue
+            {isAdmin ? "Report an Issue \u2013 Admin" : "Report an Issue \u2013 Student"}
           </DialogTitle>
         </DialogHeader>
 
@@ -132,23 +150,25 @@ const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
               Submitted By
             </Label>
             <div className="mt-1 rounded border-2 border-secondary bg-muted px-3 py-2 font-body text-sm text-foreground">
-              {studentName || user?.email || "Loading..."}
+              {submitterName || user?.email || "Loading..."}
             </div>
           </div>
 
-          {/* On behalf of */}
-          <div>
-            <Label className="font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              If you are submitting this request on behalf of someone else, what is their name and email address?
-            </Label>
-            <Input
-              value={onBehalf}
-              onChange={(e) => setOnBehalf(e.target.value)}
-              placeholder="Name and email (optional)"
-              className="mt-1 border-2 border-secondary bg-background font-body"
-              maxLength={200}
-            />
-          </div>
+          {/* On behalf of - ADMIN ONLY */}
+          {isAdmin && (
+            <div>
+              <Label className="font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                If you are submitting this request on behalf of someone else, what is their name and email address?
+              </Label>
+              <Input
+                value={onBehalf}
+                onChange={(e) => setOnBehalf(e.target.value)}
+                placeholder="Name and email (optional)"
+                className="mt-1 border-2 border-secondary bg-background font-body"
+                maxLength={200}
+              />
+            </div>
+          )}
 
           {/* Feedback Type */}
           <div>
