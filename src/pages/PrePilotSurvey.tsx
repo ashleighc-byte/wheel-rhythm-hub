@@ -172,7 +172,7 @@ const PrePilotSurvey = () => {
           CONFIDENCE_OPTIONS.find((o) => o.value === confidence)?.label || "",
         "Q4 - How much do you enjoy moving or being active?":
           ENJOYMENT_OPTIONS.find((o) => o.value === enjoyment)?.label || "",
-        "Enjoyment Score": parseInt(enjoyment),
+        
         "Q5 \u2013 Based on your answer to Question 4, what things make being active less enjoyable or harder for you?":
           barriers.join(", "),
         "Q6 - Have you ever used a bike before (any bike at all)?": bikeExperience,
