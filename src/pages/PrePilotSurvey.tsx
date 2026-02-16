@@ -28,7 +28,7 @@ const ACTIVE_DAYS_OPTIONS = [
 ];
 
 const DURATION_OPTIONS = [
-  "Less than 15 Minutes per day",
+  "0-15 Minutes per day",
   "15-30 Minutes per day",
   "30 Minutes to an Hour per day",
   "More than an hour per day",
