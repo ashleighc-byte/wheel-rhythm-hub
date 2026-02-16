@@ -62,7 +62,7 @@ const BARRIER_OPTIONS = [
 
 const BIKE_EXPERIENCE_OPTIONS = [
   "Yes, lots of times",
-  "I\u2019ve tried a few times",
+  "I've tried a few times",
   "No, not really",
   "No, never",
 ];
