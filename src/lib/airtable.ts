@@ -96,17 +96,12 @@ export async function fetchSurveys(studentRecordId?: string) {
 }
 
 export async function hasCompletedPrePilotSurvey(email: string): Promise<boolean> {
-  // First find the student record
+  // Check the student record for linked survey entries
   const students = await fetchStudents(email);
   if (!students.records.length) return false;
-  const studentId = students.records[0].id;
-  
-  // Check for a Pre-Pilot survey linked to this student
-  const result = await callAirtable('Surveys & Student Voice', 'GET', {
-    filterByFormula: `AND(FIND("${studentId}", ARRAYJOIN({Student Name})), {Survey Type} = "Pre-Pilot")`,
-    maxRecords: 1,
-  });
-  return result.records.length > 0;
+  const f = students.records[0].fields;
+  const linkedSurveys = f["Surveys & Student Voice"];
+  return Array.isArray(linkedSurveys) && linkedSurveys.length > 0;
 }
 
 export async function fetchSchoolStats() {
