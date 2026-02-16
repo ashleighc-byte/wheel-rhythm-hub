@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import brandLogo from "@/assets/brand-logo-page.jpg";
+import brandLogo from "@/assets/fw-logo.png";
 
 const navLinks = [
   { label: "HOME", path: "/" },
