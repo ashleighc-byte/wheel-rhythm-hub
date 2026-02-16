@@ -166,24 +166,21 @@ const PrePilotSurvey = () => {
         "Student Name": [student.id],
         "Survey Type": "Pre-Pilot",
         "Current Sport Involvement": sportInvolvement,
-        "Q1 –How many days in a week do you usually move around or do something active?": parseInt(activeDays),
         "Active Mins Score": parseInt(activeDays),
         "Q2 - On days when you ARE active, about how long do you move for altogether?": activeDuration,
         "Q# - Confidence Score": parseInt(confidence),
-        "Q3 – Right now, how confident do you feel trying things that involve movement?":
+        "Q3 \u2013 Right now, how confident do you feel trying things that involve movement?":
           CONFIDENCE_OPTIONS.find((o) => o.value === confidence)?.label || "",
         "Q4 - How much do you enjoy moving or being active?":
           ENJOYMENT_OPTIONS.find((o) => o.value === enjoyment)?.label || "",
         "Enjoyment Score": parseInt(enjoyment),
-        "Q5 – Based on your answer to Question 4, what things make being active less enjoyable or harder for you?":
+        "Q5 \u2013 Based on your answer to Question 4, what things make being active less enjoyable or harder for you?":
           barriers.join(", "),
         "Q6 - Have you ever used a bike before (any bike at all)?": bikeExperience,
-        "Riden a bike before?": bikeExperience === "No, never" ? 0 : 1,
         "Q7 - Do you think you'd cycle more virtually or in real life?": cyclingPreference,
-        "Q8 - Thinking about movement or being active… what would you LIKE to change or improve for yourself?":
+        "Q8 - Thinking about movement or being active\u2026 what would you LIKE to change or improve for yourself?":
           goals.join(", "),
         "Q8 - Would you want to ride with friends at other schools?": rideFriends,
-        "Q8 – Ride With Friends (% said yes)": rideFriends === "Yes" ? 1 : 0,
         "Anything else you want us to know?": anythingElse || "",
       };
 
