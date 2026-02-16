@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import CTASection from "@/components/CTASection";
 import { Target, BarChart3, Calendar, ClipboardList, MessageSquare, Heart } from "lucide-react";
@@ -253,14 +254,17 @@ const Info = () => {
             <div className="font-body text-base leading-relaxed text-foreground/90">
               <p className="mb-5">You can access the surveys below:</p>
               <div className="space-y-3">
-                <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <Link
+                  to="/post-pilot-survey"
+                  className="block border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1"
+                >
                   <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
                     Post-Pilot Survey
                   </h3>
-                  <p className="mt-1 font-body text-sm text-muted-foreground">
-                    Link coming soon
+                  <p className="mt-1 font-body text-sm text-primary">
+                    Click here to complete →
                   </p>
-                </div>
+                </Link>
                 <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
                   <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
                     Teacher Observation Form
