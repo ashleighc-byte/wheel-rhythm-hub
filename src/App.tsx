@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import PrePilotSurvey from "./pages/PrePilotSurvey";
 import NotFound from "./pages/NotFound";
 import Leaderboards from "./pages/Leaderboards";
+import Info from "./pages/Info";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/leaderboards" element={<ProtectedRoute><Leaderboards /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/info" element={<ProtectedRoute><Info /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
