@@ -26,7 +26,7 @@ const CTASection = () => {
               onClick={() => setFeedbackOpen(true)}
               className="tape-element text-lg transition-transform hover:rotate-0 hover:scale-105"
             >
-              DAILY SESSION FEEDBACK
+              LOG A DAILY RIDE
             </button>
             <button className="tape-element-green text-lg transition-transform hover:rotate-0 hover:scale-105">
               TEACHER OBSERVATIONS

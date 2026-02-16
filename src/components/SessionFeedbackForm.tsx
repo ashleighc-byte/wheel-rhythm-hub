@@ -112,18 +112,18 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
 
       const fields: Record<string, any> = {
         "Student Name": studentName.trim(),
-        "Pre-Session Rating": preRating,
-        "Post-Session Rating": postRating,
-        "Reflection": reflection.trim(),
+        "How did you feel before you jumped on the bike?": preRating,
+        "How did you feel after your bike session today?": postRating,
+        "What did you enjoy or not enjoy about today's session?": reflection.trim(),
       };
 
       if (attachmentUrl) {
-        fields["Session Screenshot"] = [{ url: attachmentUrl }];
+        fields["Use the ipad to take a screenshot of your session time and upload it here."] = [{ url: attachmentUrl }];
       }
 
       await createSessionReflection(fields);
       setSubmitted(true);
-      toast({ title: "Session feedback submitted! 🚴" });
+      toast({ title: "Ride logged successfully! 🚴" });
     } catch (err: any) {
       console.error("Submission error:", err);
       toast({ title: "Failed to submit feedback", description: err.message, variant: "destructive" });
@@ -142,7 +142,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
       <DialogContent className="max-h-[90vh] overflow-y-auto border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl uppercase tracking-wider text-foreground">
-            Daily Session Feedback
+            Log a Daily Ride
           </DialogTitle>
         </DialogHeader>
 
@@ -155,8 +155,8 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
               className="flex flex-col items-center gap-4 py-10 text-center"
             >
               <CheckCircle className="h-16 w-16 text-primary" />
-              <h3 className="font-display text-xl uppercase text-foreground">Feedback Submitted!</h3>
-              <p className="font-body text-muted-foreground">Thanks for sharing how your session went today.</p>
+              <h3 className="font-display text-xl uppercase text-foreground">Ride Logged!</h3>
+              <p className="font-body text-muted-foreground">Thanks for logging your ride today.</p>
               <Button onClick={() => handleClose(false)} className="tape-element-green mt-4">
                 Close
               </Button>
@@ -264,7 +264,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
                     <Loader2 className="h-5 w-5 animate-spin" /> Submitting...
                   </span>
                 ) : (
-                  "Submit Feedback"
+                  "Log Ride"
                 )}
               </Button>
             </motion.form>
