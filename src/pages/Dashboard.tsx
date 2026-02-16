@@ -165,7 +165,7 @@ const Dashboard = () => {
               Hey, {firstName}! 👋
             </h1>
             <p className="mt-2 font-body text-lg text-muted-foreground">
-              {student?.school}{schoolRank ? ` · Rank #${schoolRank}` : ""}
+              {student?.school ? student.school : ""}{schoolRank ? ` · Rank #${schoolRank}` : ""}
             </p>
           </div>
           <Button
