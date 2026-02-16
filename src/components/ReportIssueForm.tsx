@@ -69,10 +69,8 @@ const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
         "Severity": severity,
       };
 
-      // Use text field for submitter name instead of linked record
-      // (Submitted By links to a different table than Student Registration)
-      if (studentName) {
-        fields["If your name is not listed above, type it here"] = studentName;
+      if (studentRecordId) {
+        fields["Submitted By"] = [studentRecordId];
       }
 
       if (onBehalf.trim()) {
