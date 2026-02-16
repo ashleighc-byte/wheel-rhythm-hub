@@ -73,10 +73,12 @@ export async function validateStudentApproval(email: string): Promise<{ approved
   return { approved: false };
 }
 
-export async function fetchSessionReflections(studentRecordId?: string) {
+export async function fetchSessionReflections(sessionRecordIds?: string[]) {
   const options: any = {};
-  if (studentRecordId) {
-    options.filterByFormula = `FIND("${studentRecordId}", ARRAYJOIN({Student Registration}))`;
+  if (sessionRecordIds?.length) {
+    // Fetch by known record IDs using OR(RECORD_ID()=...) formula
+    const orClauses = sessionRecordIds.map(id => `RECORD_ID()='${id}'`).join(',');
+    options.filterByFormula = `OR(${orClauses})`;
   }
   return callAirtable('Session Reflections', 'GET', options);
 }
