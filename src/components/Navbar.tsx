@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import brandLogo from "@/assets/brand-logo-page.jpg";
 
 const navLinks = [
@@ -13,6 +14,7 @@ const navLinks = [
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const { signOut } = useAuth();
 
   return (
     <nav className="bg-primary sticky top-0 z-50 border-b-4 border-secondary">
@@ -38,14 +40,23 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="text-accent md:hidden"
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={signOut}
+            className="hidden items-center gap-1 px-3 py-2 font-display text-xs font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground md:flex"
+            aria-label="Sign out"
+          >
+            <LogOut className="h-4 w-4" /> Sign Out
+          </button>
+          {/* Mobile toggle */}
+          <button
+            onClick={() => setOpen(!open)}
+            className="text-accent md:hidden"
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
@@ -61,6 +72,12 @@ const Navbar = () => {
               {link.label}
             </Link>
           ))}
+          <button
+            onClick={() => { signOut(); setOpen(false); }}
+            className="flex w-full items-center gap-2 py-3 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
+          >
+            <LogOut className="h-4 w-4" /> Sign Out
+          </button>
         </div>
       )}
     </nav>
