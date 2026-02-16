@@ -95,6 +95,20 @@ export async function fetchSurveys(studentRecordId?: string) {
   return callAirtable('Surveys & Student Voice', 'GET', options);
 }
 
+export async function hasCompletedPrePilotSurvey(email: string): Promise<boolean> {
+  // First find the student record
+  const students = await fetchStudents(email);
+  if (!students.records.length) return false;
+  const studentId = students.records[0].id;
+  
+  // Check for a Pre-Pilot survey linked to this student
+  const result = await callAirtable('Surveys & Student Voice', 'GET', {
+    filterByFormula: `AND(FIND("${studentId}", ARRAYJOIN({Student Name})), {Survey Type} = "Pre-Pilot")`,
+    maxRecords: 1,
+  });
+  return result.records.length > 0;
+}
+
 export async function fetchSchoolStats() {
   return callAirtable('School Stats', 'GET');
 }
