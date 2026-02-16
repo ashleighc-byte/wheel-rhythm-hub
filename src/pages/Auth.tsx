@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import brandLogo from "@/assets/brand-logo-page.jpg";
+import brandLogo from "@/assets/fw-logo.png";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
