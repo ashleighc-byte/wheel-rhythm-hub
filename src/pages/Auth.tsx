@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { validateStudentApproval } from "@/lib/airtable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,25 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  const checkApproval = async (userEmail: string): Promise<boolean> => {
+    try {
+      const { approved } = await validateStudentApproval(userEmail);
+      if (!approved) {
+        await supabase.auth.signOut();
+        toast({
+          title: "Not registered yet",
+          description: "Your school email isn't approved. Please complete the registration form first, then try again once your consent status is active.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      return true;
+    } catch {
+      console.error("Approval check failed, allowing access");
+      return true;
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
@@ -37,7 +57,17 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        await checkApproval(email);
       } else {
+        const { approved } = await validateStudentApproval(email);
+        if (!approved) {
+          toast({
+            title: "Not registered yet",
+            description: "Your school email isn't in our system. Please complete the registration form first.",
+            variant: "destructive",
+          });
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,

@@ -56,9 +56,21 @@ async function callAirtable(
 export async function fetchStudents(email?: string) {
   const options: any = {};
   if (email) {
-    options.filterByFormula = `{Email} = '${email}'`;
+    options.filterByFormula = `{School Email} = '${email}'`;
   }
   return callAirtable('Student Registration', 'GET', options);
+}
+
+export async function validateStudentApproval(email: string): Promise<{ approved: boolean; studentName?: string }> {
+  const formula = `AND({School Email} = '${email}', {Consent Status} = 'active')`;
+  const result = await callAirtable('Student Registration', 'GET', {
+    filterByFormula: formula,
+    maxRecords: 1,
+  });
+  if (result.records.length > 0) {
+    return { approved: true, studentName: result.records[0].fields['Full Name'] };
+  }
+  return { approved: false };
 }
 
 export async function fetchSessionReflections(studentRecordId?: string) {
