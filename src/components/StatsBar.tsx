@@ -15,9 +15,9 @@ const fallbackStats: StatItem[] = [
   { target: 0, label: "Total Minutes", formatted: "0:00" },
 ];
 
-function formatDuration(totalMinutes: number): string {
-  const hours = Math.floor(totalMinutes / 60);
-  const mins = totalMinutes % 60;
+function formatHours(totalHours: number): string {
+  const hours = Math.floor(totalHours);
+  const mins = Math.round((totalHours - hours) * 60);
   return `${hours}:${mins.toString().padStart(2, "0")}`;
 }
 
@@ -30,12 +30,12 @@ const StatsBar = () => {
       .then((res) => {
         if (res.records.length > 0) {
           const fields = res.records[0].fields;
-          const rawMinutes = Number(fields["Total Minutes"] ?? 0);
+          const rawHours = Number(fields["Total Hours"] ?? 0);
           setStats([
             { target: Number(fields["Total Schools"] ?? 0), label: "Total Schools" },
             { target: Number(fields["Total Riders"] ?? 0), label: "Total Riders" },
             { target: Number(fields["Total Sessions"] ?? 0), label: "Total Sessions" },
-            { target: rawMinutes, label: "Total Hours", formatted: formatDuration(rawMinutes) },
+            { target: rawHours, label: "Total Hours", formatted: formatHours(rawHours) },
           ]);
         }
       })
