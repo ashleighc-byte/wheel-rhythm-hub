@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import PrePilotSurvey from "./pages/PrePilotSurvey";
 import NotFound from "./pages/NotFound";
+import Leaderboards from "./pages/Leaderboards";
 
 const queryClient = new QueryClient();
 
@@ -83,7 +84,7 @@ const App = () => (
             <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
             <Route path="/survey" element={<SurveyRoute><PrePilotSurvey /></SurveyRoute>} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/leaderboards" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/leaderboards" element={<ProtectedRoute><Leaderboards /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
