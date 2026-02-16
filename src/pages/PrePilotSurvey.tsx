@@ -35,55 +35,62 @@ const DURATION_OPTIONS = [
 ];
 
 const CONFIDENCE_OPTIONS = [
-  { value: "1", label: "1 - I don't feel confident at all" },
-  { value: "2", label: "2 - I feel a little bit confident" },
-  { value: "3", label: "3 - I feel okay about it" },
+  { value: "1", label: "1 - I don\u2019t really feel confident doing movement yet" },
+  { value: "2", label: "2 - I feel a tiny bit confident, but still unsure" },
+  { value: "3", label: "3 - I feel somewhat confident - in the middle" },
   { value: "4", label: "4 - I feel pretty confident trying movement things" },
   { value: "5", label: "5 - I feel very confident trying movement things" },
 ];
 
 const ENJOYMENT_OPTIONS = [
-  { value: "1", label: "1 - I don't enjoy it at all" },
-  { value: "2", label: "2 - I don't really enjoy it" },
-  { value: "3", label: "3 - It's okay, I don't mind it" },
-  { value: "4", label: "4 - I usually enjoy moving around or being active" },
-  { value: "5", label: "5 - I love it!" },
+  { value: "1", label: "1 - I don\u2019t really like being active right now." },
+  { value: "2", label: "2 - Sometimes it\u2019s okay, but mostly I don\u2019t enjoy it." },
+  { value: "3", label: "3 - I enjoy being active if it\u2019s the right thing or with the right people." },
+  { value: "4", label: "4 - I usually enjoy moving around or being active." },
 ];
 
 const BARRIER_OPTIONS = [
-  "Being active isn't hard for me",
+  "Being active isn\u2019t hard for me",
   "I feel embarrassed or judged",
-  "I don't have people to be active with",
-  "I don't know what to do or where to go",
-  "I prefer other activities that aren't movement",
+  "I don\u2019t have people to be active with",
+  "I don\u2019t know what to do or where to go",
+  "I prefer other activities that aren\u2019t movement",
   "I find it boring",
   "I find it hard because of health or pain",
   "It costs too much",
 ];
 
 const BIKE_EXPERIENCE_OPTIONS = [
-  "No, never",
-  "Yes, a few times",
   "Yes, lots of times",
+  "I\u2019ve tried a few times",
+  "No, not really",
+  "No, never",
 ];
 
 const CYCLING_PREFERENCE_OPTIONS = [
-  "1- I don't really think I'd ride much either way",
-  "2- I think I'd ride more virtually (like on a smart bike)",
-  "3- I think I'd ride about the same on both",
-  "4- I think I'd ride more in real life",
-  "5- I'd love to ride both!",
+  "4 - I think I\u2019d ride more on a virtual/screen bike",
+  "3- I think I\u2019d ride about the same on both",
+  "2 - I think I\u2019d ride more on a real bike outside",
+  "1- I don\u2019t really think I\u2019d ride much either way",
 ];
 
 const GOALS_OPTIONS = [
-  "Nothing — I'm happy as I am right now",
-  "Be more active or move more often",
-  "Enjoy being active more",
-  "Try a new sport or activity",
   "Feel more confident being active",
+  "Feel fitter or stronger",
+  "Enjoy being active more",
+  "Find movement more fun",
+  "Have more energy",
+  "Feel less embarrassed or shy",
   "Feel safer being active (inside or outside)",
-  "Find people to be active with",
-  "Get stronger or fitter",
+  "Have more chances to be active",
+  "Try new types of movement",
+  "Be more active with friends",
+  "Get better at something active",
+  "Have more motivation",
+  "Know more ways to be active",
+  "Nothing \u2014 I\u2019m happy as I am right now",
+  "I\u2019m not sure yet",
+  "Other",
 ];
 
 const PrePilotSurvey = () => {
