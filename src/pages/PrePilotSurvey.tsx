@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchStudents, callAirtable } from "@/lib/airtable";
+import { fetchStudents, callAirtable, hasCompletedPrePilotSurvey } from "@/lib/airtable";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -107,6 +107,14 @@ const PrePilotSurvey = () => {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
+  // Redirect if survey already completed
+  useEffect(() => {
+    if (!user?.email) return;
+    hasCompletedPrePilotSurvey(user.email).then((done) => {
+      if (done) navigate("/dashboard", { replace: true });
+    });
+  }, [user?.email, navigate]);
+
   // Form state
   const [sportInvolvement, setSportInvolvement] = useState("");
   const [activeDays, setActiveDays] = useState("");
@@ -207,7 +215,7 @@ const PrePilotSurvey = () => {
       });
 
       // Small delay then navigate
-      setTimeout(() => navigate("/", { replace: true }), 1000);
+      setTimeout(() => navigate("/dashboard", { replace: true }), 1000);
     } catch (err: any) {
       console.error("Survey submit error:", err);
       toast({
