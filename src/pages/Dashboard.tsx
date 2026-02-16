@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Bike, Clock, MapPin, TrendingUp, Trophy, Activity, Plus } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchStudents, fetchSessionReflections, callAirtable } from "@/lib/airtable";
+import { fetchStudents, fetchSessionReflections, callAirtable, hasCompletedFourWeekCheckIn } from "@/lib/airtable";
 
 const moodEmojis = ["😞", "😕", "😐", "🙂", "😁"];
 
@@ -30,7 +31,8 @@ interface SessionRow {
 }
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const navigate = useNavigate();
   const [student, setStudent] = useState<StudentData | null>(null);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [schoolRank, setSchoolRank] = useState<number | null>(null);
@@ -38,6 +40,20 @@ const Dashboard = () => {
   const [moodImprovement, setMoodImprovement] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [logOpen, setLogOpen] = useState(false);
+
+  // 4-week check-in trigger
+  useEffect(() => {
+    if (!user?.email || !user?.created_at || role !== "student") return;
+    const createdAt = new Date(user.created_at);
+    const fourWeeksLater = new Date(createdAt.getTime() + 28 * 24 * 60 * 60 * 1000);
+    if (new Date() < fourWeeksLater) return;
+
+    hasCompletedFourWeekCheckIn(user.email).then((done) => {
+      if (!done) {
+        navigate("/four-week-check-in", { replace: true });
+      }
+    }).catch(console.error);
+  }, [user?.email, user?.created_at, role, navigate]);
 
   const loadData = async () => {
     if (!user?.email) return;
