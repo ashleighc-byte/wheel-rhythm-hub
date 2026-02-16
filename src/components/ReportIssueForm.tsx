@@ -52,7 +52,7 @@ const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
       }).then((res) => {
         if (res.records.length > 0) {
           setSubmitterRecordId(res.records[0].id);
-          setSubmitterName(String(res.records[0].fields["Name"] ?? res.records[0].fields["Full Name"] ?? user.email));
+          setSubmitterName(String(res.records[0].fields["Full Name"] ?? user.email));
         }
       });
     } else {
