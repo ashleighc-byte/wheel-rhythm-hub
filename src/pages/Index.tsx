@@ -1,9 +1,5 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import StatsBar from "@/components/StatsBar";
-import SchoolLeaderboard from "@/components/SchoolLeaderboard";
-import TopRiders from "@/components/TopRiders";
-import ImpactStats from "@/components/ImpactStats";
 import CTASection from "@/components/CTASection";
 
 const Index = () => {
@@ -11,24 +7,8 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection />
-      <StatsBar />
-
-      {/* Leaderboard Section */}
-      <section className="bg-background pb-20">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-            <SchoolLeaderboard />
-            <div className="space-y-6">
-              <ImpactStats />
-              <TopRiders />
-            </div>
-          </div>
-        </div>
-      </section>
-
       <CTASection />
 
-      {/* Footer */}
       <footer className="border-t-4 border-primary bg-secondary px-4 py-10">
         <div className="container mx-auto text-center">
           <div className="font-display text-lg font-bold uppercase text-accent">
