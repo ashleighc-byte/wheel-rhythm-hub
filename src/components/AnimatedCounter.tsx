@@ -12,6 +12,13 @@ const AnimatedCounter = ({ target, duration = 2000, label }: AnimatedCounterProp
   const started = useRef(false);
 
   useEffect(() => {
+    // Reset animation flag when target changes so new data triggers animation
+    started.current = false;
+  }, [target]);
+
+  useEffect(() => {
+    if (target === 0) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !started.current) {
