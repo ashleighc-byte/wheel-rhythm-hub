@@ -35,7 +35,7 @@ const DURATION_OPTIONS = [
 ];
 
 const CONFIDENCE_OPTIONS = [
-  { value: "1", label: "1 - I don't really feel confident doing movement yet" },
+  { value: "1", label: "1 - I don\u2019t really feel confident doing movement yet" },
   { value: "2", label: "2 - I feel a tiny bit confident, but still unsure" },
   { value: "3", label: "3 - I feel somewhat confident - in the middle" },
   { value: "4", label: "4 - I feel pretty confident trying movement things" },
@@ -43,29 +43,29 @@ const CONFIDENCE_OPTIONS = [
 ];
 
 const ENJOYMENT_OPTIONS = [
-  { value: "1", label: "1 - I don't really like being active right now." },
-  { value: "2", label: "2 - Sometimes it's okay, but mostly I don't enjoy it." },
-  { value: "3", label: "3 - I enjoy being active if it's the right thing or with the right people." },
+  { value: "1", label: "1 - I don\u2019t really like being active right now." },
+  { value: "2", label: "2 - Sometimes it\u2019s okay, but mostly I don\u2019t enjoy it." },
+  { value: "3", label: "3 - I enjoy being active if it\u2019s the right thing or with the right people." },
   { value: "4", label: "4 - I usually enjoy moving around or being active." },
   { value: "5", label: "5 - Being active is fun for me most of the time." },
 ];
 
 const BARRIER_OPTIONS = [
-  "I don't feel confident",
+  "I don\u2019t feel confident",
   "I worry people will judge me",
-  "I don't feel fit enough",
+  "I don\u2019t feel fit enough",
   "I get tired easily",
-  "I don't like being watched",
+  "I don\u2019t like being watched",
   "I find it embarrassing",
-  "I don't know how to start",
+  "I don\u2019t know how to start",
   "It feels boring",
-  "I prefer other activities that aren't movement",
-  "I don't have anyone to be active with",
-  "I'm not good at sport",
+  "I prefer other activities that aren\u2019t movement",
+  "I don\u2019t have anyone to be active with",
+  "I\u2019m not good at sport",
   "I get anxious about trying new things",
   "I find it hard because of health or pain",
-  "I don't have the right gear",
-  "Being active isn't hard for me",
+  "I don\u2019t have the right gear",
+  "Being active isn\u2019t hard for me",
 ];
 
 const BIKE_EXPERIENCE_OPTIONS = [
