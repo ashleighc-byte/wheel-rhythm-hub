@@ -41,7 +41,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
           <img
@@ -49,10 +49,10 @@ const Auth = () => {
             alt="Free Wheeler Bike League"
             className="mx-auto mb-6 h-20 w-auto object-contain"
           />
-          <h1 className="font-display text-3xl uppercase tracking-wider text-secondary-foreground">
+          <h1 className="font-display text-3xl uppercase tracking-wider text-foreground">
             {isLogin ? "Sign In" : "Create Account"}
           </h1>
-          <p className="mt-2 font-body text-sm text-secondary-foreground/70">
+          <p className="mt-2 font-body text-sm text-muted-foreground">
             {isLogin ? "Welcome back, rider!" : "Join the Free Wheeler league"}
           </p>
         </div>
@@ -105,7 +105,7 @@ const Auth = () => {
           </Button>
         </form>
 
-        <p className="text-center font-body text-sm text-secondary-foreground/70">
+        <p className="text-center font-body text-sm text-muted-foreground">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
           <button
             onClick={() => setIsLogin(!isLogin)}
