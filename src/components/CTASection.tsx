@@ -35,9 +35,10 @@ const CTASection = () => {
               </button>
               <button
                 onClick={() => setIssueOpen(true)}
-                className="tape-element-green text-lg transition-transform hover:rotate-0 hover:scale-105"
+                className="tape-element-green text-lg transition-transform hover:rotate-0 hover:scale-105 flex flex-col items-center"
               >
-                SOMETHING BROKEN?
+                <span>SOMETHING NOT WORKING?</span>
+                <span className="text-xs font-body font-normal normal-case tracking-normal opacity-80">Let us know here</span>
               </button>
             </div>
           </motion.div>
