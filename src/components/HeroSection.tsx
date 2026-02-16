@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import heroCycling from "@/assets/hero-cycling.jpg";
+import fwChainPoster from "@/assets/fw-chain-poster.png";
 
 const HeroSection = () => {
   return (
@@ -7,8 +7,8 @@ const HeroSection = () => {
       {/* Hero image */}
       <div className="absolute inset-0">
         <img
-          src={heroCycling}
-          alt="Dynamic cycling action"
+          src={fwChainPoster}
+          alt="Free Wheeler - Go hard without having to go anywhere"
           className="h-full w-full object-cover opacity-40"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/80 to-transparent" />
