@@ -35,7 +35,7 @@ const DURATION_OPTIONS = [
 ];
 
 const CONFIDENCE_OPTIONS = [
-  { value: "1", label: "1 - I don\u2019t really feel confident doing movement yet" },
+  { value: "1", label: "1 - I don't really feel confident doing movement yet" },
   { value: "2", label: "2 - I feel a tiny bit confident, but still unsure" },
   { value: "3", label: "3 - I feel somewhat confident - in the middle" },
   { value: "4", label: "4 - I feel pretty confident trying movement things" },
@@ -43,18 +43,18 @@ const CONFIDENCE_OPTIONS = [
 ];
 
 const ENJOYMENT_OPTIONS = [
-  { value: "1", label: "1 - I don\u2019t really like being active right now." },
-  { value: "2", label: "2 - Sometimes it\u2019s okay, but mostly I don\u2019t enjoy it." },
-  { value: "3", label: "3 - I enjoy being active if it\u2019s the right thing or with the right people." },
+  { value: "1", label: "1 - I don't really like being active right now." },
+  { value: "2", label: "2 - Sometimes it's okay, but mostly I don't enjoy it." },
+  { value: "3", label: "3 - I enjoy being active if it's the right thing or with the right people." },
   { value: "4", label: "4 - I usually enjoy moving around or being active." },
 ];
 
 const BARRIER_OPTIONS = [
-  "Being active isn\u2019t hard for me",
+  "Being active isn't hard for me",
   "I feel embarrassed or judged",
-  "I don\u2019t have people to be active with",
-  "I don\u2019t know what to do or where to go",
-  "I prefer other activities that aren\u2019t movement",
+  "I don't have people to be active with",
+  "I don't know what to do or where to go",
+  "I prefer other activities that aren't movement",
   "I find it boring",
   "I find it hard because of health or pain",
   "It costs too much",
@@ -68,10 +68,10 @@ const BIKE_EXPERIENCE_OPTIONS = [
 ];
 
 const CYCLING_PREFERENCE_OPTIONS = [
-  "4 - I think I\u2019d ride more on a virtual/screen bike",
-  "3- I think I\u2019d ride about the same on both",
-  "2 - I think I\u2019d ride more on a real bike outside",
-  "1- I don\u2019t really think I\u2019d ride much either way",
+  "4 - I think I'd ride more on a virtual/screen bike",
+  "3- I think I'd ride about the same on both",
+  "2 - I think I'd ride more on a real bike outside",
+  "1- I don't really think I'd ride much either way",
 ];
 
 const GOALS_OPTIONS = [
@@ -88,8 +88,8 @@ const GOALS_OPTIONS = [
   "Get better at something active",
   "Have more motivation",
   "Know more ways to be active",
-  "Nothing \u2014 I\u2019m happy as I am right now",
-  "I\u2019m not sure yet",
+  "Nothing -- I'm happy as I am right now",
+  "I'm not sure yet",
   "Other",
 ];
 
