@@ -7,8 +7,8 @@ import brandLogo from "@/assets/fw-logo.png";
 const navLinks = [
   { label: "HOME", path: "/" },
   { label: "LEADERBOARDS", path: "/leaderboards" },
-  { label: "CHALLENGE", path: "/challenge" },
-  { label: "LOG SESSION", path: "/log" },
+  { label: "YOUR STATS", path: "/dashboard" },
+  { label: "LOG A RIDE", path: "/log" },
   { label: "INFO", path: "/info" },
 ];
 
