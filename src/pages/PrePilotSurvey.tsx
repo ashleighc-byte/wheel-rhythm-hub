@@ -173,8 +173,6 @@ const PrePilotSurvey = () => {
         "Q4 - How much do you enjoy moving or being active?":
           ENJOYMENT_OPTIONS.find((o) => o.value === enjoyment)?.label || "",
         
-        "Q5 \u2013 Based on your answer to Question 4, what things make being active less enjoyable or harder for you?":
-          barriers.join(", "),
         "Q6 - Have you ever used a bike before (any bike at all)?": bikeExperience,
         "Q7 - Do you think you'd cycle more virtually or in real life?": cyclingPreference,
         "Q8 - Thinking about movement or being active\u2026 what would you LIKE to change or improve for yourself?":
