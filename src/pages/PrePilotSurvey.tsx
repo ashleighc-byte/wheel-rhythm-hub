@@ -176,7 +176,7 @@ const PrePilotSurvey = () => {
         "Q6 - Have you ever used a bike before (any bike at all)?": bikeExperience,
         "Q7 - Do you think you\u2019d cycle more virtually or in real life?": cyclingPreference,
         "Q8 - Thinking about movement or being active\u2026 what would you LIKE to change or improve for yourself?":
-          goals.join(", "),
+          goals,
         "Q8 - Would you want to ride with friends at other schools?": rideFriends,
         "Anything else you want us to know?": anythingElse || "",
       };
