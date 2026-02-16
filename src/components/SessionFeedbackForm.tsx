@@ -1,13 +1,13 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Upload, X, Loader2, CheckCircle } from "lucide-react";
+import { Star, Upload, X, Loader2, CheckCircle, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createSessionReflection } from "@/lib/airtable";
+import { createSessionReflection, fetchStudents } from "@/lib/airtable";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 
 interface SessionFeedbackFormProps {
@@ -55,7 +55,10 @@ function StarRating({
 }
 
 const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) => {
+  const { user } = useAuth();
   const [studentName, setStudentName] = useState("");
+  const [studentRecordId, setStudentRecordId] = useState<string | null>(null);
+  const [loadingStudent, setLoadingStudent] = useState(false);
   const [preRating, setPreRating] = useState(0);
   const [postRating, setPostRating] = useState(0);
   const [reflection, setReflection] = useState("");
@@ -64,6 +67,28 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Auto-fill student name from Airtable based on logged-in email
+  useEffect(() => {
+    if (!open || !user?.email) return;
+
+    setLoadingStudent(true);
+    fetchStudents(user.email)
+      .then((res) => {
+        if (res.records.length > 0) {
+          const r = res.records[0];
+          setStudentName(String(r.fields["Full Name"] ?? ""));
+          setStudentRecordId(r.id);
+        } else {
+          setStudentName(user.email ?? "");
+          setStudentRecordId(null);
+        }
+      })
+      .catch(() => {
+        setStudentName(user.email ?? "");
+      })
+      .finally(() => setLoadingStudent(false));
+  }, [open, user?.email]);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -74,7 +99,6 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
   };
 
   const resetForm = () => {
-    setStudentName("");
     setPreRating(0);
     setPostRating(0);
     setReflection("");
@@ -94,7 +118,6 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
     try {
       let attachmentUrl: string | undefined;
 
-      // Upload screenshot if provided
       if (file) {
         const ext = file.name.split(".").pop();
         const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -111,11 +134,17 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
       }
 
       const fields: Record<string, any> = {
-        "Student Name": studentName.trim(),
         "How did you feel before you jumped on the bike?": preRating,
         "How did you feel after your bike session today?": postRating,
         "What did you enjoy or not enjoy about today's session?": reflection.trim(),
       };
+
+      // Link to student record if found
+      if (studentRecordId) {
+        fields["Student Registration"] = [studentRecordId];
+      } else {
+        fields["Student Name"] = studentName.trim();
+      }
 
       if (attachmentUrl) {
         fields["Use the ipad to take a screenshot of your session time and upload it here."] = [{ url: attachmentUrl }];
@@ -169,19 +198,23 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
               onSubmit={handleSubmit}
               className="space-y-6"
             >
-              {/* Student Name */}
+              {/* Student Name - Auto-filled */}
               <div>
-                <Label htmlFor="student-name" className="font-display text-sm uppercase tracking-wider text-foreground">
-                  Student Name *
+                <Label className="font-display text-sm uppercase tracking-wider text-foreground">
+                  Rider
                 </Label>
-                <Input
-                  id="student-name"
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="Enter your name"
-                  className="mt-1 border-[2px] border-secondary"
-                  required
-                />
+                <div className="mt-1 flex items-center gap-2 border-[2px] border-secondary bg-muted px-3 py-2.5">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  {loadingStudent ? (
+                    <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Finding your profile...
+                    </span>
+                  ) : (
+                    <span className="font-body text-sm font-medium text-foreground">
+                      {studentName}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Screenshot upload */}
@@ -256,7 +289,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
 
               <Button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || loadingStudent}
                 className="tape-element-green w-full text-lg transition-transform hover:rotate-0 hover:scale-105"
               >
                 {submitting ? (
