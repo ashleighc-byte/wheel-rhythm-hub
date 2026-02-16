@@ -1,7 +1,12 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import fwChainPoster from "@/assets/fw-chain-poster.png";
+import SessionFeedbackForm from "./SessionFeedbackForm";
 
 const HeroSection = () => {
+  const [logOpen, setLogOpen] = useState(false);
+  const navigate = useNavigate();
   return (
     <section className="relative overflow-hidden bg-secondary">
       {/* Hero image */}
@@ -52,15 +57,23 @@ const HeroSection = () => {
             transition={{ delay: 0.7, duration: 0.5 }}
             className="mt-8 flex flex-wrap gap-4"
           >
-            <button className="tape-element text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg">
-              JOIN THE PILOT
+            <button
+              onClick={() => setLogOpen(true)}
+              className="tape-element text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg"
+            >
+              LOG A RIDE
             </button>
-            <button className="tape-element-green text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg">
+            <button
+              onClick={() => navigate("/info")}
+              className="tape-element-green text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg"
+            >
               LEARN MORE
             </button>
           </motion.div>
         </div>
       </div>
+
+      <SessionFeedbackForm open={logOpen} onOpenChange={setLogOpen} />
     </section>
   );
 };
