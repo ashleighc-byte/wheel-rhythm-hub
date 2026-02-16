@@ -55,11 +55,17 @@ const BARRIER_OPTIONS = [
   "I worry people will judge me",
   "I don't feel fit enough",
   "I get tired easily",
+  "I don't like being watched",
+  "I find it embarrassing",
+  "I don't know how to start",
+  "It feels boring",
+  "I prefer other activities that aren't movement",
   "I don't have anyone to be active with",
-  "I don't know what to try",
-  "It's not fun for me",
-  "I feel unsafe",
-  "Being active isn\u2019t hard for me",
+  "I'm not good at sport",
+  "I get anxious about trying new things",
+  "I find it hard because of health or pain",
+  "I don't have the right gear",
+  "Being active isn't hard for me",
 ];
 
 const BIKE_EXPERIENCE_OPTIONS = [
