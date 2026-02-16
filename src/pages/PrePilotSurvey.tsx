@@ -12,9 +12,9 @@ import { Loader2, ChevronRight, ChevronLeft, Bike } from "lucide-react";
 import brandLogo from "@/assets/fw-logo.png";
 
 const SPORT_OPTIONS = [
-  "I don't really do any physical activity",
+  "I don\u2019t really do any sport or active stuff outside PE",
   "I sometimes join in (e.g. casual games, walking, biking)",
-  "I am fairly active (a few times a week)",
+  "I regularly do sport or active recreation (1\u20132 times a week)",
   "I am very active (most days, training or games)",
 ];
 
