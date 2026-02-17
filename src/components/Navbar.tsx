@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import brandLogo from "@/assets/fw-logo.png";
+import brandLogo from "@/assets/fw-logo-new.png";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 
 const studentNavLinks = [
@@ -35,7 +35,7 @@ const Navbar = () => {
             <img
               src={brandLogo}
               alt="Free Wheeler Bike League"
-              className="h-10 w-auto object-contain"
+              className="h-12 w-auto object-contain rounded"
             />
           </Link>
 
