@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import CTASection from "@/components/CTASection";
 import { Target, BarChart3, Calendar, ClipboardList, MessageSquare, Heart } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const timelinePhases = [
   {
@@ -44,6 +45,8 @@ const timelinePhases = [
 ];
 
 const Info = () => {
+  const { role } = useAuth();
+  const isAdmin = role === 'admin';
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -265,14 +268,30 @@ const Info = () => {
                     Click here to complete →
                   </p>
                 </Link>
-                <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                  <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
-                    Teacher Observation Form
-                  </h3>
-                  <p className="mt-1 font-body text-sm text-muted-foreground">
-                    Available under the admin login
-                  </p>
-                </div>
+                {isAdmin ? (
+                  <a
+                    href="https://airtable.com/YOUR_TEACHER_OBSERVATION_FORM_LINK"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1"
+                  >
+                    <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
+                      Teacher Observation Form
+                    </h3>
+                    <p className="mt-1 font-body text-sm text-primary">
+                      Click here to complete →
+                    </p>
+                  </a>
+                ) : (
+                  <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                    <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
+                      Teacher Observation Form
+                    </h3>
+                    <p className="mt-1 font-body text-sm text-muted-foreground">
+                      Available under the admin login
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

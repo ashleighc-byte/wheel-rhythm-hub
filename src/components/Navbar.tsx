@@ -5,17 +5,27 @@ import { useAuth } from "@/hooks/useAuth";
 import brandLogo from "@/assets/fw-logo.png";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 
-const navLinks = [
+const studentNavLinks = [
   { label: "HOME", path: "/" },
   { label: "LEADERBOARDS", path: "/leaderboards" },
   { label: "YOUR STATS", path: "/dashboard" },
   { label: "INFO", path: "/info" },
 ];
 
+const teacherNavLinks = [
+  { label: "HOME", path: "/" },
+  { label: "LEADERBOARDS", path: "/leaderboards" },
+  { label: "YOUR STATS", path: "/dashboard" },
+  { label: "INFO", path: "/info" },
+  { label: "TEACHER DASHBOARD", path: "/teacher-dashboard" },
+];
+
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, role } = useAuth();
+  const isAdmin = role === 'admin';
+  const navLinks = isAdmin ? teacherNavLinks : studentNavLinks;
 
   return (
     <>
@@ -40,12 +50,14 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ))}
-            <button
-              onClick={() => setLogOpen(true)}
-              className="px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
-            >
-              LOG A RIDE
-            </button>
+            {!isAdmin && (
+              <button
+                onClick={() => setLogOpen(true)}
+                className="px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
+              >
+                LOG A RIDE
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -80,12 +92,14 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ))}
-            <button
-              onClick={() => { setLogOpen(true); setOpen(false); }}
-              className="block w-full text-left py-3 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
-            >
-              LOG A RIDE
-            </button>
+            {!isAdmin && (
+              <button
+                onClick={() => { setLogOpen(true); setOpen(false); }}
+                className="block w-full text-left py-3 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
+              >
+                LOG A RIDE
+              </button>
+            )}
             <button
               onClick={() => { signOut(); setOpen(false); }}
               className="flex w-full items-center gap-2 py-3 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"

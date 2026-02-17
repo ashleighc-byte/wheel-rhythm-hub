@@ -168,5 +168,51 @@ export async function fetchGlobalDashboard() {
   return callAirtable('Global Dashboard', 'GET', { maxRecords: 1 });
 }
 
+// ---- Teacher-specific helpers ----
+
+export async function fetchTeacherOrg(email: string): Promise<{ id: string; name: string } | null> {
+  const formula = `{Email} = '${email}'`;
+  const result = await callAirtable('Organisations', 'GET', {
+    filterByFormula: formula,
+    maxRecords: 1,
+  });
+  if (!result.records.length) return null;
+  const rec = result.records[0];
+  return {
+    id: rec.id,
+    name: rec.fields['Organisation Name'] || rec.fields['Name'] || '',
+  };
+}
+
+export async function fetchStudentsBySchool(orgRecordId: string) {
+  // Students link to their school via a linked record field called 'School'
+  const formula = `FIND("${orgRecordId}", ARRAYJOIN({School}))`;
+  return callAirtable('Student Registration', 'GET', {
+    filterByFormula: formula,
+  });
+}
+
+export async function fetchAllSurveysForStudents(studentRecordIds: string[]) {
+  if (!studentRecordIds.length) return { records: [] };
+  const orClauses = studentRecordIds
+    .map(id => `FIND("${id}", ARRAYJOIN({Student Name}))`)
+    .join(',');
+  const formula = `OR(${orClauses})`;
+  return callAirtable('Surveys & Student Voice', 'GET', {
+    filterByFormula: formula,
+  });
+}
+
+export async function fetchRecentSessionsForSchool(orgRecordId: string, maxRecords = 20) {
+  // Sessions linked to school via the Student Registration -> School chain
+  // We query sessions where the linked student belongs to this org
+  const formula = `FIND("${orgRecordId}", ARRAYJOIN({School (from Student Registration)}))`;
+  return callAirtable('Session Reflections', 'GET', {
+    filterByFormula: formula,
+    maxRecords,
+    sort: 'Created',
+  });
+}
+
 export { callAirtable };
 export type { AirtableRecord, AirtableResponse };
