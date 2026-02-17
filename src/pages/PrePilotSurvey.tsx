@@ -59,7 +59,7 @@ const BARRIER_OPTIONS = [
   "I find it embarrassing",
   "I don\u2019t know how to start",
   "It feels boring",
-  "I prefer other activities that aren\u2019t movement",
+  "I prefer other activities that aren't movement",
   "I don\u2019t have anyone to be active with",
   "I\u2019m not good at sport",
   "I get anxious about trying new things",
