@@ -33,6 +33,13 @@ const SchoolLeaderboard = () => {
           }
         }
 
+        // Ensure every org appears, defaulting to 0 riders
+        for (const [id] of orgMap.entries()) {
+          if (!countMap.has(id)) {
+            countMap.set(id, 0);
+          }
+        }
+
         // Merge and sort
         const rows: SchoolRow[] = Array.from(countMap.entries())
           .map(([id, riders]) => ({
