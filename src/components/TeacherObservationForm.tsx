@@ -74,15 +74,20 @@ const TeacherObservationForm = ({ open, onOpenChange }: TeacherObservationFormPr
     setSubmitting(true);
 
     try {
-      const combined =
-        `Teacher: ${teacherName}\n` +
-        `Student: ${selectedStudentName}\n\n` +
-        `What I observed:\n${observationSummary.trim()}\n\n` +
-        `How is this different from before Free Wheelers:\n${difference.trim()}`;
+      // First, inspect existing records to discover real field names
+      const existing = await callAirtable("Kaiako Observations", "GET", { maxRecords: 1 });
+      console.log("[TeacherObservationForm] Existing record fields:", JSON.stringify(existing.records[0]?.fields ?? "no records"));
 
+      // The Airtable form labels ARE the field names in Airtable.
+      // Trying exact form question text as field names (Airtable uses label = field name by default).
       const fields: Record<string, any> = {
-        "Observation Summary": combined,
+        "Your Name": teacherName,
+        "Student's Name": selectedStudentName,
+        "What I have Observed (Engagement, Participation, Educational priorities, Behaviour, etc.)": observationSummary.trim(),
+        "How is this different from before Free Wheelers?": difference.trim(),
       };
+
+      console.log("[TeacherObservationForm] Submitting fields:", JSON.stringify(fields));
 
       await callAirtable("Kaiako Observations", "POST", {
         body: { records: [{ fields }] },
@@ -95,17 +100,18 @@ const TeacherObservationForm = ({ open, onOpenChange }: TeacherObservationFormPr
 
       resetForm();
       onOpenChange(false);
-    } catch (err) {
-      console.error("Observation form error:", err);
+    } catch (err: any) {
+      console.error("[TeacherObservationForm] Submit error:", err?.message ?? err);
       toast({
-        title: "Something went wrong",
-        description: "Please try again later.",
+        title: "Submission failed",
+        description: err?.message ?? "Please try again. Check console for field name details.",
         variant: "destructive",
       });
     } finally {
       setSubmitting(false);
     }
   };
+
 
   const isValid = !!selectedStudentName && observationSummary.trim().length > 0 && difference.trim().length > 0;
 
