@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import {
   Users,
@@ -13,7 +14,69 @@ import {
   AlertTriangle,
   CheckCircle2,
   ChevronRight,
+  Copy,
+  Check,
 } from "lucide-react";
+
+const PERMISSION_LINK = "https://bit.ly/FreewheelerPermission";
+
+const messageTemplate = `Tēnā koe,
+
+We're excited to share that your child has been selected to take part in the Free Wheeler Bike League pilot — a new programme running at our school this year.
+
+Free Wheeler is an indoor cycling programme designed to give rangatahi a fresh way to engage with physical activity. It's self-paced, digital, and built around friendly competition — a great fit for students who love a challenge but maybe don't always feel at home in traditional team sports.
+
+Your child has been handpicked because we think they'd really benefit from this experience. The programme runs during school time and is fully supervised.
+
+To confirm your child's place, we need both you and your child to complete a short permission form. This takes just a few minutes.
+
+👉 Permission form: ${PERMISSION_LINK}
+
+If you have any questions, please don't hesitate to get in touch.
+
+Ngā mihi,
+[Your name]
+[School name]`;
+
+const CaregiverMessageTemplate = () => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(messageTemplate);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
+          📋 Template Message — Copy &amp; Customise
+        </p>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 border-[2px] border-primary bg-primary px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-wider text-primary-foreground transition-transform hover:-translate-y-0.5 active:translate-y-0"
+        >
+          {copied ? (
+            <>
+              <Check className="h-3 w-3" /> Copied!
+            </>
+          ) : (
+            <>
+              <Copy className="h-3 w-3" /> Copy Message
+            </>
+          )}
+        </button>
+      </div>
+      <div className="border-[2px] border-secondary bg-background p-4 font-body text-xs leading-relaxed text-foreground/80 whitespace-pre-wrap">
+        {messageTemplate}
+      </div>
+      <p className="font-body text-[11px] text-foreground/50 italic">
+        Replace [Your name] and [School name] before sending.
+      </p>
+    </div>
+  );
+};
 
 const steps = [
   {
@@ -46,7 +109,7 @@ const steps = [
     colour: "bg-secondary",
     textColour: "text-secondary-foreground",
     content: (
-      <div className="space-y-3 font-body text-sm leading-relaxed text-foreground/85">
+      <div className="space-y-4 font-body text-sm leading-relaxed text-foreground/85">
         <p>
           Send a message via your school's communications to the caregivers of these students. The
           message should explain:
@@ -63,6 +126,9 @@ const steps = [
             </li>
           ))}
         </ul>
+
+        <CaregiverMessageTemplate />
+
         <div className="border-[3px] border-secondary bg-card p-4 shadow-[3px_3px_0px_hsl(var(--brand-dark))]">
           <p className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
             Permission Form Link
