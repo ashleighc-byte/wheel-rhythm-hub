@@ -68,8 +68,22 @@ const CaregiverMessageTemplate = () => {
           )}
         </button>
       </div>
-      <div className="border-[2px] border-secondary bg-background p-4 font-body text-xs leading-relaxed text-foreground/80 whitespace-pre-wrap">
-        {messageTemplate}
+      <div className="border-[2px] border-secondary bg-background p-4 font-body text-xs leading-relaxed text-foreground/80">
+        {messageTemplate.split(PERMISSION_LINK).map((part, i, arr) => (
+          <span key={i} className="whitespace-pre-wrap">
+            {part}
+            {i < arr.length - 1 && (
+              <a
+                href={PERMISSION_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-primary underline underline-offset-2 hover:opacity-75"
+              >
+                {PERMISSION_LINK}
+              </a>
+            )}
+          </span>
+        ))}
       </div>
       <p className="font-body text-[11px] text-foreground/50 italic">
         Replace [Your name] and [School name] before sending.
