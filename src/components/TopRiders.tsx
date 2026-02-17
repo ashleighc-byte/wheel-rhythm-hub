@@ -13,7 +13,8 @@ interface Rider {
 }
 
 const TopRiders = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isAdmin = role === 'admin';
   const [riders, setRiders] = useState<Rider[]>([]);
   const [schoolName, setSchoolName] = useState("");
 
@@ -22,25 +23,10 @@ const TopRiders = () => {
 
     const load = async () => {
       try {
-        // Get the logged-in user's student record to find their school
-        const [currentStudentRes, allStudentsRes, orgsRes] = await Promise.all([
-          fetchStudents(user.email!),
+        const [allStudentsRes, orgsRes] = await Promise.all([
           fetchStudents(),
           callAirtable("Organisations", "GET"),
         ]);
-
-        if (!currentStudentRes.records.length) return;
-
-        const currentStudent = currentStudentRes.records[0];
-        const userSchoolIds = currentStudent.fields["School"] as string[] | undefined;
-        if (!userSchoolIds?.length) return;
-
-        const userSchoolId = userSchoolIds[0];
-
-        // Resolve school name
-        const org = orgsRes.records.find((o) => o.id === userSchoolId);
-        const resolvedSchoolName = org ? String(org.fields["Organisation Name"] ?? "") : "";
-        setSchoolName(resolvedSchoolName);
 
         // Build a map of org ID -> name
         const orgMap = new Map<string, string>();
@@ -48,11 +34,25 @@ const TopRiders = () => {
           orgMap.set(o.id, String(o.fields["Organisation Name"] ?? ""));
         });
 
-        // Filter students to same school, sort by total minutes
+        let schoolFilterId: string | null = null;
+
+        if (!isAdmin) {
+          // For students, filter to their own school
+          const currentStudentRes = await fetchStudents(user.email!);
+          if (!currentStudentRes.records.length) return;
+          const userSchoolIds = currentStudentRes.records[0].fields["School"] as string[] | undefined;
+          if (!userSchoolIds?.length) return;
+          schoolFilterId = userSchoolIds[0];
+          const org = orgsRes.records.find((o) => o.id === schoolFilterId);
+          setSchoolName(org ? String(org.fields["Organisation Name"] ?? "") : "");
+        }
+        // Admins get all schools — no filter, no school name label
+
         const mapped = allStudentsRes.records
           .filter((r) => {
+            if (!schoolFilterId) return true; // admin: all students
             const school = r.fields["School"] as string[] | undefined;
-            return school?.[0] === userSchoolId;
+            return school?.[0] === schoolFilterId;
           })
           .map((r) => ({
             name: String(r.fields["Full Name"] ?? ""),
@@ -79,13 +79,13 @@ const TopRiders = () => {
     };
 
     load();
-  }, [user?.email]);
+  }, [user?.email, isAdmin]);
 
   return (
     <div className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
       <div className="leaderboard-header px-6 py-4">
         <h3 className="text-xl tracking-wider md:text-2xl">
-          Top Riders{schoolName ? ` – ${schoolName}` : ""}
+          {isAdmin ? "Top Riders – All Schools" : `Top Riders${schoolName ? ` – ${schoolName}` : ""}`}
         </h3>
       </div>
       <div className="divide-y divide-muted">

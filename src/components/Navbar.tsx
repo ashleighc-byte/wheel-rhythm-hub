@@ -15,7 +15,6 @@ const studentNavLinks = [
 const teacherNavLinks = [
   { label: "HOME", path: "/" },
   { label: "LEADERBOARDS", path: "/leaderboards" },
-  { label: "YOUR STATS", path: "/dashboard" },
   { label: "INFO", path: "/info" },
   { label: "TEACHER DASHBOARD", path: "/teacher-dashboard" },
 ];
