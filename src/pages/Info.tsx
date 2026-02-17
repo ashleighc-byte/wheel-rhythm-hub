@@ -5,6 +5,8 @@ import { CheckCircle2, Circle, Bike, ClipboardList, MessageSquare, Heart, AlertT
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { useState } from "react";
 import ReportIssueForm from "@/components/ReportIssueForm";
+import TeacherObservationForm from "@/components/TeacherObservationForm";
+
 
 const timelinePhases = [
   {
@@ -251,6 +253,8 @@ const StudentInfo = () => {
 
 const TeacherInfo = () => {
   const [reportOpen, setReportOpen] = useState(false);
+  const [observationOpen, setObservationOpen] = useState(false);
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -364,15 +368,14 @@ const TeacherInfo = () => {
                 Teacher Observation Form
               </h2>
             </div>
-            <a
-              href="https://airtable.com/YOUR_TEACHER_OBSERVATION_FORM_LINK"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1"
+            <button
+              onClick={() => setObservationOpen(true)}
+              className="block w-full border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1 text-left"
             >
               <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">Complete Observation Form</h3>
               <p className="mt-1 font-body text-sm text-primary">Click here to open the form →</p>
-            </a>
+            </button>
+
           </div>
         </div>
       </section>
@@ -474,8 +477,10 @@ const TeacherInfo = () => {
       </footer>
 
       <ReportIssueForm open={reportOpen} onOpenChange={setReportOpen} />
+      <TeacherObservationForm open={observationOpen} onOpenChange={setObservationOpen} />
     </div>
   );
+
 };
 
 // ── Route entry point ─────────────────────────────────────────────────────────
