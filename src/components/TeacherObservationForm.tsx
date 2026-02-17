@@ -74,11 +74,13 @@ const TeacherObservationForm = ({ open, onOpenChange }: TeacherObservationFormPr
     setSubmitting(true);
 
     try {
-      const combined = `What I observed:\n${observationSummary.trim()}\n\nHow is this different from before Free Wheelers:\n${difference.trim()}`;
+      const combined =
+        `Teacher: ${teacherName}\n` +
+        `Student: ${selectedStudentName}\n\n` +
+        `What I observed:\n${observationSummary.trim()}\n\n` +
+        `How is this different from before Free Wheelers:\n${difference.trim()}`;
 
       const fields: Record<string, any> = {
-        "Your Name": teacherName,
-        "Student's Name": selectedStudentName,
         "Observation Summary": combined,
       };
 
