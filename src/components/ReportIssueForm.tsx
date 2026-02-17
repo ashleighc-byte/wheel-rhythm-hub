@@ -86,13 +86,15 @@ const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
         "Severity": severity,
       };
 
-      if (submitterRecordId) {
+      if (isAdmin) {
+        // Organisations records can't be linked into Submitted By (Student Registration table).
+        // Store the teacher's name in the free-text field instead.
+        fields["If your name is not listed above, type it here"] = submitterName || user?.email || "";
+        if (onBehalf.trim()) {
+          fields["If you are submitting this request on behalf of someone else, what is their name and email address?"] = onBehalf.trim();
+        }
+      } else if (submitterRecordId) {
         fields["Submitted By"] = [submitterRecordId];
-      }
-
-      // Only include "on behalf of" for admin form
-      if (isAdmin && onBehalf.trim()) {
-        fields["If your name is not listed above, type it here"] = onBehalf.trim();
       }
 
       // Upload photo if provided
