@@ -26,7 +26,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [surveyDone, setSurveyDone] = useState(false);
 
   useEffect(() => {
+    // Wait until role is resolved (not null AND not still loading)
+    if (loading) return;
     if (!user?.email) return;
+    // role is null while loading — only proceed once we have a definitive role
+    if (role === null) return;
+
     // Admins (teachers) skip the survey entirely
     if (role === 'admin') {
       setSurveyDone(true);
@@ -42,7 +47,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         setSurveyDone(true);
         setSurveyChecked(true);
       });
-  }, [user?.email, role]);
+  }, [user?.email, role, loading]);
 
   if (loading || (!surveyChecked && session)) {
     return (
@@ -80,10 +85,12 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const SurveyRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, loading } = useAuth();
+  const { session, role, loading } = useAuth();
 
   if (loading) return null;
   if (!session) return <Navigate to="/auth" replace />;
+  // Admins should never see the survey — send them home
+  if (role === 'admin') return <Navigate to="/" replace />;
 
   return <>{children}</>;
 };
