@@ -18,6 +18,7 @@ import PostPilotSurvey from "./pages/PostPilotSurvey";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import OgImageDownload from "./pages/OgImageDownload";
 import SetupInstructions from "./pages/SetupInstructions";
+import SetupInstructionsPrint from "./pages/SetupInstructionsPrint";
 
 
 const queryClient = new QueryClient();
@@ -124,6 +125,7 @@ const App = () => (
              <Route path="/four-week-check-in" element={<SurveyRoute><FourWeekCheckIn /></SurveyRoute>} />
              <Route path="/teacher-dashboard" element={<AdminRoute><TeacherDashboard /></AdminRoute>} />
              <Route path="/setup-instructions" element={<AdminRoute><SetupInstructions /></AdminRoute>} />
+             <Route path="/setup-instructions/print" element={<SetupInstructionsPrint />} />
              <Route path="/og-download" element={<OgImageDownload />} />
              <Route path="*" element={<NotFound />} />
           </Routes>

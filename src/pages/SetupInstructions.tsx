@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import {
   Users,
@@ -16,6 +17,7 @@ import {
   ChevronRight,
   Copy,
   Check,
+  FileDown,
 } from "lucide-react";
 
 const PERMISSION_LINK = "https://bit.ly/FreewheelerPermission";
@@ -307,6 +309,8 @@ const ongoingItems = [
 ];
 
 const SetupInstructions = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -320,6 +324,16 @@ const SetupInstructions = () => {
           <p className="mx-auto mt-4 max-w-2xl font-body text-lg text-secondary-foreground/70">
             Everything you need to get your students onto Free Wheeler — from first contact to first
             ride.
+          </p>
+          <button
+            onClick={() => navigate("/setup-instructions/print")}
+            className="mt-6 inline-flex items-center gap-2 border-[3px] border-accent bg-accent px-6 py-3 font-display text-sm font-bold uppercase tracking-wider text-accent-foreground shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_hsl(var(--brand-dark))]"
+          >
+            <FileDown className="h-4 w-4" />
+            Download as PDF
+          </button>
+          <p className="mt-2 font-body text-xs text-secondary-foreground/50">
+            Opens a print-ready flowchart — save as PDF from your browser's print dialog
           </p>
         </div>
       </section>
