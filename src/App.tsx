@@ -15,6 +15,8 @@ import NotFound from "./pages/NotFound";
 import Leaderboards from "./pages/Leaderboards";
 import Info from "./pages/Info";
 import PostPilotSurvey from "./pages/PostPilotSurvey";
+import TeacherDashboard from "./pages/TeacherDashboard";
+
 
 const queryClient = new QueryClient();
 
@@ -63,6 +65,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { session, role, loading } = useAuth();
+
+  if (loading) return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="font-display text-xl uppercase tracking-wider text-foreground animate-pulse">Loading...</div>
+    </div>
+  );
+  if (!session) return <Navigate to="/auth" replace />;
+  if (role !== 'admin') return <Navigate to="/" replace />;
+
+  return <>{children}</>;
+};
+
 const SurveyRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
 
@@ -95,9 +111,10 @@ const App = () => (
             <Route path="/leaderboards" element={<ProtectedRoute><Leaderboards /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/info" element={<ProtectedRoute><Info /></ProtectedRoute>} />
-            <Route path="/post-pilot-survey" element={<ProtectedRoute><PostPilotSurvey /></ProtectedRoute>} />
-            <Route path="/four-week-check-in" element={<SurveyRoute><FourWeekCheckIn /></SurveyRoute>} />
-            <Route path="*" element={<NotFound />} />
+             <Route path="/post-pilot-survey" element={<ProtectedRoute><PostPilotSurvey /></ProtectedRoute>} />
+             <Route path="/four-week-check-in" element={<SurveyRoute><FourWeekCheckIn /></SurveyRoute>} />
+             <Route path="/teacher-dashboard" element={<AdminRoute><TeacherDashboard /></AdminRoute>} />
+             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
