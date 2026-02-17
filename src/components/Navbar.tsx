@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import brandLogo from "@/assets/fw-logo-new.png";
 import SessionFeedbackForm from "./SessionFeedbackForm";
@@ -14,17 +14,82 @@ const studentNavLinks = [
 
 const teacherNavLinks = [
   { label: "HOME", path: "/" },
-  { label: "ABOUT THE PILOT", path: "/info" },
+  {
+    label: "ABOUT THE PILOT",
+    path: "/info",
+    dropdown: [
+      { label: "About the Pilot", path: "/info" },
+      { label: "Setup Instructions", path: "/setup-instructions" },
+    ],
+  },
   { label: "LEADERBOARDS", path: "/leaderboards" },
   { label: "TEACHER DASHBOARD", path: "/teacher-dashboard" },
 ];
+
+type NavLink = {
+  label: string;
+  path: string;
+  dropdown?: { label: string; path: string }[];
+};
+
+const DropdownNavItem = ({ link }: { link: NavLink }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  if (!link.dropdown) {
+    return (
+      <Link
+        to={link.path}
+        className="px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
+      >
+        {link.label}
+      </Link>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1 px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
+      >
+        {link.label}
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-50 min-w-[180px] border-[2px] border-secondary bg-primary shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+          {link.dropdown.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => setOpen(false)}
+              className="block px-4 py-3 font-display text-xs font-semibold uppercase tracking-wider text-accent transition-colors hover:bg-primary/80 hover:text-primary-foreground"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const { signOut, role } = useAuth();
   const isAdmin = role === 'admin';
-  const navLinks = isAdmin ? teacherNavLinks : studentNavLinks;
+  const navLinks: NavLink[] = isAdmin ? teacherNavLinks : studentNavLinks;
 
   return (
     <>
@@ -39,15 +104,9 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden gap-1 md:flex">
+          <div className="hidden gap-1 md:flex items-center">
             {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.path}
-                className="px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
-              >
-                {link.label}
-              </Link>
+              <DropdownNavItem key={link.label} link={link} />
             ))}
             {!isAdmin && (
               <button
@@ -82,14 +141,25 @@ const Navbar = () => {
         {open && (
           <div className="border-t-2 border-secondary/30 bg-primary px-4 pb-4 md:hidden">
             {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.path}
-                onClick={() => setOpen(false)}
-                className="block py-3 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
-              >
-                {link.label}
-              </Link>
+              <div key={link.label}>
+                <Link
+                  to={link.path}
+                  onClick={() => setOpen(false)}
+                  className="block py-3 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
+                >
+                  {link.label}
+                </Link>
+                {link.dropdown?.map((sub) => (
+                  <Link
+                    key={sub.path}
+                    to={sub.path}
+                    onClick={() => setOpen(false)}
+                    className="block py-2 pl-4 font-display text-xs font-semibold uppercase tracking-wider text-accent/70 transition-colors hover:text-primary-foreground"
+                  >
+                    → {sub.label}
+                  </Link>
+                ))}
+              </div>
             ))}
             {!isAdmin && (
               <button
