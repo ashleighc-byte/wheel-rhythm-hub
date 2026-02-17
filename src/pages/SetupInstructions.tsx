@@ -129,22 +129,6 @@ const steps = [
 
         <CaregiverMessageTemplate />
 
-        <div className="border-[3px] border-secondary bg-card p-4 shadow-[3px_3px_0px_hsl(var(--brand-dark))]">
-          <p className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
-            Permission Form Link
-          </p>
-          <a
-            href="https://bit.ly/FreewheelerPermission"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-1 block font-body text-base font-semibold text-primary underline underline-offset-2 hover:opacity-80"
-          >
-            https://bit.ly/FreewheelerPermission
-          </a>
-          <p className="mt-2 text-xs text-foreground/60">
-            Share this link with caregivers so they and the student can complete the permission slip.
-          </p>
-        </div>
       </div>
     ),
   },
