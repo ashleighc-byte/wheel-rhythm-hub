@@ -7,7 +7,8 @@ import {
   fetchAllSurveysForStudents,
   fetchSessionsByRecordIds,
 } from "@/lib/airtable";
-import { CheckCircle2, XCircle, Users, Clock, Bike } from "lucide-react";
+import { CheckCircle2, XCircle, Users, Clock, Bike, MessageSquare } from "lucide-react";
+import TeacherObservationForm from "@/components/TeacherObservationForm";
 
 interface StudentRow {
   id: string;
@@ -42,6 +43,7 @@ const TeacherDashboard = () => {
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [observationOpen, setObservationOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.email) return;
@@ -156,6 +158,7 @@ const TeacherDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <TeacherObservationForm open={observationOpen} onOpenChange={setObservationOpen} />
 
       {/* Header */}
       <section className="bg-secondary py-12 md:py-16">
@@ -188,6 +191,25 @@ const TeacherDashboard = () => {
 
         {!loading && !error && (
           <>
+            {/* Teacher Observation Form */}
+            <div>
+              <div className="mb-3 flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center bg-primary">
+                  <MessageSquare className="h-4 w-4 text-primary-foreground" />
+                </div>
+                <h2 className="font-display text-2xl font-bold uppercase tracking-wider text-foreground">
+                  Teacher Observation Form
+                </h2>
+              </div>
+              <button
+                onClick={() => setObservationOpen(true)}
+                className="block w-full border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1 text-left"
+              >
+                <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">Complete Observation Form</h3>
+                <p className="mt-1 font-body text-sm text-primary">Click here to open the form →</p>
+              </button>
+            </div>
+
             {/* Summary chips */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {[

@@ -1,11 +1,10 @@
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
-import { CheckCircle2, Circle, Bike, ClipboardList, MessageSquare, Heart, AlertTriangle, Target, BarChart3, Calendar } from "lucide-react";
+import { CheckCircle2, Circle, Bike, ClipboardList, Heart, AlertTriangle, Target, BarChart3, Calendar } from "lucide-react";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { useState } from "react";
 import ReportIssueForm from "@/components/ReportIssueForm";
-import TeacherObservationForm from "@/components/TeacherObservationForm";
 
 
 const timelinePhases = [
@@ -253,7 +252,6 @@ const StudentInfo = () => {
 
 const TeacherInfo = () => {
   const [reportOpen, setReportOpen] = useState(false);
-  const [observationOpen, setObservationOpen] = useState(false);
 
 
   return (
@@ -356,30 +354,6 @@ const TeacherInfo = () => {
         </div>
       </section>
 
-      {/* Teacher Observation Form */}
-      <section className="bg-secondary py-12">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-3xl">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center bg-accent">
-                <MessageSquare className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <h2 className="font-display text-3xl font-bold uppercase tracking-wider text-secondary-foreground">
-                Teacher Observation Form
-              </h2>
-            </div>
-            <button
-              onClick={() => setObservationOpen(true)}
-              className="block w-full border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1 text-left"
-            >
-              <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">Complete Observation Form</h3>
-              <p className="mt-1 font-body text-sm text-primary">Click here to open the form →</p>
-            </button>
-
-          </div>
-        </div>
-      </section>
-
       {/* Pilot Timeline */}
       <section className="bg-background py-16">
         <div className="container mx-auto px-4">
@@ -477,7 +451,6 @@ const TeacherInfo = () => {
       </footer>
 
       <ReportIssueForm open={reportOpen} onOpenChange={setReportOpen} />
-      <TeacherObservationForm open={observationOpen} onOpenChange={setObservationOpen} />
     </div>
   );
 
