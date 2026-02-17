@@ -3,10 +3,14 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import fwChainPoster from "@/assets/fw-chain-poster.png";
 import SessionFeedbackForm from "./SessionFeedbackForm";
+import { useAuth } from "@/hooks/useAuth";
 
 const HeroSection = () => {
   const [logOpen, setLogOpen] = useState(false);
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const isAdmin = role === 'admin';
+
   return (
     <section className="relative overflow-hidden bg-secondary">
       {/* Hero image */}
@@ -47,8 +51,9 @@ const HeroSection = () => {
             transition={{ delay: 0.5, duration: 0.5 }}
             className="max-w-lg font-body text-lg leading-relaxed text-secondary-foreground/80"
           >
-            Ride whenever you want, wherever you want. No commitments, no stress—just
-            you and your bike. Join in whenever it works for you.
+            {isAdmin
+              ? "Keep tabs on your students' progress, track sessions, and celebrate their achievements — all in one place."
+              : "Ride whenever you want, wherever you want. No commitments, no stress—just you and your bike. Join in whenever it works for you."}
           </motion.p>
 
           <motion.div
@@ -57,18 +62,29 @@ const HeroSection = () => {
             transition={{ delay: 0.7, duration: 0.5 }}
             className="mt-8 flex flex-wrap gap-4"
           >
-            <button
-              onClick={() => setLogOpen(true)}
-              className="tape-element text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg"
-            >
-              LOG A RIDE
-            </button>
-            <button
-              onClick={() => navigate("/info")}
-              className="tape-element-green text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg"
-            >
-              LEARN MORE
-            </button>
+            {isAdmin ? (
+              <button
+                onClick={() => navigate("/teacher-dashboard")}
+                className="tape-element-green text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg"
+              >
+                TRACK YOUR STUDENTS
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => setLogOpen(true)}
+                  className="tape-element text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg"
+                >
+                  LOG A RIDE
+                </button>
+                <button
+                  onClick={() => navigate("/info")}
+                  className="tape-element-green text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg"
+                >
+                  LEARN MORE
+                </button>
+              </>
+            )}
           </motion.div>
         </div>
       </div>
