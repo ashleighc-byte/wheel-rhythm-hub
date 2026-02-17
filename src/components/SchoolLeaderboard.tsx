@@ -33,11 +33,11 @@ const SchoolLeaderboard = () => {
           }
         }
 
-        // Merge and sort
-        const rows: SchoolRow[] = Array.from(countMap.entries())
-          .map(([id, riders]) => ({
-            name: orgMap.get(id) ?? id,
-            riders,
+        // Merge and sort — include ALL orgs, even those with 0 riders
+        const rows: SchoolRow[] = Array.from(orgMap.entries())
+          .map(([id, name]) => ({
+            name,
+            riders: countMap.get(id) ?? 0,
             rank: 0,
           }))
           .sort((a, b) => b.riders - a.riders)
