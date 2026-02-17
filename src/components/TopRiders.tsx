@@ -63,7 +63,7 @@ const TopRiders = () => {
           }))
           .filter((r) => r.sessions > 0)
           .sort((a, b) => b.totalMinutes - a.totalMinutes)
-          .slice(0, 10)
+          .slice(0, isAdmin ? 5 : 10)
           .map((r, i) => ({
             rank: i + 1,
             name: r.name,
