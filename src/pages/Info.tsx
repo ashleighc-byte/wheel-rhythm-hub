@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import CTASection from "@/components/CTASection";
-import { Target, BarChart3, Calendar, ClipboardList, MessageSquare, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { CheckCircle2, Circle, Bike, ClipboardList, MessageSquare, Heart, AlertTriangle, Target, BarChart3, Calendar } from "lucide-react";
+import SessionFeedbackForm from "@/components/SessionFeedbackForm";
+import { useState } from "react";
+import ReportIssueForm from "@/components/ReportIssueForm";
 
 const timelinePhases = [
   {
@@ -44,9 +46,212 @@ const timelinePhases = [
   },
 ];
 
-const Info = () => {
-  const { role } = useAuth();
-  const isAdmin = role === 'admin';
+// ── Student-facing Info page ──────────────────────────────────────────────────
+
+const StudentInfo = () => {
+  const [logOpen, setLogOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+
+  const checklist = [
+    {
+      done: true,
+      label: "Pre-Pilot Survey",
+      description: "Completed on sign-up — you're good! ✅",
+      action: null,
+    },
+    {
+      done: false,
+      label: "4 Week Check-In",
+      description: "A quick mid-pilot check-in — due around week 4.",
+      action: { type: "link" as const, to: "/four-week-check-in", text: "Start Check-In →" },
+    },
+    {
+      done: false,
+      label: "Post-Pilot Survey",
+      description: "Coming Term 4 2026 — we'll remind you when it's time.",
+      action: { type: "link" as const, to: "/post-pilot-survey", text: "Start Survey →" },
+    },
+    {
+      done: false,
+      label: "Log Your Ride After Every Session",
+      description: "Every time you jump on the bike, log your data — it keeps your stats up and helps the programme.",
+      action: { type: "button" as const, text: "Log a Ride →", onClick: () => setLogOpen(true) },
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+
+      {/* Hero */}
+      <section className="bg-secondary py-14 md:py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
+            What's This All About?
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl font-body text-lg text-secondary-foreground/70">
+            Everything you need to know — and everything you need to do.
+          </p>
+        </div>
+      </section>
+
+      {/* What is Free Wheeler — condensed */}
+      <section className="bg-background py-12">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl space-y-6 font-body text-base leading-relaxed text-foreground/90">
+            <p className="text-xl font-bold text-foreground">
+              Free Wheeler Bike League is a new way to do sport — on your terms.
+            </p>
+            <p>
+              Forget rigid team sports with pressure to perform. This is indoor cycling, digital racing, and friendly competition that works for everyone — whether you love sport or you've never felt like sport loves you back.
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {[
+                { emoji: "🚴", label: "Ride at your own pace" },
+                { emoji: "📊", label: "Track your progress" },
+                { emoji: "🏆", label: "Compete with your school" },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
+                >
+                  <div className="mb-1 text-2xl">{item.emoji}</div>
+                  <div className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
+                    {item.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p>
+              This is a pilot — meaning we're trialling it to see how it works and whether it should grow into more schools. Your participation, data, and feedback directly shapes what happens next.
+            </p>
+            <p className="tape-element-green inline-block px-4 py-2 font-display text-lg font-bold uppercase">
+              Go hard — without having to go anywhere.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Your Checklist */}
+      <section className="bg-secondary py-12">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl">
+            <div className="mb-8 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center bg-primary">
+                <ClipboardList className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <h2 className="font-display text-3xl font-bold uppercase tracking-wider text-secondary-foreground">
+                Your Checklist
+              </h2>
+            </div>
+
+            <div className="space-y-4">
+              {checklist.map((item, i) => (
+                <div
+                  key={i}
+                  className={`border-[3px] bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] ${
+                    item.done ? "border-primary/40 opacity-75" : "border-secondary"
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="mt-0.5 shrink-0">
+                      {item.done ? (
+                        <CheckCircle2 className="h-6 w-6 text-primary" />
+                      ) : (
+                        <Circle className="h-6 w-6 text-muted-foreground/40" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
+                          {i + 1}. {item.label}
+                        </span>
+                        {item.done && (
+                          <span className="bg-primary px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+                            Done
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 font-body text-sm text-foreground/70">{item.description}</p>
+                      {item.action && !item.done && (
+                        <div className="mt-3">
+                          {item.action.type === "link" ? (
+                            <Link
+                              to={item.action.to}
+                              className="inline-block border-[2px] border-primary bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-transform hover:-translate-y-0.5"
+                            >
+                              {item.action.text}
+                            </Link>
+                          ) : (
+                            <button
+                              onClick={item.action.onClick}
+                              className="inline-block border-[2px] border-primary bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-transform hover:-translate-y-0.5"
+                            >
+                              {item.action.text}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Hardware issue button */}
+      <section className="bg-background py-12">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl">
+            <div className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-accent">
+                  <AlertTriangle className="h-5 w-5 text-accent-foreground" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
+                    Something Not Working?
+                  </h3>
+                  <p className="mt-1 font-body text-sm text-foreground/70">
+                    Bike broken? App glitch? Hardware issue? Let us know and we'll sort it.
+                  </p>
+                  <button
+                    onClick={() => setReportOpen(true)}
+                    className="mt-4 inline-block border-[2px] border-accent bg-accent px-5 py-2 font-display text-xs font-bold uppercase tracking-wider text-accent-foreground transition-transform hover:-translate-y-0.5"
+                  >
+                    Report an Issue →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t-4 border-primary bg-secondary px-4 py-10">
+        <div className="container mx-auto text-center">
+          <div className="font-display text-lg font-bold uppercase text-accent">
+            Free Wheeler Bike League
+          </div>
+          <p className="mt-2 font-body text-sm text-secondary-foreground/60">
+            Pedal Your Own Path · © 2026
+          </p>
+        </div>
+      </footer>
+
+      <SessionFeedbackForm open={logOpen} onOpenChange={setLogOpen} />
+      <ReportIssueForm open={reportOpen} onOpenChange={setReportOpen} />
+    </div>
+  );
+};
+
+// ── Teacher-facing Info page ──────────────────────────────────────────────────
+
+const TeacherInfo = () => {
+  const [reportOpen, setReportOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -75,7 +280,6 @@ const Info = () => {
                 Pilot Purpose
               </h2>
             </div>
-
             <div className="space-y-5 font-body text-base leading-relaxed text-foreground/90">
               <p className="text-lg font-semibold">
                 Free Wheeler Bike League is reimagining how rangatahi experience sport.
@@ -98,9 +302,6 @@ const Info = () => {
                   </li>
                 ))}
               </ul>
-              <p>
-                Free Wheeler combines indoor cycling, digital racing, and real-time feedback to create an experience that is competitive, accessible, and student-driven.
-              </p>
               <p className="tape-element-green inline-block px-4 py-2 font-display text-lg font-bold uppercase">
                 Go hard — without having to go anywhere.
               </p>
@@ -121,12 +322,8 @@ const Info = () => {
                 Why This Pilot Matters
               </h2>
             </div>
-
             <div className="space-y-5 font-body text-base leading-relaxed text-secondary-foreground/90">
-              <p>
-                Many rangatahi disengage from traditional sport due to structure, pressure, or lack of perceived ability.
-              </p>
-
+              <p>Many rangatahi disengage from traditional sport due to structure, pressure, or lack of perceived ability.</p>
               <p className="font-semibold text-accent">Free Wheeler offers:</p>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {["Low barrier to entry", "Self-paced challenge", "Individual progress tracking", "Inclusive participation", "A new pathway into physical activity"].map((item) => (
@@ -135,7 +332,6 @@ const Info = () => {
                   </div>
                 ))}
               </div>
-
               <p className="mt-6 font-semibold text-accent">This pilot will measure:</p>
               <ul className="space-y-2 pl-1">
                 {[
@@ -151,10 +347,6 @@ const Info = () => {
                   </li>
                 ))}
               </ul>
-
-              <p>
-                The data collected will determine how Free Wheeler can grow sustainably within schools.
-              </p>
             </div>
           </div>
         </div>
@@ -172,23 +364,14 @@ const Info = () => {
                 Pilot Timeline
               </h2>
             </div>
-
             <div className="relative space-y-0">
-              {/* Vertical line */}
               <div className="absolute left-5 top-0 h-full w-1 bg-primary/30" />
-
-              {timelinePhases.map((phase, i) => (
+              {timelinePhases.map((phase) => (
                 <div key={phase.phase} className="relative pb-10 pl-14 last:pb-0">
-                  {/* Dot */}
                   <div className="absolute left-3 top-1 h-5 w-5 border-[3px] border-primary bg-background" />
-
                   <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                    <div className="mb-1 font-display text-xs font-bold uppercase tracking-widest text-primary">
-                      {phase.phase}
-                    </div>
-                    <h3 className="mb-3 font-display text-lg font-bold uppercase text-foreground">
-                      {phase.title}
-                    </h3>
+                    <div className="mb-1 font-display text-xs font-bold uppercase tracking-widest text-primary">{phase.phase}</div>
+                    <h3 className="mb-3 font-display text-lg font-bold uppercase text-foreground">{phase.title}</h3>
                     <ul className="space-y-1.5 font-body text-sm text-foreground/80">
                       {phase.items.map((item) => (
                         <li key={item} className="flex gap-2">
@@ -205,93 +388,61 @@ const Info = () => {
         </div>
       </section>
 
-      {/* How Data Is Collected */}
+      {/* Surveys & Feedback */}
       <section className="bg-secondary py-16">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl">
             <div className="mb-8 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center bg-accent">
-                <ClipboardList className="h-5 w-5 text-accent-foreground" />
+                <MessageSquare className="h-5 w-5 text-accent-foreground" />
               </div>
               <h2 className="font-display text-3xl font-bold uppercase tracking-wider text-secondary-foreground">
-                How Data Is Collected
+                Surveys & Feedback
               </h2>
             </div>
-
-            <div className="space-y-5 font-body text-base leading-relaxed text-secondary-foreground/90">
-              <p>To ensure this pilot is evidence-based, students will:</p>
-              <ul className="space-y-2 pl-1">
-                {[
-                  "Log their cycling session data",
-                  "Complete a short post-session reflection",
-                  "Participate in pre- and post-pilot surveys",
-                ].map((item) => (
-                  <li key={item} className="flex gap-3">
-                    <span className="mt-1.5 h-2.5 w-2.5 shrink-0 bg-accent" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <p>
-                Teachers may also complete short observation forms to help measure engagement and impact.
-              </p>
-              <p>All data is used to evaluate the effectiveness of the programme.</p>
+            <div className="space-y-3">
+              <Link
+                to="/post-pilot-survey"
+                className="block border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1"
+              >
+                <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">Post-Pilot Survey</h3>
+                <p className="mt-1 font-body text-sm text-primary">Click here to complete →</p>
+              </Link>
+              <a
+                href="https://airtable.com/YOUR_TEACHER_OBSERVATION_FORM_LINK"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1"
+              >
+                <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">Teacher Observation Form</h3>
+                <p className="mt-1 font-body text-sm text-primary">Click here to complete →</p>
+              </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Surveys & Feedback */}
-      <section className="bg-background py-16">
+      {/* Hardware / issue reporting */}
+      <section className="bg-background py-12">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl">
-            <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center bg-primary">
-                <MessageSquare className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <h2 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground">
-                Surveys & Feedback
-              </h2>
-            </div>
-
-            <div className="font-body text-base leading-relaxed text-foreground/90">
-              <p className="mb-5">You can access the surveys below:</p>
-              <div className="space-y-3">
-                <Link
-                  to="/post-pilot-survey"
-                  className="block border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1"
-                >
-                  <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
-                    Post-Pilot Survey
-                  </h3>
-                  <p className="mt-1 font-body text-sm text-primary">
-                    Click here to complete →
+            <div className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-accent">
+                  <AlertTriangle className="h-5 w-5 text-accent-foreground" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">Something Not Working?</h3>
+                  <p className="mt-1 font-body text-sm text-foreground/70">
+                    Hardware issue, app glitch, or student problem? Report it here.
                   </p>
-                </Link>
-                {isAdmin ? (
-                  <a
-                    href="https://airtable.com/YOUR_TEACHER_OBSERVATION_FORM_LINK"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1"
+                  <button
+                    onClick={() => setReportOpen(true)}
+                    className="mt-4 inline-block border-[2px] border-accent bg-accent px-5 py-2 font-display text-xs font-bold uppercase tracking-wider text-accent-foreground transition-transform hover:-translate-y-0.5"
                   >
-                    <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
-                      Teacher Observation Form
-                    </h3>
-                    <p className="mt-1 font-body text-sm text-primary">
-                      Click here to complete →
-                    </p>
-                  </a>
-                ) : (
-                  <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                    <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
-                      Teacher Observation Form
-                    </h3>
-                    <p className="mt-1 font-body text-sm text-muted-foreground">
-                      Available under the admin login
-                    </p>
-                  </div>
-                )}
+                    Report an Issue →
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -307,45 +458,38 @@ const Info = () => {
                 <Heart className="h-6 w-6 text-accent-foreground" />
               </div>
             </div>
-            <h2 className="mb-8 font-display text-3xl font-bold uppercase tracking-wider text-secondary-foreground md:text-4xl">
-              Our Vision
-            </h2>
-
+            <h2 className="mb-8 font-display text-3xl font-bold uppercase tracking-wider text-secondary-foreground md:text-4xl">Our Vision</h2>
             <div className="space-y-4 font-body text-lg leading-relaxed text-secondary-foreground/90">
-              <p className="font-semibold text-accent">
-                Free Wheeler isn't just about cycling.
-              </p>
-              <p>
-                It's about creating a pathway for rangatahi to move on their own terms.
-              </p>
+              <p className="font-semibold text-accent">Free Wheeler isn't just about cycling.</p>
+              <p>It's about creating a pathway for rangatahi to move on their own terms.</p>
               <p>To build confidence.</p>
               <p>To find enjoyment in effort.</p>
               <p>To feel part of something different.</p>
             </div>
-
             <div className="mt-10 inline-block tape-element-green px-8 py-4">
-              <span className="font-display text-2xl font-extrabold uppercase tracking-wider">
-                Pedal Your Own Path.
-              </span>
+              <span className="font-display text-2xl font-extrabold uppercase tracking-wider">Pedal Your Own Path.</span>
             </div>
           </div>
         </div>
       </section>
 
-      <CTASection />
-
       <footer className="border-t-4 border-primary bg-secondary px-4 py-10">
         <div className="container mx-auto text-center">
-          <div className="font-display text-lg font-bold uppercase text-accent">
-            Free Wheeler Bike League
-          </div>
-          <p className="mt-2 font-body text-sm text-secondary-foreground/60">
-            Pedal Your Own Path · © 2026
-          </p>
+          <div className="font-display text-lg font-bold uppercase text-accent">Free Wheeler Bike League</div>
+          <p className="mt-2 font-body text-sm text-secondary-foreground/60">Pedal Your Own Path · © 2026</p>
         </div>
       </footer>
+
+      <ReportIssueForm open={reportOpen} onOpenChange={setReportOpen} />
     </div>
   );
+};
+
+// ── Route entry point ─────────────────────────────────────────────────────────
+
+const Info = () => {
+  const { role } = useAuth();
+  return role === 'admin' ? <TeacherInfo /> : <StudentInfo />;
 };
 
 export default Info;
