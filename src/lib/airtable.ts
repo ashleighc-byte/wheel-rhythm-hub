@@ -170,7 +170,7 @@ export async function fetchGlobalDashboard() {
 
 // ---- Teacher-specific helpers ----
 
-export async function fetchTeacherOrg(email: string): Promise<{ id: string; name: string } | null> {
+export async function fetchTeacherOrg(email: string): Promise<{ id: string; name: string; studentRecordIds: string[] } | null> {
   const formula = `{Email} = '${email}'`;
   const result = await callAirtable('Organisations', 'GET', {
     filterByFormula: formula,
@@ -178,14 +178,27 @@ export async function fetchTeacherOrg(email: string): Promise<{ id: string; name
   });
   if (!result.records.length) return null;
   const rec = result.records[0];
+  // The org record already contains linked Student Registration IDs
+  const studentRecordIds: string[] = Array.isArray(rec.fields['Student Registration'])
+    ? rec.fields['Student Registration']
+    : [];
   return {
     id: rec.id,
     name: rec.fields['Organisation Name'] || rec.fields['Name'] || '',
+    studentRecordIds,
   };
 }
 
+export async function fetchStudentsByIds(studentRecordIds: string[]) {
+  if (!studentRecordIds.length) return { records: [] };
+  const orClauses = studentRecordIds.map(id => `RECORD_ID()='${id}'`).join(',');
+  return callAirtable('Student Registration', 'GET', {
+    filterByFormula: `OR(${orClauses})`,
+  });
+}
+
+// Kept for backwards compatibility / alternate use
 export async function fetchStudentsBySchool(orgRecordId: string) {
-  // Students link to their school via a linked record field called 'School'
   const formula = `FIND("${orgRecordId}", ARRAYJOIN({School}))`;
   return callAirtable('Student Registration', 'GET', {
     filterByFormula: formula,
@@ -194,6 +207,9 @@ export async function fetchStudentsBySchool(orgRecordId: string) {
 
 export async function fetchAllSurveysForStudents(studentRecordIds: string[]) {
   if (!studentRecordIds.length) return { records: [] };
+  // Airtable linked record fields don't support FIND() filtering well;
+  // use RECORD_ID() pattern with the known student IDs as survey->student lookup
+  // We fetch all surveys and filter client-side by student record ID
   const orClauses = studentRecordIds
     .map(id => `FIND("${id}", ARRAYJOIN({Student Name}))`)
     .join(',');
@@ -203,14 +219,21 @@ export async function fetchAllSurveysForStudents(studentRecordIds: string[]) {
   });
 }
 
+export async function fetchSessionsByRecordIds(sessionRecordIds: string[]) {
+  if (!sessionRecordIds.length) return { records: [] };
+  const orClauses = sessionRecordIds.map(id => `RECORD_ID()='${id}'`).join(',');
+  return callAirtable('Session Reflections', 'GET', {
+    filterByFormula: `OR(${orClauses})`,
+  });
+}
+
 export async function fetchRecentSessionsForSchool(orgRecordId: string, maxRecords = 20) {
-  // Sessions linked to school via the Student Registration -> School chain
-  // We query sessions where the linked student belongs to this org
-  const formula = `FIND("${orgRecordId}", ARRAYJOIN({School (from Student Registration)}))`;
+  // The correct Airtable lookup field is "School (from Student Registration) 2"
+  const formula = `FIND("${orgRecordId}", ARRAYJOIN({School (from Student Registration) 2}))`;
   return callAirtable('Session Reflections', 'GET', {
     filterByFormula: formula,
     maxRecords,
-    sort: 'Created',
+    sort: 'Auto date',
   });
 }
 

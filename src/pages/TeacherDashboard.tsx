@@ -3,9 +3,9 @@ import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import {
   fetchTeacherOrg,
-  fetchStudentsBySchool,
+  fetchStudentsByIds,
   fetchAllSurveysForStudents,
-  fetchRecentSessionsForSchool,
+  fetchSessionsByRecordIds,
 } from "@/lib/airtable";
 import { CheckCircle2, XCircle, Users, Clock, Bike } from "lucide-react";
 
@@ -50,7 +50,7 @@ const TeacherDashboard = () => {
       try {
         setLoading(true);
 
-        // 1. Get teacher's org
+        // 1. Get teacher's org — includes linked student record IDs
         const org = await fetchTeacherOrg(user.email!);
         if (!org) {
           setError("Could not find your organisation in Airtable. Make sure your email matches the Organisations table.");
@@ -58,8 +58,8 @@ const TeacherDashboard = () => {
         }
         setOrgName(org.name);
 
-        // 2. Get all students at that school
-        const studentData = await fetchStudentsBySchool(org.id);
+        // 2. Fetch student records directly by their IDs (from org record)
+        const studentData = await fetchStudentsByIds(org.studentRecordIds);
         const studentRecords = studentData.records;
 
         if (!studentRecords.length) {
@@ -110,19 +110,38 @@ const TeacherDashboard = () => {
         rows.sort((a, b) => a.name.localeCompare(b.name));
         setStudents(rows);
 
-        // 5. Fetch recent sessions
-        const sessionData = await fetchRecentSessionsForSchool(org.id);
-        const sessionRows: SessionRow[] = sessionData.records.map((rec) => ({
-          studentName:
-            Array.isArray(rec.fields["Student Name (from Student Registration)"])
-              ? rec.fields["Student Name (from Student Registration)"][0]
-              : rec.fields["Full Name"] || "—",
-          date: rec.fields["Date"] || rec.createdTime?.slice(0, 10) || "—",
-          km: rec.fields["Distance (km)"] ?? "—",
-          time: rec.fields["Duration (mins)"] ?? rec.fields["Time (mins)"] ?? "—",
-          moodBefore: rec.fields["Mood Before"] ?? "—",
-          moodAfter: rec.fields["Mood After"] ?? "—",
-        }));
+        // 5. Collect all session record IDs from student records (max 20 most recent)
+        const allSessionIds: string[] = [];
+        // Build a map of sessionRecordId -> studentName for display
+        const sessionStudentMap: Record<string, string> = {};
+        for (const rec of studentRecords) {
+          const sIds: string[] = rec.fields["Session Reflections"] || [];
+          const name: string = rec.fields["Full Name"] || "—";
+          for (const sid of sIds) {
+            allSessionIds.push(sid);
+            sessionStudentMap[sid] = name;
+          }
+        }
+        // Take latest 20 (Airtable IDs are not ordered, so we fetch all and sort by date client-side)
+        const sessionData = await fetchSessionsByRecordIds(allSessionIds.slice(0, 40));
+        const sessionRows: SessionRow[] = sessionData.records
+          .map((rec) => {
+            const dateRaw: string = rec.fields["Auto date"] || rec.createdTime || "";
+            const date = dateRaw
+              ? new Date(dateRaw).toLocaleDateString("en-NZ", { day: "numeric", month: "short", year: "numeric" })
+              : "—";
+            return {
+              studentName: sessionStudentMap[rec.id] || "—",
+              date,
+              km: rec.fields["Total km "] ?? "—",
+              time: rec.fields["Total minutes"] ?? "—",
+              moodBefore: rec.fields["How did you feel before you jumped on the bike?"] ?? "—",
+              moodAfter: rec.fields["How did you feel after your bike session today?"] ?? "—",
+              _dateRaw: dateRaw,
+            };
+          })
+          .sort((a: any, b: any) => new Date(b._dateRaw).getTime() - new Date(a._dateRaw).getTime())
+          .slice(0, 20);
         setSessions(sessionRows);
       } catch (e: any) {
         setError(e.message || "Failed to load teacher dashboard data.");
