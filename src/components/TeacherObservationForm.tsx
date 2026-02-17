@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { callAirtable, fetchTeacherOrg, fetchStudentsByIds } from "@/lib/airtable";
+import { callAirtable, fetchStudentsByIds } from "@/lib/airtable";
 
 interface TeacherObservationFormProps {
   open: boolean;
@@ -19,10 +19,12 @@ const TeacherObservationForm = ({ open, onOpenChange }: TeacherObservationFormPr
   const { toast } = useToast();
 
   const [teacherName, setTeacherName] = useState("");
+  const [teacherOrgId, setTeacherOrgId] = useState(""); // Airtable record ID for the Organisations record
   const [students, setStudents] = useState<{ id: string; name: string }[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
 
-  const [selectedStudentName, setSelectedStudentName] = useState("");
+  const [selectedStudentId, setSelectedStudentId] = useState("");   // Airtable record ID
+  const [selectedStudentName, setSelectedStudentName] = useState(""); // Display name only
   const [observationSummary, setObservationSummary] = useState("");
   const [difference, setDifference] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -41,6 +43,7 @@ const TeacherObservationForm = ({ open, onOpenChange }: TeacherObservationFormPr
         if (!orgRes.records.length) return;
         const org = orgRes.records[0];
         setTeacherName(String(org.fields["Full Name"] ?? user.email ?? ""));
+        setTeacherOrgId(org.id); // store the Airtable record ID
 
         const studentRecordIds: string[] = Array.isArray(org.fields["Student Registration"])
           ? org.fields["Student Registration"]
@@ -63,29 +66,36 @@ const TeacherObservationForm = ({ open, onOpenChange }: TeacherObservationFormPr
   }, [user?.email, open]);
 
   const resetForm = () => {
+    setSelectedStudentId("");
     setSelectedStudentName("");
     setObservationSummary("");
     setDifference("");
   };
 
+  const handleStudentChange = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    const student = students.find((s) => s.id === studentId);
+    setSelectedStudentName(student?.name ?? "");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedStudentName || !observationSummary.trim() || !difference.trim()) return;
+    if (!selectedStudentId || !observationSummary.trim() || !difference.trim()) return;
     setSubmitting(true);
 
     try {
-      // First, inspect existing records to discover real field names
-      const existing = await callAirtable("Kaiako Observations", "GET", { maxRecords: 1 });
-      console.log("[TeacherObservationForm] Existing record fields:", JSON.stringify(existing.records[0]?.fields ?? "no records"));
-
-      // The Airtable form labels ARE the field names in Airtable.
-      // Trying exact form question text as field names (Airtable uses label = field name by default).
+      // "Kaiako" = linked record to Organisations (needs array of record IDs)
+      // "Student Name" = linked record to Student Registration (needs array of record IDs)
+      // Long text fields use their full question label as the field name
       const fields: Record<string, any> = {
-        "Your Name": teacherName,
-        "Student's Name": selectedStudentName,
+        "Kaiako": teacherOrgId ? [teacherOrgId] : undefined,
+        "Student Name": [selectedStudentId],
         "What I have Observed (Engagement, Participation, Educational priorities, Behaviour, etc.)": observationSummary.trim(),
         "How is this different from before Free Wheelers?": difference.trim(),
       };
+
+      // Remove undefined values
+      Object.keys(fields).forEach((k) => fields[k] === undefined && delete fields[k]);
 
       console.log("[TeacherObservationForm] Submitting fields:", JSON.stringify(fields));
 
@@ -104,7 +114,7 @@ const TeacherObservationForm = ({ open, onOpenChange }: TeacherObservationFormPr
       console.error("[TeacherObservationForm] Submit error:", err?.message ?? err);
       toast({
         title: "Submission failed",
-        description: err?.message ?? "Please try again. Check console for field name details.",
+        description: err?.message ?? "Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -112,8 +122,7 @@ const TeacherObservationForm = ({ open, onOpenChange }: TeacherObservationFormPr
     }
   };
 
-
-  const isValid = !!selectedStudentName && observationSummary.trim().length > 0 && difference.trim().length > 0;
+  const isValid = !!selectedStudentId && observationSummary.trim().length > 0 && difference.trim().length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -142,8 +151,8 @@ const TeacherObservationForm = ({ open, onOpenChange }: TeacherObservationFormPr
               Student's Name <span className="text-destructive">*</span>
             </Label>
             <Select
-              value={selectedStudentName}
-              onValueChange={setSelectedStudentName}
+              value={selectedStudentId}
+              onValueChange={handleStudentChange}
               required
             >
               <SelectTrigger className="mt-1 border-2 border-secondary bg-background font-body">
@@ -160,7 +169,7 @@ const TeacherObservationForm = ({ open, onOpenChange }: TeacherObservationFormPr
                   </SelectItem>
                 ) : (
                   students.map((s) => (
-                    <SelectItem key={s.id} value={s.name}>
+                    <SelectItem key={s.id} value={s.id}>
                       {s.name}
                     </SelectItem>
                   ))
