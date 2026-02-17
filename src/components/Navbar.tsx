@@ -7,15 +7,15 @@ import SessionFeedbackForm from "./SessionFeedbackForm";
 
 const studentNavLinks = [
   { label: "HOME", path: "/" },
+  { label: "ABOUT THE PILOT", path: "/info" },
   { label: "LEADERBOARDS", path: "/leaderboards" },
   { label: "YOUR STATS", path: "/dashboard" },
-  { label: "INFO", path: "/info" },
 ];
 
 const teacherNavLinks = [
   { label: "HOME", path: "/" },
+  { label: "ABOUT THE PILOT", path: "/info" },
   { label: "LEADERBOARDS", path: "/leaderboards" },
-  { label: "INFO", path: "/info" },
   { label: "TEACHER DASHBOARD", path: "/teacher-dashboard" },
 ];
 
