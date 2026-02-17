@@ -72,7 +72,12 @@ const FEELS_DIFFERENT_OPTIONS = [
   "Other",
 ];
 
-const RIDE_FRIENDS_OPTIONS = ["Yes", "No"];
+const RIDE_FRIENDS_OPTIONS = [
+  "Yes, definitely",
+  "Maybe/Not Sure",
+  "Probably not",
+  "No",
+];
 
 const RIDE_FRIENDS_WHY_OPTIONS = [
   "It would make it more fun",
@@ -179,9 +184,9 @@ const PostPilotSurvey = () => {
           enjoymentChange,
         "Q5b - Thinking about what you said earlier about what makes being active hard\u2026 does anything feel different now?":
           feelsDifferent,
-        "Q5b - Is there anything else you want to tell us about what feels different or the same?":
+        "Q6 - Is there anything else you want to tell us about what feels different or the same?":
           feelsDifferentText || "",
-        "Q8 - Would you want to ride with friends at other schools?":
+        "Q7 - Would you want to expand this pilot and be able ride online with friends at other schools?":
           rideFriends,
         "Q8b - Why or Why Not?": rideFriendsWhy,
         "Anything else you want us to know?": anythingElse || "",
@@ -393,7 +398,7 @@ const PostPilotSurvey = () => {
             <div className="space-y-5">
               <div className="space-y-2">
                 <Label className="font-display text-xs uppercase tracking-wider text-accent-foreground">
-                  Is there anything else you want to tell us about what feels different or the same?
+                  Q6 – Is there anything else you want to tell us about what feels different or the same? (optional)
                 </Label>
                 <Textarea
                   value={feelsDifferentText}
@@ -406,7 +411,7 @@ const PostPilotSurvey = () => {
 
               <div className="space-y-2">
                 <Label className="font-display text-xs uppercase tracking-wider text-accent-foreground">
-                  Would you want to expand this pilot and be able to ride online with friends at other schools?
+                  Q7 – Would you want to expand this pilot and be able to ride online with friends at other schools?
                 </Label>
                 <RadioGroup value={rideFriends} onValueChange={setRideFriends}>
                   {RIDE_FRIENDS_OPTIONS.map((opt) => (
