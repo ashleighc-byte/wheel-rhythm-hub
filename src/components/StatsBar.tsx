@@ -30,7 +30,8 @@ const StatsBar = () => {
       .then((res) => {
         if (res.records.length > 0) {
           const fields = res.records[0].fields;
-          const rawHours = Number(fields["Total Hours"] ?? 0);
+        const rawHoursField = fields["Total Hours"];
+          const rawHours = typeof rawHoursField === "number" ? rawHoursField : 0;
           setStats([
             { target: Number(fields["Total Schools"] ?? 0), label: "Total Schools" },
             { target: Number(fields["Total Riders"] ?? 0), label: "Total Riders" },
