@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import AnimatedCounter from "./AnimatedCounter";
-import { fetchGlobalDashboard } from "@/lib/airtable";
+import { fetchGlobalDashboard, callAirtable } from "@/lib/airtable";
 
 interface StatItem {
   target: number;
@@ -12,36 +12,53 @@ const fallbackStats: StatItem[] = [
   { target: 0, label: "Total Schools" },
   { target: 0, label: "Total Riders" },
   { target: 0, label: "Total Sessions" },
-  { target: 0, label: "Total Minutes", formatted: "0:00" },
+  { target: 0, label: "Total Hours", formatted: "0:00" },
 ];
 
-function formatHours(totalHours: number): string {
-  const hours = Math.floor(totalHours);
-  const mins = Math.round((totalHours - hours) * 60);
+function formatHours(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = Math.round(totalMinutes % 60);
   return `${hours}:${mins.toString().padStart(2, "0")}`;
 }
 
 const StatsBar = () => {
   const [stats, setStats] = useState<StatItem[]>(fallbackStats);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchGlobalDashboard()
-      .then((res) => {
-        if (res.records.length > 0) {
-          const fields = res.records[0].fields;
+    Promise.all([
+      fetchGlobalDashboard(),
+      callAirtable("Student Registration", "GET"),
+    ])
+      .then(([dashRes, studentsRes]) => {
+        if (dashRes.records.length === 0) return;
+        const fields = dashRes.records[0].fields;
+
+        // Try Global Dashboard Total Hours first (it's in hours, not minutes)
         const rawHoursField = fields["Total Hours"];
-          const rawHours = typeof rawHoursField === "number" ? rawHoursField : 0;
-          setStats([
-            { target: Number(fields["Total Schools"] ?? 0), label: "Total Schools" },
-            { target: Number(fields["Total Riders"] ?? 0), label: "Total Riders" },
-            { target: Number(fields["Total Sessions"] ?? 0), label: "Total Sessions" },
-            { target: rawHours, label: "Total Hours", formatted: formatHours(rawHours) },
-          ]);
+        let totalMinutes: number | null = null;
+
+        if (typeof rawHoursField === "number" && !isNaN(rawHoursField)) {
+          totalMinutes = rawHoursField * 60;
+        } else {
+          // Fallback: sum student minutes directly
+          let sum = 0;
+          for (const r of studentsRes.records) {
+            const mins = r.fields["Total minutes Rollup (from Session Reflections)"];
+            if (typeof mins === "number" && !isNaN(mins)) {
+              sum += mins;
+            }
+          }
+          totalMinutes = sum;
         }
+
+        setStats([
+          { target: Number(fields["Total Schools"] ?? 0), label: "Total Schools" },
+          { target: Number(fields["Total Riders"] ?? 0), label: "Total Riders" },
+          { target: Number(fields["Total Sessions"] ?? 0), label: "Total Sessions" },
+          { target: totalMinutes, label: "Total Hours", formatted: formatHours(totalMinutes) },
+        ]);
       })
-      .catch((err) => console.error("Failed to fetch global dashboard:", err))
-      .finally(() => setLoading(false));
+      .catch((err) => console.error("Failed to fetch global dashboard:", err));
   }, []);
 
   return (
@@ -75,3 +92,4 @@ const StatsBar = () => {
 };
 
 export default StatsBar;
+
