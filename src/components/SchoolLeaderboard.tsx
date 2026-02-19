@@ -40,13 +40,16 @@ const SchoolLeaderboard = () => {
           }
         }
 
-        // Merge and sort
-        const rows: SchoolRow[] = Array.from(countMap.entries())
-          .map(([id, riders]) => ({
-            name: orgMap.get(id) ?? id,
-            riders,
-            rank: 0,
-          }))
+        // Merge by name (deduplicate orgs with the same display name)
+        const nameCountMap = new Map<string, number>();
+        for (const [id, riders] of countMap.entries()) {
+          const name = orgMap.get(id) ?? id;
+          nameCountMap.set(name, (nameCountMap.get(name) ?? 0) + riders);
+        }
+
+        // Sort and rank
+        const rows: SchoolRow[] = Array.from(nameCountMap.entries())
+          .map(([name, riders]) => ({ name, riders, rank: 0 }))
           .sort((a, b) => b.riders - a.riders)
           .map((r, i) => ({ ...r, rank: i + 1 }));
 
