@@ -93,7 +93,9 @@ const NfcTap = () => {
   }, [token]);
 
   const Logo = () => (
-    <img src={logoSrc} alt="Free Wheeler" className="mx-auto mb-6 h-14 object-contain" />
+    <Link to="/" className="mx-auto mb-6 block">
+      <img src={logoSrc} alt="Free Wheeler" className="h-14 object-contain" />
+    </Link>
   );
 
   return (
