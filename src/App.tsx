@@ -20,6 +20,7 @@ import OgImageDownload from "./pages/OgImageDownload";
 import SetupInstructions from "./pages/SetupInstructions";
 import SetupInstructionsPrint from "./pages/SetupInstructionsPrint";
 import NfcTap from "./pages/NfcTap";
+import ResetPassword from "./pages/ResetPassword";
 
 
 const queryClient = new QueryClient();
@@ -127,7 +128,8 @@ const App = () => (
              <Route path="/teacher-dashboard" element={<AdminRoute><TeacherDashboard /></AdminRoute>} />
              <Route path="/setup-instructions" element={<AdminRoute><SetupInstructions /></AdminRoute>} />
              <Route path="/setup-instructions/print" element={<SetupInstructionsPrint />} />
-             <Route path="/og-download" element={<OgImageDownload />} />
+              <Route path="/og-download" element={<OgImageDownload />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
              <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
           </Routes>

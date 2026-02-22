@@ -11,6 +11,7 @@ import brandLogo from "@/assets/fw-logo.png";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,6 +47,26 @@ const Auth = () => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast({
+        title: "Check your email",
+        description: "We've sent you a password reset link.",
+      });
+      setIsForgotPassword(false);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,6 +107,32 @@ const Auth = () => {
     }
   };
 
+  if (isForgotPassword) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="w-full max-w-sm space-y-8">
+          <div className="text-center">
+            <img src={brandLogo} alt="Free Wheeler Bike League" className="mx-auto mb-6 h-20 w-auto object-contain" />
+            <h1 className="font-display text-3xl uppercase tracking-wider text-foreground">Reset Password</h1>
+            <p className="mt-2 font-body text-sm text-muted-foreground">Enter your email and we'll send you a reset link</p>
+          </div>
+          <form onSubmit={handleForgotPassword} className="space-y-6">
+            <div className="tape-element inline-flex w-full flex-col gap-1 rotate-[-2deg]">
+              <Label htmlFor="email" className="font-display text-xs uppercase tracking-wider text-accent-foreground">School Email</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@school.nz" required className="border-2 border-secondary bg-accent/30 font-display text-accent-foreground placeholder:text-accent-foreground/50 focus-visible:ring-secondary" />
+            </div>
+            <Button type="submit" disabled={loading} className="tape-element-green w-full text-lg transition-transform hover:rotate-0 hover:scale-105">
+              {loading ? <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Sending...</span> : "Send Reset Link"}
+            </Button>
+          </form>
+          <p className="text-center font-body text-sm text-muted-foreground">
+            <button onClick={() => setIsForgotPassword(false)} className="font-display font-bold uppercase text-primary underline">Back to Sign In</button>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-8">
@@ -101,7 +148,12 @@ const Auth = () => {
           <p className="mt-2 font-body text-sm text-muted-foreground">
             {isLogin ? "Welcome back, rider!" : "Join the Free Wheeler league"}
           </p>
-        </div>
+          </div>
+          {isLogin && (
+            <button type="button" onClick={() => setIsForgotPassword(true)} className="font-body text-xs text-muted-foreground underline hover:text-primary">
+              Forgot your password?
+            </button>
+          )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="tape-element inline-flex w-full flex-col gap-1 rotate-[-2deg]">
