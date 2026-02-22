@@ -9,6 +9,7 @@ import { createSessionReflection, fetchStudents } from "@/lib/airtable";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface SessionFeedbackFormProps {
   open: boolean;
@@ -55,7 +56,8 @@ function StarRating({
 }
 
 const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) => {
-  const { user } = useAuth();
+  const { user, nfcSession } = useAuth();
+  const navigate = useNavigate();
   const [studentName, setStudentName] = useState("");
   const [studentRecordId, setStudentRecordId] = useState<string | null>(null);
   const [loadingStudent, setLoadingStudent] = useState(false);
@@ -68,9 +70,19 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
   const [submitted, setSubmitted] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Auto-fill student name from Airtable based on logged-in email
+  // Auto-fill student name from NFC session or Airtable email lookup
   useEffect(() => {
-    if (!open || !user?.email) return;
+    if (!open) return;
+
+    // NFC session takes priority
+    if (nfcSession) {
+      setStudentName(nfcSession.fullName);
+      setStudentRecordId(nfcSession.studentId);
+      setLoadingStudent(false);
+      return;
+    }
+
+    if (!user?.email) return;
 
     setLoadingStudent(true);
     fetchStudents(user.email)
@@ -88,7 +100,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
         setStudentName(user.email ?? "");
       })
       .finally(() => setLoadingStudent(false));
-  }, [open, user?.email]);
+  }, [open, user?.email, nfcSession]);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -150,7 +162,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
         fields["Use the ipad to take a screenshot of your session time and upload it here."] = [{ url: attachmentUrl }];
       }
 
-      await createSessionReflection(fields);
+      await createSessionReflection(fields, nfcSession?.nfcToken);
       setSubmitted(true);
       toast({ title: "Ride logged successfully! 🚴" });
     } catch (err: any) {
@@ -186,8 +198,14 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
               <CheckCircle className="h-16 w-16 text-primary" />
               <h3 className="font-display text-xl uppercase text-foreground">Ride Logged!</h3>
               <p className="font-body text-muted-foreground">Thanks for logging your ride today.</p>
-              <Button onClick={() => handleClose(false)} className="tape-element-green mt-4">
-                Close
+              <Button
+                onClick={() => {
+                  handleClose(false);
+                  navigate("/dashboard");
+                }}
+                className="tape-element-green mt-4"
+              >
+                View Your Stats →
               </Button>
             </motion.div>
           ) : (
