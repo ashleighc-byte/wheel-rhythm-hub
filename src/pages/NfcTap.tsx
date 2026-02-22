@@ -82,7 +82,7 @@ const NfcTap = () => {
         });
 
         setPhase("redirecting");
-        navigate("/", { replace: true });
+        navigate("/", { replace: true, state: { openLogRide: true } });
       } catch (err) {
         console.error("NFC lookup error:", err);
         setPhase("invalid");
