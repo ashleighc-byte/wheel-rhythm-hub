@@ -26,11 +26,18 @@ import ResetPassword from "./pages/ResetPassword";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, user, role, loading } = useAuth();
+  const { session, user, role, loading, nfcSession } = useAuth();
   const [surveyChecked, setSurveyChecked] = useState(false);
   const [surveyDone, setSurveyDone] = useState(false);
 
   useEffect(() => {
+    // NFC sessions skip the survey gate entirely
+    if (nfcSession) {
+      setSurveyDone(true);
+      setSurveyChecked(true);
+      return;
+    }
+
     // Wait until role is resolved (not null AND not still loading)
     if (loading) return;
     if (!user?.email) return;
@@ -52,7 +59,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         setSurveyDone(true);
         setSurveyChecked(true);
       });
-  }, [user?.email, role, loading]);
+  }, [user?.email, role, loading, nfcSession]);
+
+  // NFC-authenticated students get through
+  if (nfcSession) {
+    return <>{children}</>;
+  }
 
   if (loading || (!surveyChecked && session)) {
     return (

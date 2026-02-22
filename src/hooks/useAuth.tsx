@@ -5,12 +5,21 @@ import { validateUserApproval, fetchUserRole } from "@/lib/airtable";
 
 type AppRole = 'admin' | 'student' | null;
 
+export interface NfcSession {
+  studentId: string;
+  fullName: string;
+  firstName: string;
+  nfcToken: string;
+}
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   role: AppRole;
   loading: boolean;
   signOut: () => Promise<void>;
+  nfcSession: NfcSession | null;
+  setNfcSession: (s: NfcSession | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -19,12 +28,15 @@ const AuthContext = createContext<AuthContextType>({
   role: null,
   loading: true,
   signOut: async () => {},
+  nfcSession: null,
+  setNfcSession: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole>(null);
   const [loading, setLoading] = useState(true);
+  const [nfcSession, setNfcSession] = useState<NfcSession | null>(null);
   const checkedEmails = useRef<Set<string>>(new Set());
 
   const checkApprovalAndAssignRole = async (userSession: Session | null) => {
@@ -76,12 +88,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
+    setNfcSession(null);
     await supabase.auth.signOut();
   };
 
   return (
     <AuthContext.Provider
-      value={{ session, user: session?.user ?? null, role, loading, signOut }}
+      value={{ session, user: session?.user ?? null, role, loading, signOut, nfcSession, setNfcSession }}
     >
       {children}
     </AuthContext.Provider>
