@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { fetchStudents, callAirtable } from "@/lib/airtable";
+import { fetchStudents, callAirtable, escapeFormulaValue } from "@/lib/airtable";
 import { supabase } from "@/integrations/supabase/client";
 
 const FEEDBACK_TYPES = [
@@ -47,7 +47,7 @@ const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
     if (isAdmin) {
       // Fetch from Organisations table for teachers
       callAirtable('Organisations', 'GET', {
-        filterByFormula: `{Email} = '${user.email}'`,
+        filterByFormula: `{Email} = '${escapeFormulaValue(user.email!)}'`,
         maxRecords: 1,
       }).then((res) => {
         if (res.records.length > 0) {

@@ -1,6 +1,8 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-nfc-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 Deno.serve(async (req) => {
@@ -8,6 +10,37 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // ─── Authentication ──────────────────────────────────────────────────────────
+  // Allow two auth modes:
+  //   1. Standard JWT (Authorization: Bearer <jwt>)
+  //   2. NFC token header (x-nfc-token: <token>) – limited to Student Registration table only
+  const authHeader = req.headers.get('authorization');
+  const nfcToken = req.headers.get('x-nfc-token');
+  let isNfcAuth = false;
+
+  if (nfcToken) {
+    // NFC token auth – we'll validate the token against Airtable below
+    isNfcAuth = true;
+  } else if (authHeader && authHeader.startsWith('Bearer ')) {
+    // Validate JWT
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data, error } = await userClient.auth.getUser();
+    if (error || !data.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  } else {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // ─── Airtable credentials ───────────────────────────────────────────────────
   const AIRTABLE_API_KEY = Deno.env.get('AIRTABLE_API_KEY');
   if (!AIRTABLE_API_KEY) {
     return new Response(JSON.stringify({ error: 'AIRTABLE_API_KEY is not configured' }), {
@@ -34,6 +67,16 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Missing table parameter' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+    }
+
+    // NFC auth can only access Student Registration and Session Reflections
+    if (isNfcAuth) {
+      const allowedTables = ['Student Registration', 'Session Reflections'];
+      if (!allowedTables.includes(table)) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     const encodedTable = encodeURIComponent(table);

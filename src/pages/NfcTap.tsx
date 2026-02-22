@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { callAirtable, createSessionReflection } from "@/lib/airtable";
+import { callAirtable, createSessionReflection, escapeFormulaValue } from "@/lib/airtable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import logoSrc from "@/assets/fw-logo-new.png";
@@ -89,11 +89,12 @@ const NfcTap = () => {
     const lookup = async () => {
       try {
         // Sanitise token to prevent formula injection
-        const safeToken = token.replace(/'/g, "\\'");
+        const safeToken = escapeFormulaValue(token);
         const formula = `{NFC Bracelet Token} = '${safeToken}'`;
         const res = await callAirtable("Student Registration", "GET", {
           filterByFormula: formula,
           maxRecords: 1,
+          nfcToken: token, // Use NFC token auth instead of JWT
         });
 
         if (!res.records.length) {
@@ -126,6 +127,7 @@ const NfcTap = () => {
         // Update Last Tap At via PATCH
         try {
           await callAirtable("Student Registration", "PATCH", {
+            nfcToken: token,
             body: {
               records: [
                 {
@@ -203,7 +205,7 @@ const NfcTap = () => {
         ];
       }
 
-      await createSessionReflection(fields);
+      await createSessionReflection(fields, token);
       setPhase("success");
     } catch (err: any) {
       console.error("NFC submit error:", err);

@@ -1,5 +1,20 @@
+import { supabase } from "@/integrations/supabase/client";
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+// ─── Injection-safe helpers ────────────────────────────────────────────────────
+
+/** Escape a value for safe use inside an Airtable filterByFormula string literal. */
+export function escapeFormulaValue(value: string): string {
+  // Airtable formula strings are single-quoted; escape backslashes then quotes
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+/** Validate that a string looks like an Airtable record ID (rec + alphanumeric). */
+export function isValidRecordId(id: string): boolean {
+  return /^rec[a-zA-Z0-9]{10,20}$/.test(id);
+}
 
 interface AirtableRecord {
   id: string;
@@ -20,6 +35,7 @@ async function callAirtable(
     maxRecords?: number;
     view?: string;
     body?: any;
+    nfcToken?: string; // For NFC tap auth (no JWT needed)
   }
 ): Promise<AirtableResponse> {
   const params = new URLSearchParams({ table });
@@ -30,12 +46,26 @@ async function callAirtable(
 
   const url = `${SUPABASE_URL}/functions/v1/airtable-proxy?${params}`;
 
+  // Build auth headers
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_ANON_KEY,
+  };
+
+  if (options?.nfcToken) {
+    // NFC token auth – no JWT needed
+    headers['x-nfc-token'] = options.nfcToken;
+  } else {
+    // Standard JWT auth
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+  }
+
   const fetchOptions: RequestInit = {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_ANON_KEY,
-    },
+    headers,
   };
 
   if (options?.body && (method === 'POST' || method === 'PATCH')) {
@@ -56,13 +86,14 @@ async function callAirtable(
 export async function fetchStudents(email?: string) {
   const options: any = {};
   if (email) {
-    options.filterByFormula = `{School Email} = '${email}'`;
+    options.filterByFormula = `{School Email} = '${escapeFormulaValue(email)}'`;
   }
   return callAirtable('Student Registration', 'GET', options);
 }
 
 export async function validateStudentApproval(email: string): Promise<{ approved: boolean; studentName?: string }> {
-  const formula = `AND({School Email} = '${email}', {Consent Status} = 'active')`;
+  const safe = escapeFormulaValue(email);
+  const formula = `AND({School Email} = '${safe}', {Consent Status} = 'active')`;
   const result = await callAirtable('Student Registration', 'GET', {
     filterByFormula: formula,
     maxRecords: 1,
@@ -74,7 +105,7 @@ export async function validateStudentApproval(email: string): Promise<{ approved
 }
 
 export async function validateTeacherApproval(email: string): Promise<{ approved: boolean }> {
-  const formula = `{Email} = '${email}'`;
+  const formula = `{Email} = '${escapeFormulaValue(email)}'`;
   const result = await callAirtable('Organisations', 'GET', {
     filterByFormula: formula,
     maxRecords: 1,
@@ -114,29 +145,31 @@ export async function fetchUserRole(session: { access_token: string }): Promise<
 export async function fetchSessionReflections(sessionRecordIds?: string[]) {
   const options: any = {};
   if (sessionRecordIds?.length) {
-    // Fetch by known record IDs using OR(RECORD_ID()=...) formula
-    const orClauses = sessionRecordIds.map(id => `RECORD_ID()='${id}'`).join(',');
-    options.filterByFormula = `OR(${orClauses})`;
+    const validIds = sessionRecordIds.filter(isValidRecordId);
+    if (validIds.length) {
+      const orClauses = validIds.map(id => `RECORD_ID()='${id}'`).join(',');
+      options.filterByFormula = `OR(${orClauses})`;
+    }
   }
   return callAirtable('Session Reflections', 'GET', options);
 }
 
-export async function createSessionReflection(fields: Record<string, any>) {
+export async function createSessionReflection(fields: Record<string, any>, nfcToken?: string) {
   return callAirtable('Session Reflections', 'POST', {
-    body: { records: [{ fields }] }
+    body: { records: [{ fields }] },
+    ...(nfcToken ? { nfcToken } : {}),
   });
 }
 
 export async function fetchSurveys(studentRecordId?: string) {
   const options: any = {};
-  if (studentRecordId) {
+  if (studentRecordId && isValidRecordId(studentRecordId)) {
     options.filterByFormula = `FIND("${studentRecordId}", ARRAYJOIN({Linked Student}))`;
   }
   return callAirtable('Surveys & Student Voice', 'GET', options);
 }
 
 export async function hasCompletedPrePilotSurvey(email: string): Promise<boolean> {
-  // Check the student record for linked survey entries
   const students = await fetchStudents(email);
   if (!students.records.length) return false;
   const f = students.records[0].fields;
@@ -148,6 +181,7 @@ export async function hasCompletedFourWeekCheckIn(email: string): Promise<boolea
   const students = await fetchStudents(email);
   if (!students.records.length) return false;
   const studentRecordId = students.records[0].id;
+  if (!isValidRecordId(studentRecordId)) return false;
   const formula = `AND(FIND("${studentRecordId}", ARRAYJOIN({Student Name})), {Survey Type} = "4 Week Check In")`;
   const result = await callAirtable("Surveys & Student Voice", "GET", {
     filterByFormula: formula,
@@ -171,7 +205,7 @@ export async function fetchGlobalDashboard() {
 // ---- Teacher-specific helpers ----
 
 export async function fetchTeacherOrg(email: string): Promise<{ id: string; name: string; studentRecordIds: string[] } | null> {
-  const formula = `{Email} = '${email}'`;
+  const formula = `{Email} = '${escapeFormulaValue(email)}'`;
   const result = await callAirtable('Organisations', 'GET', {
     filterByFormula: formula,
     maxRecords: 1,
@@ -190,8 +224,9 @@ export async function fetchTeacherOrg(email: string): Promise<{ id: string; name
 }
 
 export async function fetchStudentsByIds(studentRecordIds: string[]) {
-  if (!studentRecordIds.length) return { records: [] };
-  const orClauses = studentRecordIds.map(id => `RECORD_ID()='${id}'`).join(',');
+  const validIds = studentRecordIds.filter(isValidRecordId);
+  if (!validIds.length) return { records: [] };
+  const orClauses = validIds.map(id => `RECORD_ID()='${id}'`).join(',');
   return callAirtable('Student Registration', 'GET', {
     filterByFormula: `OR(${orClauses})`,
   });
@@ -199,6 +234,7 @@ export async function fetchStudentsByIds(studentRecordIds: string[]) {
 
 // Kept for backwards compatibility / alternate use
 export async function fetchStudentsBySchool(orgRecordId: string) {
+  if (!isValidRecordId(orgRecordId)) return { records: [] };
   const formula = `FIND("${orgRecordId}", ARRAYJOIN({School}))`;
   return callAirtable('Student Registration', 'GET', {
     filterByFormula: formula,
@@ -206,11 +242,9 @@ export async function fetchStudentsBySchool(orgRecordId: string) {
 }
 
 export async function fetchAllSurveysForStudents(studentRecordIds: string[]) {
-  if (!studentRecordIds.length) return { records: [] };
-  // Airtable linked record fields don't support FIND() filtering well;
-  // use RECORD_ID() pattern with the known student IDs as survey->student lookup
-  // We fetch all surveys and filter client-side by student record ID
-  const orClauses = studentRecordIds
+  const validIds = studentRecordIds.filter(isValidRecordId);
+  if (!validIds.length) return { records: [] };
+  const orClauses = validIds
     .map(id => `FIND("${id}", ARRAYJOIN({Student Name}))`)
     .join(',');
   const formula = `OR(${orClauses})`;
@@ -220,15 +254,16 @@ export async function fetchAllSurveysForStudents(studentRecordIds: string[]) {
 }
 
 export async function fetchSessionsByRecordIds(sessionRecordIds: string[]) {
-  if (!sessionRecordIds.length) return { records: [] };
-  const orClauses = sessionRecordIds.map(id => `RECORD_ID()='${id}'`).join(',');
+  const validIds = sessionRecordIds.filter(isValidRecordId);
+  if (!validIds.length) return { records: [] };
+  const orClauses = validIds.map(id => `RECORD_ID()='${id}'`).join(',');
   return callAirtable('Session Reflections', 'GET', {
     filterByFormula: `OR(${orClauses})`,
   });
 }
 
 export async function fetchRecentSessionsForSchool(orgRecordId: string, maxRecords = 20) {
-  // The correct Airtable lookup field is "School (from Student Registration) 2"
+  if (!isValidRecordId(orgRecordId)) return { records: [] };
   const formula = `FIND("${orgRecordId}", ARRAYJOIN({School (from Student Registration) 2}))`;
   return callAirtable('Session Reflections', 'GET', {
     filterByFormula: formula,

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { callAirtable, fetchStudentsByIds } from "@/lib/airtable";
+import { callAirtable, fetchStudentsByIds, escapeFormulaValue } from "@/lib/airtable";
 
 interface TeacherObservationFormProps {
   open: boolean;
@@ -36,7 +36,7 @@ const TeacherObservationForm = ({ open, onOpenChange }: TeacherObservationFormPr
     setLoadingStudents(true);
 
     callAirtable("Organisations", "GET", {
-      filterByFormula: `{Email} = '${user.email}'`,
+      filterByFormula: `{Email} = '${escapeFormulaValue(user.email!)}'`,
       maxRecords: 1,
     })
       .then(async (orgRes) => {
