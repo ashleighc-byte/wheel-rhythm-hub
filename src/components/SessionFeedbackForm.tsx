@@ -9,7 +9,8 @@ import { createSessionReflection, fetchStudents } from "@/lib/airtable";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import logoSrc from "@/assets/fw-logo-new.png";
 
 interface SessionFeedbackFormProps {
   open: boolean;
@@ -195,6 +196,9 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center gap-4 py-10 text-center"
             >
+              <Link to="/" className="block">
+                <img src={logoSrc} alt="Free Wheeler" className="h-14 object-contain" />
+              </Link>
               <CheckCircle className="h-16 w-16 text-primary" />
               <h3 className="font-display text-xl uppercase text-foreground">Ride Logged!</h3>
               <p className="font-body text-muted-foreground">Thanks for logging your ride today.</p>
