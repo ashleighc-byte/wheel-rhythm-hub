@@ -13,13 +13,15 @@ interface Rider {
 }
 
 const TopRiders = () => {
-  const { user, role } = useAuth();
+  const { user, role, nfcSession } = useAuth();
   const isAdmin = role === 'admin';
   const [riders, setRiders] = useState<Rider[]>([]);
   const [schoolName, setSchoolName] = useState("");
 
+  const hasIdentity = !!user?.email || !!nfcSession;
+
   useEffect(() => {
-    if (!user?.email) return;
+    if (!hasIdentity) return;
 
     const load = async () => {
       try {
@@ -38,9 +40,19 @@ const TopRiders = () => {
 
         if (!isAdmin) {
           // For students, filter to their own school
-          const currentStudentRes = await fetchStudents(user.email!);
-          if (!currentStudentRes.records.length) return;
-          const userSchoolIds = currentStudentRes.records[0].fields["School"] as string[] | undefined;
+          let currentStudentRec;
+          if (user?.email) {
+            const currentStudentRes = await fetchStudents(user.email);
+            currentStudentRec = currentStudentRes.records[0];
+          } else if (nfcSession?.studentId) {
+            const currentStudentRes = await callAirtable('Student Registration', 'GET', {
+              filterByFormula: `RECORD_ID()='${nfcSession.studentId}'`,
+              maxRecords: 1,
+            });
+            currentStudentRec = currentStudentRes.records[0];
+          }
+          if (!currentStudentRec) return;
+          const userSchoolIds = currentStudentRec.fields["School"] as string[] | undefined;
           if (!userSchoolIds?.length) return;
           schoolFilterId = userSchoolIds[0];
           const org = orgsRes.records.find((o) => o.id === schoolFilterId);
@@ -79,7 +91,7 @@ const TopRiders = () => {
     };
 
     load();
-  }, [user?.email, isAdmin]);
+  }, [hasIdentity, isAdmin, user?.email, nfcSession?.studentId]);
 
   return (
     <div className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">

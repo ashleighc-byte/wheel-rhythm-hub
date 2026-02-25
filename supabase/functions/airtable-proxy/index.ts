@@ -5,24 +5,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-nfc-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// NFC auth access control: table → allowed HTTP methods
+const NFC_ALLOWED_TABLES: Record<string, string[]> = {
+  'Student Registration': ['GET', 'PATCH'],
+  'Session Reflections': ['GET', 'POST'],
+  'Organisations': ['GET'],
+  'Global Dashboard': ['GET'],
+  'Support Tickets (Bug/Issue Form)': ['POST'],
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   // ─── Authentication ──────────────────────────────────────────────────────────
-  // Allow two auth modes:
-  //   1. Standard JWT (Authorization: Bearer <jwt>)
-  //   2. NFC token header (x-nfc-token: <token>) – limited to Student Registration table only
   const authHeader = req.headers.get('authorization');
   const nfcToken = req.headers.get('x-nfc-token');
   let isNfcAuth = false;
 
   if (nfcToken) {
-    // NFC token auth – we'll validate the token against Airtable below
     isNfcAuth = true;
   } else if (authHeader && authHeader.startsWith('Bearer ')) {
-    // Validate JWT
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const userClient = createClient(supabaseUrl, anonKey, {
@@ -69,10 +73,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // NFC auth can only access Student Registration and Session Reflections
+    // NFC auth: check table + method allowlist
     if (isNfcAuth) {
-      const allowedTables = ['Student Registration', 'Session Reflections'];
-      if (!allowedTables.includes(table)) {
+      const allowedMethods = NFC_ALLOWED_TABLES[table];
+      if (!allowedMethods || !allowedMethods.includes(req.method)) {
         return new Response(JSON.stringify({ error: 'Forbidden' }), {
           status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
