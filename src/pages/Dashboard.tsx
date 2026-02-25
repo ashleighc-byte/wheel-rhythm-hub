@@ -6,7 +6,7 @@ import Navbar from "@/components/Navbar";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchStudents, fetchSessionReflections, callAirtable, hasCompletedFourWeekCheckIn } from "@/lib/airtable";
+import { fetchStudents, fetchSessionReflections, callAirtable, hasCompletedFourWeekCheckIn, isValidRecordId } from "@/lib/airtable";
 
 const moodEmojis = ["😞", "😕", "😐", "🙂", "😁"];
 
@@ -31,7 +31,7 @@ interface SessionRow {
 }
 
 const Dashboard = () => {
-  const { user, role } = useAuth();
+  const { user, role, nfcSession } = useAuth();
   const navigate = useNavigate();
   const [student, setStudent] = useState<StudentData | null>(null);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
@@ -41,8 +41,11 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [logOpen, setLogOpen] = useState(false);
 
-  // 4-week check-in trigger
+  const hasIdentity = !!user?.email || !!nfcSession;
+
+  // 4-week check-in trigger — skip for NFC users
   useEffect(() => {
+    if (nfcSession) return; // NFC users bypass surveys
     if (!user?.email || !user?.created_at || role !== "student") return;
     const createdAt = new Date(user.created_at);
     const fourWeeksLater = new Date(createdAt.getTime() + 28 * 24 * 60 * 60 * 1000);
@@ -53,15 +56,33 @@ const Dashboard = () => {
         navigate("/four-week-check-in", { replace: true });
       }
     }).catch(console.error);
-  }, [user?.email, user?.created_at, role, navigate]);
+  }, [user?.email, user?.created_at, role, navigate, nfcSession]);
 
   const loadData = async () => {
-    if (!user?.email) return;
+    if (!hasIdentity) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      // Fetch student record
-      const studentsRes = await fetchStudents(user.email);
-      if (studentsRes.records.length === 0) return;
+      // Fetch student record — by email or by record ID (NFC)
+      let studentsRes;
+      if (user?.email) {
+        studentsRes = await fetchStudents(user.email);
+      } else if (nfcSession?.studentId && isValidRecordId(nfcSession.studentId)) {
+        studentsRes = await callAirtable('Student Registration', 'GET', {
+          filterByFormula: `RECORD_ID()='${nfcSession.studentId}'`,
+          maxRecords: 1,
+        });
+      } else {
+        setLoading(false);
+        return;
+      }
+
+      if (studentsRes.records.length === 0) {
+        setLoading(false);
+        return;
+      }
       const rec = studentsRes.records[0];
       const f = rec.fields;
 
@@ -140,12 +161,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadData();
-  }, [user?.email]);
+  }, [user?.email, nfcSession?.studentId]);
 
   const handleLogClose = (open: boolean) => {
     setLogOpen(open);
     if (!open) {
-      // Reload data after logging a ride
       loadData();
     }
   };
@@ -163,7 +183,7 @@ const Dashboard = () => {
     );
   }
 
-  const firstName = student?.name.split(" ")[0] ?? "Rider";
+  const firstName = student?.name.split(" ")[0] ?? nfcSession?.firstName ?? "Rider";
 
   return (
     <div className="min-h-screen bg-background">

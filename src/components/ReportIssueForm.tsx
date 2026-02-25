@@ -27,7 +27,7 @@ interface ReportIssueFormProps {
 }
 
 const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
-  const { user, role } = useAuth();
+  const { user, role, nfcSession } = useAuth();
   const { toast } = useToast();
 
   const [submitterRecordId, setSubmitterRecordId] = useState<string | null>(null);
@@ -42,10 +42,18 @@ const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
   const isAdmin = role === 'admin';
 
   useEffect(() => {
-    if (!user?.email || !open) return;
+    if (!open) return;
+
+    // NFC users: pre-fill from session data directly
+    if (nfcSession && !user?.email) {
+      setSubmitterRecordId(nfcSession.studentId);
+      setSubmitterName(nfcSession.fullName);
+      return;
+    }
+
+    if (!user?.email) return;
 
     if (isAdmin) {
-      // Fetch from Organisations table for teachers
       callAirtable('Organisations', 'GET', {
         filterByFormula: `{Email} = '${escapeFormulaValue(user.email!)}'`,
         maxRecords: 1,
@@ -56,7 +64,6 @@ const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
         }
       });
     } else {
-      // Fetch from Student Registration for students
       fetchStudents(user.email).then((res) => {
         if (res.records.length > 0) {
           setSubmitterRecordId(res.records[0].id);
@@ -64,7 +71,7 @@ const ReportIssueForm = ({ open, onOpenChange }: ReportIssueFormProps) => {
         }
       });
     }
-  }, [user?.email, open, isAdmin]);
+  }, [user?.email, open, isAdmin, nfcSession]);
 
   const resetForm = () => {
     setOnBehalf("");

@@ -3,6 +3,21 @@ import { supabase } from "@/integrations/supabase/client";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// ─── NFC token persistence ────────────────────────────────────────────────────
+const NFC_TOKEN_KEY = 'active_nfc_token';
+
+export function setActiveNfcToken(token: string) {
+  sessionStorage.setItem(NFC_TOKEN_KEY, token);
+}
+
+export function clearActiveNfcToken() {
+  sessionStorage.removeItem(NFC_TOKEN_KEY);
+}
+
+export function getActiveNfcToken(): string | null {
+  return sessionStorage.getItem(NFC_TOKEN_KEY);
+}
+
 // ─── Injection-safe helpers ────────────────────────────────────────────────────
 
 /** Escape a value for safe use inside an Airtable filterByFormula string literal. */
@@ -53,13 +68,19 @@ async function callAirtable(
   };
 
   if (options?.nfcToken) {
-    // NFC token auth – no JWT needed
+    // Explicit NFC token auth
     headers['x-nfc-token'] = options.nfcToken;
   } else {
     // Standard JWT auth
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) {
       headers['Authorization'] = `Bearer ${session.access_token}`;
+    } else {
+      // Auto-detect NFC token from sessionStorage as fallback
+      const storedNfcToken = getActiveNfcToken();
+      if (storedNfcToken) {
+        headers['x-nfc-token'] = storedNfcToken;
+      }
     }
   }
 

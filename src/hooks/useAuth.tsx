@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, createContext, useContext, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { validateUserApproval, fetchUserRole } from "@/lib/airtable";
+import { validateUserApproval, fetchUserRole, setActiveNfcToken, clearActiveNfcToken } from "@/lib/airtable";
 
 type AppRole = 'admin' | 'student' | null;
 
@@ -36,7 +36,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole>(null);
   const [loading, setLoading] = useState(true);
-  const [nfcSession, setNfcSession] = useState<NfcSession | null>(null);
+  const [nfcSession, setNfcSessionState] = useState<NfcSession | null>(null);
+
+  const setNfcSession = (s: NfcSession | null) => {
+    setNfcSessionState(s);
+    if (s?.nfcToken) {
+      setActiveNfcToken(s.nfcToken);
+    } else {
+      clearActiveNfcToken();
+    }
+  };
   const checkedEmails = useRef<Set<string>>(new Set());
 
   const checkApprovalAndAssignRole = async (userSession: Session | null) => {
@@ -88,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    setNfcSession(null);
+    setNfcSession(null); // also clears sessionStorage via wrapper
     await supabase.auth.signOut();
   };
 
