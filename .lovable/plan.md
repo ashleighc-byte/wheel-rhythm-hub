@@ -1,110 +1,76 @@
 
-# Teacher (Admin) Dashboard & Role-Based Views
 
-## Overview
+## Root Cause Analysis
 
-This plan splits the app into student-facing and teacher-facing views. Teachers see everything students see, plus an exclusive teacher dashboard showing their school's active students, survey completion status, and session counts. The Info page will also show a Teacher Observation Form link for admins only.
+You've nailed the diagnosis. The NFC bracelet flow sets an `nfcSession` in React state (student ID, name, token) but does **not** create a Supabase auth session. This means `user` and `session` are both `null` for NFC-authenticated students. The problem cascades because:
 
-## What's Being Built
+1. **Dashboard stuck loading** — `loadData()` checks `if (!user?.email) return` and exits immediately, never setting `loading = false`. The page stays on "Loading your dashboard..." forever.
 
-### 1. Teacher Dashboard Page (`/teacher-dashboard`)
-A new protected admin-only page that shows:
-- A table of all students from the teacher's school (matched by their organisation record)
-- For each student:
-  - Name
-  - Number of sessions completed
-  - Pre-Pilot Survey completed? (checkbox/tick)
-  - 4 Week Check-In completed? (checkbox/tick)
-  - Post-Pilot Survey completed? (checkbox/tick)
-- Recent session submissions from those students (name, date, km, time, mood)
+2. **Leaderboards empty** — `TopRiders` checks `if (!user?.email) return` and skips data loading entirely.
 
-### 2. Navbar Updates
-Teachers get an extra nav link: **"TEACHER DASHBOARD"** → `/teacher-dashboard`
+3. **Issue report form broken** — `ReportIssueForm` checks `if (!user?.email || !open) return` so the "Submitted By" field never populates.
 
-The "LOG A RIDE" button will be hidden for admin users (teachers don't log rides).
+4. **All Airtable calls fail silently** — `callAirtable()` tries to get a Supabase JWT to authenticate with the proxy. NFC users have no JWT, so either no auth header is sent (401 error) or only the `nfcToken` is sent for the few places that pass it. The proxy only allows NFC tokens to access 2 tables (`Student Registration` and `Session Reflections`), blocking leaderboard and organisation data.
 
-### 3. Info Page Updates
-The Teacher Observation Form section will show a clickable link for admins, instead of the placeholder "Available under the admin login" text. (The actual form can be linked externally or built as a future step.)
+## Plan
 
-## Data Strategy (Airtable)
+### Step 1: Auto-detect NFC token in the Airtable client (`src/lib/airtable.ts`)
 
-All data is already available in Airtable — no new tables needed.
+Store the NFC token in `sessionStorage` when it's set, and modify `callAirtable` to automatically use it as a fallback when there's no JWT session. This avoids needing to thread `nfcToken` through every component manually.
 
-**To build the teacher's student list:**
-1. Fetch the teacher's Organisation record using their email → get `Organisation Name` and record ID
-2. Fetch all `Student Registration` records where `{School}` links to that org record ID
-3. For each student, check:
-   - **Pre-Pilot Survey**: `Surveys & Student Voice` array in their student record is non-empty (field already used in `hasCompletedPrePilotSurvey`)
-   - **4 Week Check-In**: Query `Surveys & Student Voice` with `Survey Type = "4 Week Check In"` + student record ID (already done in `hasCompletedFourWeekCheckIn`)
-   - **Post-Pilot Survey**: Query `Surveys & Student Voice` with `Survey Type = "Post-Pilot"` + student record ID
-   - **Session count**: `Count (Session Reflections)` field already on each student record
+- Add `setActiveNfcToken(token)` / `getActiveNfcToken()` helpers
+- In `callAirtable`, if no JWT session exists, check for a stored NFC token and attach the `x-nfc-token` header automatically
 
-**New airtable helper functions needed in `src/lib/airtable.ts`:**
-- `fetchStudentsBySchool(orgRecordId: string)` — fetch all students linked to a given org
-- `fetchTeacherOrg(email: string)` — fetch the org record for a teacher
-- `fetchAllSurveysForStudents(studentRecordIds: string[])` — batch fetch all survey records for a group of students to check completion status efficiently
+### Step 2: Store the NFC token on session creation (`src/hooks/useAuth.tsx`)
 
-## Files to Create / Modify
+When `setNfcSession` is called, also persist the token to `sessionStorage`. When cleared (sign out), remove it. This ensures `callAirtable` can always find it.
 
-### New Files
-- `src/pages/TeacherDashboard.tsx` — the new admin-only dashboard page
+### Step 3: Expand NFC-allowed tables in the proxy (`supabase/functions/airtable-proxy/index.ts`)
 
-### Modified Files
-- `src/App.tsx` — add `/teacher-dashboard` route (admin-only protected route wrapper)
-- `src/components/Navbar.tsx` — add conditional "TEACHER DASHBOARD" link + hide "LOG A RIDE" for admins
-- `src/pages/Info.tsx` — show Teacher Observation Form as a clickable link for admins (conditionally rendered)
-- `src/lib/airtable.ts` — add new helper functions for teacher data fetching
+Currently NFC auth only allows `Student Registration` and `Session Reflections`. Expand to also allow:
+- `Organisations` (GET only — needed for leaderboards/dashboard)
+- `Global Dashboard` (GET only — needed for stats bar)
+- `Support Tickets (Bug/Issue Form)` (POST only — needed for issue reporting)
 
-## Technical Detail
+Add a method check: NFC auth can only GET from read-only tables, and POST to Session Reflections and Support Tickets.
 
-### Route Protection
-A new `AdminRoute` wrapper will be added to `App.tsx`:
+### Step 4: Fix Dashboard for NFC users (`src/pages/Dashboard.tsx`)
 
-```text
-AdminRoute
-  ├── If loading → show loading spinner
-  ├── If no session → redirect /auth
-  ├── If role !== 'admin' → redirect /
-  └── Else → render children
-```
+- Instead of requiring `user?.email`, also check for `nfcSession`
+- When NFC session is present, fetch the student record directly by record ID (using `RECORD_ID()` formula) instead of by email
+- Skip the 4-week check-in gate for NFC users (they already bypass surveys)
+- Ensure `loading` is set to `false` even when no data source is available
 
-### Teacher Dashboard Data Flow
+### Step 5: Fix TopRiders for NFC users (`src/components/TopRiders.tsx`)
+
+- Remove the early `if (!user?.email) return` gate
+- When `nfcSession` is present, use the student record ID to determine the student's school for filtering, instead of looking up by email
+
+### Step 6: Fix ReportIssueForm for NFC users (`src/components/ReportIssueForm.tsx`)
+
+- When `nfcSession` is present, pre-fill the submitter name and record ID from the NFC session data directly (no Airtable lookup needed)
+- Allow form submission using the NFC token auth path
+
+### Step 7: Fix SchoolLeaderboard and StatsBar
+
+These components don't check `user?.email` but they do call `callAirtable` without passing an NFC token. With Step 1's auto-detection fix, these will work automatically once the proxy allows NFC access to their tables (Step 3).
+
+### Step 8: Fix Navbar sign-out for NFC users (`src/components/Navbar.tsx`)
+
+The sign-out button calls `signOut()` which clears the NFC session. This already works, but we should also clear `sessionStorage` (handled in Step 2).
+
+---
+
+### Technical Detail: File Changes Summary
 
 ```text
-TeacherDashboard loads
-  │
-  ├─ fetchTeacherOrg(email) → gets org record ID + name
-  │
-  ├─ fetchStudentsBySchool(orgRecordId) → list of student records
-  │   Each record already has:
-  │   ├─ Full Name
-  │   ├─ Count (Session Reflections)  [session count]
-  │   └─ Surveys & Student Voice []   [for pre-pilot check]
-  │
-  ├─ For Post-Pilot + 4-Week:
-  │   Batch fetch Surveys & Student Voice filtered by student record IDs
-  │   and check Survey Type = "Post-Pilot" / "4 Week Check In"
-  │
-  └─ Fetch recent Session Reflections for all students in that school
+src/lib/airtable.ts          — Auto-detect NFC token fallback in callAirtable
+src/hooks/useAuth.tsx         — Persist NFC token to sessionStorage
+supabase/functions/airtable-proxy/index.ts — Expand NFC allowed tables + method checks
+src/pages/Dashboard.tsx       — Support NFC session for data loading
+src/components/TopRiders.tsx  — Remove email gate, support NFC lookup
+src/components/ReportIssueForm.tsx — Pre-fill from NFC session
 ```
 
-### Student Table Layout
+No database changes needed. No new tables or RLS policies required since all data flows through Airtable via the edge function proxy.
 
-| Student Name | Sessions | Pre-Pilot ✓ | 4 Week Check-In ✓ | Post-Pilot ✓ |
-|---|---|---|---|---|
-| Jane Smith | 12 | ✅ | ✅ | ❌ |
-| Tom Brown | 4 | ✅ | ❌ | ❌ |
-
-### Recent Sessions Section
-Below the student table, a second table showing the most recent 20 session submissions from all students at the school, including student name, date, km, time, and mood transition.
-
-## What Teachers Won't See Differently
-- Home, Leaderboards, Info pages — identical to students
-- The "Log a Ride" button is removed from nav for teachers since they don't log rides themselves
-
-## Implementation Order
-1. Add new airtable helpers (`src/lib/airtable.ts`)
-2. Create `TeacherDashboard.tsx` page
-3. Add `AdminRoute` and `/teacher-dashboard` route in `App.tsx`
-4. Update `Navbar.tsx` for role-based links
-5. Update `Info.tsx` for admin-visible Teacher Observation Form link
