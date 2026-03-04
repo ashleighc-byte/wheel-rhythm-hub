@@ -1,76 +1,90 @@
 
 
-## Root Cause Analysis
+# Gamification & Points System — Implementation Plan
 
-You've nailed the diagnosis. The NFC bracelet flow sets an `nfcSession` in React state (student ID, name, token) but does **not** create a Supabase auth session. This means `user` and `session` are both `null` for NFC-authenticated students. The problem cascades because:
+## How it works
 
-1. **Dashboard stuck loading** — `loadData()` checks `if (!user?.email) return` and exits immediately, never setting `loading = false`. The page stays on "Loading your dashboard..." forever.
-
-2. **Leaderboards empty** — `TopRiders` checks `if (!user?.email) return` and skips data loading entirely.
-
-3. **Issue report form broken** — `ReportIssueForm` checks `if (!user?.email || !open) return` so the "Submitted By" field never populates.
-
-4. **All Airtable calls fail silently** — `callAirtable()` tries to get a Supabase JWT to authenticate with the proxy. NFC users have no JWT, so either no auth header is sent (401 error) or only the `nfcToken` is sent for the few places that pass it. The proxy only allows NFC tokens to access 2 tables (`Student Registration` and `Session Reflections`), blocking leaderboard and organisation data.
-
-## Plan
-
-### Step 1: Auto-detect NFC token in the Airtable client (`src/lib/airtable.ts`)
-
-Store the NFC token in `sessionStorage` when it's set, and modify `callAirtable` to automatically use it as a fallback when there's no JWT session. This avoids needing to thread `nfcToken` through every component manually.
-
-- Add `setActiveNfcToken(token)` / `getActiveNfcToken()` helpers
-- In `callAirtable`, if no JWT session exists, check for a stored NFC token and attach the `x-nfc-token` header automatically
-
-### Step 2: Store the NFC token on session creation (`src/hooks/useAuth.tsx`)
-
-When `setNfcSession` is called, also persist the token to `sessionStorage`. When cleared (sign out), remove it. This ensures `callAirtable` can always find it.
-
-### Step 3: Expand NFC-allowed tables in the proxy (`supabase/functions/airtable-proxy/index.ts`)
-
-Currently NFC auth only allows `Student Registration` and `Session Reflections`. Expand to also allow:
-- `Organisations` (GET only — needed for leaderboards/dashboard)
-- `Global Dashboard` (GET only — needed for stats bar)
-- `Support Tickets (Bug/Issue Form)` (POST only — needed for issue reporting)
-
-Add a method check: NFC auth can only GET from read-only tables, and POST to Session Reflections and Support Tickets.
-
-### Step 4: Fix Dashboard for NFC users (`src/pages/Dashboard.tsx`)
-
-- Instead of requiring `user?.email`, also check for `nfcSession`
-- When NFC session is present, fetch the student record directly by record ID (using `RECORD_ID()` formula) instead of by email
-- Skip the 4-week check-in gate for NFC users (they already bypass surveys)
-- Ensure `loading` is set to `false` even when no data source is available
-
-### Step 5: Fix TopRiders for NFC users (`src/components/TopRiders.tsx`)
-
-- Remove the early `if (!user?.email) return` gate
-- When `nfcSession` is present, use the student record ID to determine the student's school for filtering, instead of looking up by email
-
-### Step 6: Fix ReportIssueForm for NFC users (`src/components/ReportIssueForm.tsx`)
-
-- When `nfcSession` is present, pre-fill the submitter name and record ID from the NFC session data directly (no Airtable lookup needed)
-- Allow form submission using the NFC token auth path
-
-### Step 7: Fix SchoolLeaderboard and StatsBar
-
-These components don't check `user?.email` but they do call `callAirtable` without passing an NFC token. With Step 1's auto-detection fix, these will work automatically once the proxy allows NFC access to their tables (Step 3).
-
-### Step 8: Fix Navbar sign-out for NFC users (`src/components/Navbar.tsx`)
-
-The sign-out button calls `signOut()` which clears the NFC session. This already works, but we should also clear `sessionStorage` (handled in Step 2).
+Your Airtable AI agent extracts distance, duration, speed, and elevation from MyWhoosh screenshots and writes them as a JSON blob into a **"Session Data Table"** field on each Session Reflection record. It also calculates and writes a **"Points Earned"** value. The website's job is to **read and display** this data — not calculate it.
 
 ---
 
-### Technical Detail: File Changes Summary
+## What you need to set up in Airtable first
+
+Before I build anything, these fields must exist:
+
+**Session Reflections table:**
+- `Session Data Table` — already exists (your agent writes JSON here with `distance_km`, `duration_hh_mm_ss`, plus speed/elevation)
+- `Points Earned` — Number field. Your agent calculates and writes this.
+
+**Student Registration table:**
+- `Total Points` — Rollup field that sums `Points Earned` from linked Session Reflections
+- (Optional) `Level` — Formula field based on Total Points thresholds, or I calculate client-side
+
+---
+
+## What I will build
+
+### 1. Make mood ratings optional, screenshot mandatory
+**File:** `src/components/SessionFeedbackForm.tsx`
+- Remove the `preRating === 0 || postRating === 0` validation check
+- Add validation requiring a screenshot upload before submission
+- Update star rating labels to remove the asterisk (*)
+
+### 2. Parse session data JSON on the dashboard
+**File:** `src/pages/Dashboard.tsx`
+- Read `Session Data Table` field from each Session Reflection record
+- Parse the JSON to extract `distance_km`, `duration_hh_mm_ss`, speed, elevation
+- Read `Points Earned` per session and `Total Points` from Student Registration
+- Add a **Total Points** stat card to the stats grid
+- Add **Speed** and **Elevation** columns to the recent sessions table
+- Show points earned per session in the table
+
+### 3. Build a Level Progress component
+**New file:** `src/components/LevelProgress.tsx`
+- Cycling-themed XP bar showing current level and progress to next
+- Levels: Kickstand (0), Pedal Pusher (50), Chain Breaker (150), Hill Climber (300), Sprint King/Queen (500), Tour Legend (800)
+- Displayed on dashboard below the stats grid
+
+### 4. Add a Points leaderboard tab
+**Files:** `src/pages/Leaderboards.tsx`, `src/components/TopRiders.tsx`
+- Add tabs to toggle between "Time" and "Points" rankings
+- Points tab reads `Total Points` from Student Registration and ranks accordingly
+- Show level badge/name next to each rider
+
+### 5. Enhanced ride success screen
+**File:** `src/components/SessionFeedbackForm.tsx`
+- After successful submission, show a summary card with:
+  - "Points will appear once your screenshot is processed"
+  - Current level progress (reads from Student Registration)
+
+---
+
+## Points formula for your Airtable agent
+
+Here's what I'd suggest your agent uses to calculate `Points Earned` per session:
 
 ```text
-src/lib/airtable.ts          — Auto-detect NFC token fallback in callAirtable
-src/hooks/useAuth.tsx         — Persist NFC token to sessionStorage
-supabase/functions/airtable-proxy/index.ts — Expand NFC allowed tables + method checks
-src/pages/Dashboard.tsx       — Support NFC session for data loading
-src/components/TopRiders.tsx  — Remove email gate, support NFC lookup
-src/components/ReportIssueForm.tsx — Pre-fill from NFC session
+Base log:           10 pts
+Screenshot:          5 pts (always true since mandatory)
+Distance:            1 pt per km
+Duration:            1 pt per 5 mins
+Elevation:           2 pts per 100m
+Speed bonus:         5 pts if avg > 25 km/h, 10 pts if > 30 km/h
 ```
 
-No database changes needed. No new tables or RLS policies required since all data flows through Airtable via the edge function proxy.
+You can adjust these however you like — the website just reads the final number.
+
+---
+
+## Files changed
+
+```text
+src/components/SessionFeedbackForm.tsx  — Mood optional, screenshot required, success card
+src/pages/Dashboard.tsx                 — Points stat, session data parsing, new columns
+src/components/LevelProgress.tsx        — New: XP progress bar component
+src/pages/Leaderboards.tsx              — Tabs for Time vs Points
+src/components/TopRiders.tsx            — Support points-based ranking mode
+```
+
+No database migrations needed. No edge function changes needed — `Session Data Table` and `Points Earned` are standard Airtable fields read through the existing proxy.
 
