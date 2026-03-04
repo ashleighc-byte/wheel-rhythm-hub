@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bike, Clock } from "lucide-react";
+import { Bike, Clock, Zap } from "lucide-react";
 import { fetchStudents, callAirtable } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
+import { getLevelName } from "@/components/LevelProgress";
+import { Badge } from "@/components/ui/badge";
 
 interface Rider {
   rank: number;
@@ -10,9 +12,15 @@ interface Rider {
   school: string;
   sessions: number;
   totalTime: string;
+  totalPoints: number;
+  level: string;
 }
 
-const TopRiders = () => {
+interface TopRidersProps {
+  mode?: "time" | "points";
+}
+
+const TopRiders = ({ mode = "time" }: TopRidersProps) => {
   const { user, role, nfcSession } = useAuth();
   const isAdmin = role === 'admin';
   const [riders, setRiders] = useState<Rider[]>([]);
@@ -30,7 +38,6 @@ const TopRiders = () => {
           callAirtable("Organisations", "GET"),
         ]);
 
-        // Build a map of org ID -> name
         const orgMap = new Map<string, string>();
         orgsRes.records.forEach((o) => {
           orgMap.set(o.id, String(o.fields["Organisation Name"] ?? ""));
@@ -39,7 +46,6 @@ const TopRiders = () => {
         let schoolFilterId: string | null = null;
 
         if (!isAdmin) {
-          // For students, filter to their own school
           let currentStudentRec;
           if (user?.email) {
             const currentStudentRes = await fetchStudents(user.email);
@@ -58,23 +64,31 @@ const TopRiders = () => {
           const org = orgsRes.records.find((o) => o.id === schoolFilterId);
           setSchoolName(org ? String(org.fields["Organisation Name"] ?? "") : "");
         }
-        // Admins get all schools — no filter, no school name label
 
         const mapped = allStudentsRes.records
           .filter((r) => {
-            if (!schoolFilterId) return true; // admin: all students
+            if (!schoolFilterId) return true;
             const school = r.fields["School"] as string[] | undefined;
             return school?.[0] === schoolFilterId;
           })
-          .map((r) => ({
-            name: String(r.fields["Full Name"] ?? ""),
-            school: orgMap.get((r.fields["School"] as string[])?.[0] ?? "") ?? "",
-            sessions: Number(r.fields["Count (Session Reflections)"] ?? 0),
-            totalTime: String(r.fields["Total Time (h:mm)"] ?? "0:00"),
-            totalMinutes: Number(r.fields["Total minutes Rollup (from Session Reflections)"] ?? 0),
-          }))
+          .map((r) => {
+            const totalPoints = Number(r.fields["Total Points"] ?? 0);
+            return {
+              name: String(r.fields["Full Name"] ?? ""),
+              school: orgMap.get((r.fields["School"] as string[])?.[0] ?? "") ?? "",
+              sessions: Number(r.fields["Count (Session Reflections)"] ?? 0),
+              totalTime: String(r.fields["Total Time (h:mm)"] ?? "0:00"),
+              totalMinutes: Number(r.fields["Total minutes Rollup (from Session Reflections)"] ?? 0),
+              totalPoints,
+              level: getLevelName(totalPoints),
+            };
+          })
           .filter((r) => r.sessions > 0)
-          .sort((a, b) => b.totalMinutes - a.totalMinutes)
+          .sort((a, b) =>
+            mode === "points"
+              ? b.totalPoints - a.totalPoints
+              : b.totalMinutes - a.totalMinutes
+          )
           .slice(0, isAdmin ? 5 : 10)
           .map((r, i) => ({
             rank: i + 1,
@@ -82,6 +96,8 @@ const TopRiders = () => {
             school: r.school,
             sessions: r.sessions,
             totalTime: r.totalTime,
+            totalPoints: r.totalPoints,
+            level: r.level,
           }));
 
         setRiders(mapped);
@@ -91,13 +107,17 @@ const TopRiders = () => {
     };
 
     load();
-  }, [hasIdentity, isAdmin, user?.email, nfcSession?.studentId]);
+  }, [hasIdentity, isAdmin, user?.email, nfcSession?.studentId, mode]);
+
+  const title = mode === "points"
+    ? (isAdmin ? "Top Riders by Points – All Schools" : `Top Riders by Points${schoolName ? ` – ${schoolName}` : ""}`)
+    : (isAdmin ? "Top Riders – All Schools" : `Top Riders${schoolName ? ` – ${schoolName}` : ""}`);
 
   return (
     <div className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
       <div className="leaderboard-header px-6 py-4">
         <h3 className="text-xl tracking-wider md:text-2xl">
-          {isAdmin ? "Top Riders – All Schools" : `Top Riders${schoolName ? ` – ${schoolName}` : ""}`}
+          {title}
         </h3>
       </div>
       <div className="divide-y divide-muted">
@@ -117,16 +137,27 @@ const TopRiders = () => {
             >
               <div className="rank-badge flex-shrink-0">{rider.rank}</div>
               <div className="flex-1">
-                <div className="font-display text-base font-bold uppercase text-foreground">
-                  {rider.name}
+                <div className="flex items-center gap-2">
+                  <span className="font-display text-base font-bold uppercase text-foreground">
+                    {rider.name}
+                  </span>
+                  <Badge variant="secondary" className="text-[10px]">
+                    {rider.level}
+                  </Badge>
                 </div>
                 <div className="mt-1 flex gap-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Bike className="h-3 w-3" /> {rider.sessions} sessions
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> {rider.totalTime}
-                  </span>
+                  {mode === "points" ? (
+                    <span className="flex items-center gap-1">
+                      <Zap className="h-3 w-3" /> {rider.totalPoints} pts
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> {rider.totalTime}
+                    </span>
+                  )}
                 </div>
               </div>
             </motion.div>

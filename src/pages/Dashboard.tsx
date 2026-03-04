@@ -1,14 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Bike, Clock, MapPin, TrendingUp, Trophy, Activity, Plus } from "lucide-react";
+import { Bike, Clock, MapPin, TrendingUp, Trophy, Activity, Plus, Zap } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
+import LevelProgress from "@/components/LevelProgress";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, fetchSessionReflections, callAirtable, hasCompletedFourWeekCheckIn, isValidRecordId } from "@/lib/airtable";
 
 const moodEmojis = ["😞", "😕", "😐", "🙂", "😁"];
+
+interface SessionDataJSON {
+  distance_km?: number | string;
+  duration_hh_mm_ss?: string;
+  speed_kmh?: number | string;
+  elevation_m?: number | string;
+}
 
 interface StudentData {
   name: string;
@@ -17,6 +25,7 @@ interface StudentData {
   totalKm: number;
   totalMinutes: number;
   totalTimeFormatted: string;
+  totalPoints: number;
   recordId: string;
 }
 
@@ -28,6 +37,18 @@ interface SessionRow {
   feelingBefore: number;
   feelingAfter: number;
   reflection: string;
+  speed: number | null;
+  elevation: number | null;
+  points: number;
+}
+
+function parseSessionData(raw: any): SessionDataJSON | null {
+  if (!raw) return null;
+  try {
+    if (typeof raw === "string") return JSON.parse(raw);
+    if (typeof raw === "object") return raw as SessionDataJSON;
+  } catch { /* ignore */ }
+  return null;
 }
 
 const Dashboard = () => {
@@ -45,7 +66,7 @@ const Dashboard = () => {
 
   // 4-week check-in trigger — skip for NFC users
   useEffect(() => {
-    if (nfcSession) return; // NFC users bypass surveys
+    if (nfcSession) return;
     if (!user?.email || !user?.created_at || role !== "student") return;
     const createdAt = new Date(user.created_at);
     const fourWeeksLater = new Date(createdAt.getTime() + 28 * 24 * 60 * 60 * 1000);
@@ -65,7 +86,6 @@ const Dashboard = () => {
     }
     setLoading(true);
     try {
-      // Fetch student record — by email or by record ID (NFC)
       let studentsRes;
       if (user?.email) {
         studentsRes = await fetchStudents(user.email);
@@ -96,23 +116,21 @@ const Dashboard = () => {
         totalKm: Number(f["Total km  Rollup (from Session Reflections)"] ?? 0),
         totalMinutes: Number(f["Total minutes Rollup (from Session Reflections)"] ?? 0),
         totalTimeFormatted: String(f["Total Time (h:mm)"] ?? "0:00"),
+        totalPoints: Number(f["Total Points"] ?? 0),
         recordId: rec.id,
       };
 
-      // Fetch school name + all students for ranking
       const [orgsRes, allStudentsRes, sessionsRes] = await Promise.all([
         callAirtable("Organisations", "GET"),
         callAirtable("Student Registration", "GET"),
         fetchSessionReflections(sessionIds),
       ]);
 
-      // Resolve school name
       if (schoolIds?.length) {
         const org = orgsRes.records.find((o) => o.id === schoolIds[0]);
         studentData.school = org ? String(org.fields["Organisation Name"] ?? "") : "";
         setSchoolName(studentData.school);
 
-        // Calculate rank within school
         const schoolmates = allStudentsRes.records
           .filter((s) => {
             const sSchool = s.fields["School"] as string[] | undefined;
@@ -130,26 +148,33 @@ const Dashboard = () => {
 
       setStudent(studentData);
 
-      // Map sessions
+      // Map sessions — parse Session Data Table JSON
       const mapped: SessionRow[] = sessionsRes.records
-        .map((s) => ({
-          id: s.id,
-          date: String(s.fields["Auto date"] ?? s.createdTime).slice(0, 10),
-          km: Number(s.fields["Total km "] ?? 0),
-          minutes: String(s.fields["Total minutes"] ?? "0:00"),
-          feelingBefore: Number(s.fields["How did you feel before you jumped on the bike?"] ?? 0),
-          feelingAfter: Number(s.fields["How did you feel after your bike session today?"] ?? 0),
-          reflection: String(s.fields["What did you enjoy or not enjoy about today's session?"] ?? ""),
-        }))
+        .map((s) => {
+          const sessionJson = parseSessionData(s.fields["Session Data Table"]);
+          return {
+            id: s.id,
+            date: String(s.fields["Auto date"] ?? s.createdTime).slice(0, 10),
+            km: Number(s.fields["Total km "] ?? sessionJson?.distance_km ?? 0),
+            minutes: String(s.fields["Total minutes"] ?? sessionJson?.duration_hh_mm_ss ?? "0:00"),
+            feelingBefore: Number(s.fields["How did you feel before you jumped on the bike?"] ?? 0),
+            feelingAfter: Number(s.fields["How did you feel after your bike session today?"] ?? 0),
+            reflection: String(s.fields["What did you enjoy or not enjoy about today's session?"] ?? ""),
+            speed: sessionJson?.speed_kmh ? Number(sessionJson.speed_kmh) : null,
+            elevation: sessionJson?.elevation_m ? Number(sessionJson.elevation_m) : null,
+            points: Number(s.fields["Points Earned"] ?? 0),
+          };
+        })
         .sort((a, b) => b.date.localeCompare(a.date))
         .slice(0, 10);
 
       setSessions(mapped);
 
-      // Mood improvement: average change
-      if (mapped.length > 0) {
+      // Mood improvement
+      const withMood = mapped.filter((s) => s.feelingBefore > 0 && s.feelingAfter > 0);
+      if (withMood.length > 0) {
         const avgChange =
-          mapped.reduce((sum, s) => sum + (s.feelingAfter - s.feelingBefore), 0) / mapped.length;
+          withMood.reduce((sum, s) => sum + (s.feelingAfter - s.feelingBefore), 0) / withMood.length;
         setMoodImprovement(avgChange >= 0 ? `+${avgChange.toFixed(1)}` : avgChange.toFixed(1));
       }
     } catch (err) {
@@ -214,11 +239,12 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Stats grid */}
-        <div className="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
           {[
             { icon: Bike, value: student?.totalSessions ?? 0, label: "Total Rides" },
             { icon: MapPin, value: Math.round(student?.totalKm ?? 0), label: "Total KM" },
             { icon: Clock, value: student?.totalTimeFormatted ?? "0:00", label: "Total Time", isFormatted: true },
+            { icon: Zap, value: student?.totalPoints ?? 0, label: "Total Points" },
             { icon: TrendingUp, value: moodImprovement ?? "—", label: "Avg Mood Change", isFormatted: true },
           ].map((stat, i) => (
             <motion.div
@@ -237,6 +263,11 @@ const Dashboard = () => {
               </div>
             </motion.div>
           ))}
+        </div>
+
+        {/* Level Progress */}
+        <div className="mb-10">
+          <LevelProgress totalPoints={student?.totalPoints ?? 0} />
         </div>
 
         {/* Rank + Mood cards */}
@@ -315,6 +346,9 @@ const Dashboard = () => {
                     <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Date</th>
                     <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">KM</th>
                     <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Time</th>
+                    <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground hidden sm:table-cell">Speed</th>
+                    <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground hidden sm:table-cell">Elev.</th>
+                    <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Pts</th>
                     <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-widest text-accent-foreground">Mood</th>
                   </tr>
                 </thead>
@@ -330,6 +364,15 @@ const Dashboard = () => {
                       <td className="px-4 py-4 font-body text-sm text-foreground">{session.date}</td>
                       <td className="px-4 py-4 font-display text-lg font-bold text-primary">{session.km}</td>
                       <td className="px-4 py-4 font-body text-sm text-foreground">{session.minutes}</td>
+                      <td className="px-4 py-4 font-body text-sm text-foreground hidden sm:table-cell">
+                        {session.speed != null ? `${session.speed} km/h` : "—"}
+                      </td>
+                      <td className="px-4 py-4 font-body text-sm text-foreground hidden sm:table-cell">
+                        {session.elevation != null ? `${session.elevation}m` : "—"}
+                      </td>
+                      <td className="px-4 py-4 font-display text-sm font-bold text-primary">
+                        {session.points > 0 ? `+${session.points}` : "—"}
+                      </td>
                       <td className="px-4 py-4 text-lg">
                         {session.feelingBefore > 0 && session.feelingAfter > 0
                           ? `${moodEmojis[session.feelingBefore - 1]} → ${moodEmojis[session.feelingAfter - 1]}`

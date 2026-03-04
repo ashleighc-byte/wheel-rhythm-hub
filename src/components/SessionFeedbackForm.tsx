@@ -122,8 +122,12 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studentName.trim() || preRating === 0 || postRating === 0) {
-      toast({ title: "Please fill in all required fields", variant: "destructive" });
+    if (!studentName.trim()) {
+      toast({ title: "Please wait for your profile to load", variant: "destructive" });
+      return;
+    }
+    if (!file) {
+      toast({ title: "Please upload a screenshot of your session", variant: "destructive" });
       return;
     }
 
@@ -202,6 +206,12 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
               <CheckCircle className="h-16 w-16 text-primary" />
               <h3 className="font-display text-xl uppercase text-foreground">Ride Logged!</h3>
               <p className="font-body text-muted-foreground">Thanks for logging your ride today.</p>
+              <div className="w-full rounded border-[2px] border-secondary bg-muted px-4 py-3 text-left">
+                <p className="font-display text-xs uppercase tracking-wider text-muted-foreground">🏆 Points incoming</p>
+                <p className="mt-1 font-body text-sm text-foreground">
+                  Your points will appear once your screenshot is processed by our AI agent.
+                </p>
+              </div>
               <Button
                 onClick={() => {
                   handleClose(false);
@@ -285,14 +295,14 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
               <StarRating
                 value={preRating}
                 onChange={setPreRating}
-                label="How did you feel when you first jumped on the bike? *"
+                label="How did you feel when you first jumped on the bike?"
               />
 
               {/* Post-session mood */}
               <StarRating
                 value={postRating}
                 onChange={setPostRating}
-                label="How did you feel after your bike session today? *"
+                label="How did you feel after your bike session today?"
               />
 
               {/* Reflection */}
