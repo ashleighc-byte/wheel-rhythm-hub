@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      student_nudges: {
+        Row: {
+          id: string
+          nudged_at: string
+          nudged_by: string
+          student_id: string
+        }
+        Insert: {
+          id?: string
+          nudged_at?: string
+          nudged_by: string
+          student_id: string
+        }
+        Update: {
+          id?: string
+          nudged_at?: string
+          nudged_by?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
+      student_points: {
+        Row: {
+          airtable_student_id: string
+          base_points: number
+          bonus_points: number
+          created_at: string
+          id: string
+          session_date: string
+          total_points: number
+          user_id: string
+        }
+        Insert: {
+          airtable_student_id: string
+          base_points?: number
+          bonus_points?: number
+          created_at?: string
+          id?: string
+          session_date: string
+          total_points?: number
+          user_id: string
+        }
+        Update: {
+          airtable_student_id?: string
+          base_points?: number
+          bonus_points?: number
+          created_at?: string
+          id?: string
+          session_date?: string
+          total_points?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -40,6 +94,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_weekly_bonus: {
+        Args: { _session_date: string; _user_id: string }
+        Returns: number
+      }
+      get_student_total_points: { Args: { _user_id: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

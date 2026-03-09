@@ -8,6 +8,8 @@ import LevelProgress from "@/components/LevelProgress";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, fetchSessionReflections, callAirtable, hasCompletedFourWeekCheckIn, isValidRecordId } from "@/lib/airtable";
+import { getTotalPoints } from "@/lib/points";
+import { formatFriendlyDate } from "@/lib/dateFormat";
 
 const moodEmojis = ["😞", "😕", "😐", "🙂", "😁"];
 
@@ -144,6 +146,16 @@ const Dashboard = () => {
 
         const rank = schoolmates.findIndex((s) => s.id === rec.id) + 1;
         setSchoolRank(rank > 0 ? rank : null);
+      }
+
+      // Fetch points from Supabase if user is logged in
+      if (user?.id) {
+        try {
+          const supabasePoints = await getTotalPoints(user.id);
+          if (supabasePoints > 0) {
+            studentData.totalPoints = supabasePoints;
+          }
+        } catch {}
       }
 
       setStudent(studentData);
@@ -361,7 +373,7 @@ const Dashboard = () => {
                       transition={{ delay: 0.6 + i * 0.05 }}
                       className="transition-colors hover:bg-muted"
                     >
-                      <td className="px-4 py-4 font-body text-sm text-foreground">{session.date}</td>
+                      <td className="px-4 py-4 font-body text-sm text-foreground">{formatFriendlyDate(session.date)}</td>
                       <td className="px-4 py-4 font-display text-lg font-bold text-primary">{session.km}</td>
                       <td className="px-4 py-4 font-body text-sm text-foreground">{session.minutes}</td>
                       <td className="px-4 py-4 font-body text-sm text-foreground hidden sm:table-cell">

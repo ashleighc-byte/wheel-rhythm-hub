@@ -5,6 +5,19 @@ import { fetchStudents, callAirtable } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
 import { getLevelName } from "@/components/LevelProgress";
 import { Badge } from "@/components/ui/badge";
+import { pluraliseUnit } from "@/lib/dateFormat";
+
+/** Format "h:mm" string with correct pluralisation */
+function formatTime(timeStr: string): string {
+  const parts = timeStr.split(":");
+  if (parts.length !== 2) return timeStr;
+  const hours = parseInt(parts[0], 10);
+  const minutes = parseInt(parts[1], 10);
+  if (isNaN(hours) || isNaN(minutes)) return timeStr;
+  const hPart = hours > 0 ? pluraliseUnit(hours, "hour") : "";
+  const mPart = pluraliseUnit(minutes, "minute");
+  return hPart ? `${hPart} ${mPart}` : mPart;
+}
 
 interface Rider {
   rank: number;
@@ -155,7 +168,7 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
                     </span>
                   ) : (
                     <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {rider.totalTime}
+                      <Clock className="h-3 w-3" /> {formatTime(rider.totalTime)}
                     </span>
                   )}
                 </div>
