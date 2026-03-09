@@ -8,6 +8,8 @@ import LevelProgress from "@/components/LevelProgress";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, fetchSessionReflections, callAirtable, hasCompletedFourWeekCheckIn, isValidRecordId } from "@/lib/airtable";
+import { getTotalPoints } from "@/lib/points";
+import { formatFriendlyDate } from "@/lib/dateFormat";
 
 const moodEmojis = ["😞", "😕", "😐", "🙂", "😁"];
 
