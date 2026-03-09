@@ -109,6 +109,20 @@ const TeacherDashboard = () => {
         }
 
         const studentIds = studentRecords.map((r) => r.id);
+
+        // Fetch points from Supabase grouped by airtable_student_id
+        const { data: pointsRows } = await supabase
+          .from("student_points")
+          .select("airtable_student_id, total_points");
+
+        const pointsMap = new Map<string, number>();
+        if (pointsRows) {
+          for (const row of pointsRows) {
+            const prev = pointsMap.get(row.airtable_student_id) ?? 0;
+            pointsMap.set(row.airtable_student_id, prev + row.total_points);
+          }
+        }
+
         const surveyData = await fetchAllSurveysForStudents(studentIds);
         const surveyRecords = surveyData.records;
 
@@ -139,6 +153,7 @@ const TeacherDashboard = () => {
           id: rec.id,
           name: rec.fields["Full Name"] || "—",
           sessions: rec.fields["Count (Session Reflections)"] || 0,
+          points: pointsMap.get(rec.id) ?? 0,
           ...surveyMap[rec.id],
         }));
         rows.sort((a, b) => a.name.localeCompare(b.name));
