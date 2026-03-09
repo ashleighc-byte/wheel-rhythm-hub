@@ -168,8 +168,20 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
       }
 
       await createSessionReflection(fields, nfcSession?.nfcToken);
+
+      // Record points in Supabase
+      let pointsEarned = 0;
+      if (user?.id && studentRecordId) {
+        try {
+          const { recordSessionPoints } = await import("@/lib/points");
+          pointsEarned = await recordSessionPoints(user.id, studentRecordId);
+        } catch (err) {
+          console.error("Points recording failed:", err);
+        }
+      }
+
       setSubmitted(true);
-      toast({ title: "Ride logged successfully! 🚴" });
+      toast({ title: pointsEarned > 0 ? `🎉 +${pointsEarned} points earned!` : "Ride logged successfully! 🚴" });
     } catch (err: any) {
       console.error("Submission error:", err);
       toast({ title: "Failed to submit feedback", description: err.message, variant: "destructive" });

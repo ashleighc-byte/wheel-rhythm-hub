@@ -373,7 +373,7 @@ const Dashboard = () => {
                       transition={{ delay: 0.6 + i * 0.05 }}
                       className="transition-colors hover:bg-muted"
                     >
-                      <td className="px-4 py-4 font-body text-sm text-foreground">{session.date}</td>
+                      <td className="px-4 py-4 font-body text-sm text-foreground">{formatFriendlyDate(session.date)}</td>
                       <td className="px-4 py-4 font-display text-lg font-bold text-primary">{session.km}</td>
                       <td className="px-4 py-4 font-body text-sm text-foreground">{session.minutes}</td>
                       <td className="px-4 py-4 font-body text-sm text-foreground hidden sm:table-cell">

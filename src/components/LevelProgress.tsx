@@ -4,10 +4,9 @@ import { Trophy } from "lucide-react";
 const LEVELS = [
   { name: "Kickstand", min: 0, icon: "🚲" },
   { name: "Pedal Pusher", min: 50, icon: "🦵" },
-  { name: "Chain Breaker", min: 150, icon: "⛓️" },
-  { name: "Hill Climber", min: 300, icon: "⛰️" },
-  { name: "Sprint King", min: 500, icon: "👑" },
-  { name: "Tour Legend", min: 800, icon: "🏆" },
+  { name: "Gear Shifter", min: 150, icon: "⚙️" },
+  { name: "Chain Breaker", min: 300, icon: "⛓️" },
+  { name: "Freewheeler", min: 500, icon: "🏆" },
 ];
 
 export function getLevel(totalPoints: number) {

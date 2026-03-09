@@ -7,8 +7,22 @@ import {
   fetchAllSurveysForStudents,
   fetchSessionsByRecordIds,
 } from "@/lib/airtable";
+import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, XCircle, Users, Clock, Bike, MessageSquare } from "lucide-react";
 import TeacherObservationForm from "@/components/TeacherObservationForm";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
+import { formatFriendlyDate } from "@/lib/dateFormat";
 
 interface StudentRow {
   id: string;
@@ -28,6 +42,11 @@ interface SessionRow {
   moodAfter: string | number;
 }
 
+interface NudgeRecord {
+  student_id: string;
+  nudged_at: string;
+}
+
 const StatusIcon = ({ done }: { done: boolean }) =>
   done ? (
     <CheckCircle2 className="mx-auto h-5 w-5 text-primary" />
@@ -45,22 +64,40 @@ const TeacherDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [observationOpen, setObservationOpen] = useState(false);
 
+  // Nudge state
+  const [nudges, setNudges] = useState<Map<string, string>>(new Map());
+  const [nudgeTarget, setNudgeTarget] = useState<StudentRow | null>(null);
+  const [nudging, setNudging] = useState(false);
+
+  // Load existing nudges
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from("student_nudges")
+      .select("student_id, nudged_at")
+      .eq("nudged_by", user.id)
+      .then(({ data }) => {
+        if (data) {
+          const map = new Map<string, string>();
+          data.forEach((n: NudgeRecord) => map.set(n.student_id, n.nudged_at));
+          setNudges(map);
+        }
+      });
+  }, [user?.id]);
+
   useEffect(() => {
     if (!user?.email) return;
 
     const load = async () => {
       try {
         setLoading(true);
-
-        // 1. Get teacher's org — includes linked student record IDs
         const org = await fetchTeacherOrg(user.email!);
         if (!org) {
-          setError("Could not find your organisation in Airtable. Make sure your email matches the Organisations table.");
+          setError("Could not find your organisation. Make sure your email matches the Organisations table.");
           return;
         }
         setOrgName(org.name);
 
-        // 2. Fetch student records directly by their IDs (from org record)
         const studentData = await fetchStudentsByIds(org.studentRecordIds);
         const studentRecords = studentData.records;
 
@@ -71,18 +108,14 @@ const TeacherDashboard = () => {
         }
 
         const studentIds = studentRecords.map((r) => r.id);
-
-        // 3. Batch fetch surveys for all students
         const surveyData = await fetchAllSurveysForStudents(studentIds);
         const surveyRecords = surveyData.records;
 
-        // Index surveys by student record ID
         const surveyMap: Record<string, { prePilot: boolean; fourWeek: boolean; postPilot: boolean }> = {};
         for (const id of studentIds) {
           surveyMap[id] = { prePilot: false, fourWeek: false, postPilot: false };
         }
 
-        // Pre-pilot: student record itself has a non-empty 'Surveys & Student Voice' array
         for (const rec of studentRecords) {
           const linked = rec.fields["Surveys & Student Voice"];
           if (Array.isArray(linked) && linked.length > 0) {
@@ -90,7 +123,6 @@ const TeacherDashboard = () => {
           }
         }
 
-        // 4-week & post-pilot: check survey records
         for (const survey of surveyRecords) {
           const type: string = survey.fields["Survey Type"] || "";
           const linkedStudents: string[] = survey.fields["Student Name"] || [];
@@ -102,7 +134,6 @@ const TeacherDashboard = () => {
           }
         }
 
-        // 4. Build student rows
         const rows: StudentRow[] = studentRecords.map((rec) => ({
           id: rec.id,
           name: rec.fields["Full Name"] || "—",
@@ -112,9 +143,7 @@ const TeacherDashboard = () => {
         rows.sort((a, b) => a.name.localeCompare(b.name));
         setStudents(rows);
 
-        // 5. Collect all session record IDs from student records (max 20 most recent)
         const allSessionIds: string[] = [];
-        // Build a map of sessionRecordId -> studentName for display
         const sessionStudentMap: Record<string, string> = {};
         for (const rec of studentRecords) {
           const sIds: string[] = rec.fields["Session Reflections"] || [];
@@ -124,7 +153,7 @@ const TeacherDashboard = () => {
             sessionStudentMap[sid] = name;
           }
         }
-        // Take latest 20 (Airtable IDs are not ordered, so we fetch all and sort by date client-side)
+
         const sessionData = await fetchSessionsByRecordIds(allSessionIds.slice(0, 40));
         const sessionRows: SessionRow[] = sessionData.records
           .map((rec) => {
@@ -155,10 +184,47 @@ const TeacherDashboard = () => {
     load();
   }, [user?.email]);
 
+  const handleNudge = async () => {
+    if (!nudgeTarget || !user?.id) return;
+    setNudging(true);
+    try {
+      const { error: insertErr } = await supabase.from("student_nudges").insert({
+        student_id: nudgeTarget.id,
+        nudged_by: user.id,
+      });
+      if (insertErr) throw insertErr;
+      setNudges((prev) => new Map(prev).set(nudgeTarget.id, new Date().toISOString()));
+      toast({ title: `Nudge sent to ${nudgeTarget.name}` });
+    } catch (err: any) {
+      toast({ title: "Failed to send nudge", description: err.message, variant: "destructive" });
+    } finally {
+      setNudging(false);
+      setNudgeTarget(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <TeacherObservationForm open={observationOpen} onOpenChange={setObservationOpen} />
+
+      {/* Nudge confirmation */}
+      <AlertDialog open={!!nudgeTarget} onOpenChange={(open) => !open && setNudgeTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send Reminder</AlertDialogTitle>
+            <AlertDialogDescription>
+              Send a reminder to {nudgeTarget?.name} to log their first ride?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={nudging}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleNudge} disabled={nudging}>
+              {nudging ? "Sending…" : "Send Nudge"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Header */}
       <section className="bg-secondary py-12 md:py-16">
@@ -243,39 +309,47 @@ const TeacherDashboard = () => {
                   <table className="w-full font-body text-sm">
                     <thead className="bg-secondary text-secondary-foreground">
                       <tr>
-                        <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-wider">
-                          Student Name
-                        </th>
-                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">
-                          Sessions
-                        </th>
-                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">
-                          Pre-Pilot
-                        </th>
-                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">
-                          4 Week Check-In
-                        </th>
-                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">
-                          Post-Pilot
-                        </th>
+                        <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-wider">Student Name</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Sessions</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Pre-Pilot</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">4 Week Check-In</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Post-Pilot</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-secondary/40 bg-card">
-                      {students.map((s) => (
-                        <tr key={s.id} className="hover:bg-secondary/20 transition-colors">
-                          <td className="px-4 py-3 font-semibold text-foreground">{s.name}</td>
-                          <td className="px-4 py-3 text-center text-foreground">{s.sessions}</td>
-                          <td className="px-4 py-3 text-center">
-                            <StatusIcon done={s.prePilot} />
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <StatusIcon done={s.fourWeek} />
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <StatusIcon done={s.postPilot} />
-                          </td>
-                        </tr>
-                      ))}
+                      {students.map((s) => {
+                        const nudgedAt = nudges.get(s.id);
+                        return (
+                          <tr key={s.id} className="hover:bg-secondary/20 transition-colors">
+                            <td className="px-4 py-3 font-semibold text-foreground">{s.name}</td>
+                            <td className="px-4 py-3 text-center text-foreground">{s.sessions}</td>
+                            <td className="px-4 py-3 text-center"><StatusIcon done={s.prePilot} /></td>
+                            <td className="px-4 py-3 text-center"><StatusIcon done={s.fourWeek} /></td>
+                            <td className="px-4 py-3 text-center"><StatusIcon done={s.postPilot} /></td>
+                            <td className="px-4 py-3 text-center">
+                              {s.sessions === 0 ? (
+                                nudgedAt ? (
+                                  <span className="font-display text-xs text-muted-foreground">
+                                    Nudged {formatFriendlyDate(nudgedAt.slice(0, 10))}
+                                  </span>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setNudgeTarget(s)}
+                                    className="font-display text-xs uppercase"
+                                  >
+                                    Nudge
+                                  </Button>
+                                )
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -294,21 +368,11 @@ const TeacherDashboard = () => {
                   <table className="w-full font-body text-sm">
                     <thead className="bg-secondary text-secondary-foreground">
                       <tr>
-                        <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-wider">
-                          Student
-                        </th>
-                        <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-wider">
-                          Date
-                        </th>
-                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">
-                          km
-                        </th>
-                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">
-                          Time (mins)
-                        </th>
-                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">
-                          Mood
-                        </th>
+                        <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-wider">Student</th>
+                        <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">km</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Time (mins)</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Mood</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-secondary/40 bg-card">

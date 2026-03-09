@@ -3,9 +3,10 @@ import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { CheckCircle2, Circle, Bike, ClipboardList, Heart, AlertTriangle, Target, BarChart3, Calendar } from "lucide-react";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ReportIssueForm from "@/components/ReportIssueForm";
-
+import { fetchStudents } from "@/lib/airtable";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const timelinePhases = [
   {
@@ -50,35 +51,57 @@ const timelinePhases = [
 // ── Student-facing Info page ──────────────────────────────────────────────────
 
 const StudentInfo = () => {
+  const { user } = useAuth();
   const [logOpen, setLogOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [sessionCount, setSessionCount] = useState(0);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    fetchStudents(user.email)
+      .then((res) => {
+        if (res.records.length > 0) {
+          setSessionCount(Number(res.records[0].fields["Count (Session Reflections)"] ?? 0));
+        }
+      })
+      .catch(console.error);
+  }, [user?.email]);
+
+  // Determine ride log status: "empty" | "in-progress" | "done"
+  const rideStatus = sessionCount >= 10 ? "done" : sessionCount >= 1 ? "in-progress" : "empty";
 
   const checklist = [
     {
-      done: true,
+      status: "done" as const,
       label: "Pre-Pilot Survey",
       description: "Completed on sign-up — you're good! ✅",
       action: null,
     },
     {
-      done: false,
+      status: "empty" as const,
       label: "4 Week Check-In",
       description: "A quick mid-pilot check-in — due around week 4.",
       action: { type: "link" as const, to: "/four-week-check-in", text: "Start Check-In →" },
     },
     {
-      done: false,
+      status: "empty" as const,
       label: "Post-Pilot Survey",
       description: "Coming Term 4 2026 — we'll remind you when it's time.",
-      action: { type: "link" as const, to: "/post-pilot-survey", text: "Start Survey →" },
+      action: { type: "disabled-link" as const, text: "Start Survey →" },
     },
     {
-      done: false,
+      status: rideStatus,
       label: "Log Your Ride After Every Session",
       description: "Every time you jump on the bike, log your data — it keeps your stats up and helps the programme.",
       action: { type: "button" as const, text: "Log a Ride →", onClick: () => setLogOpen(true) },
     },
   ];
+
+  const renderStatusIcon = (status: "done" | "in-progress" | "empty") => {
+    if (status === "done") return <CheckCircle2 className="h-6 w-6 text-primary" />;
+    if (status === "in-progress") return <div className="h-6 w-6 rounded-full border-[3px] border-primary bg-primary/30" />;
+    return <Circle className="h-6 w-6 text-muted-foreground/40" />;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,30 +174,31 @@ const StudentInfo = () => {
                 <div
                   key={i}
                   className={`border-[3px] bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] ${
-                    item.done ? "border-primary/40 opacity-75" : "border-secondary"
+                    item.status === "done" ? "border-primary/40 opacity-75" : "border-secondary"
                   }`}
                 >
                   <div className="flex items-start gap-4">
                     <div className="mt-0.5 shrink-0">
-                      {item.done ? (
-                        <CheckCircle2 className="h-6 w-6 text-primary" />
-                      ) : (
-                        <Circle className="h-6 w-6 text-muted-foreground/40" />
-                      )}
+                      {renderStatusIcon(item.status)}
                     </div>
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
                           {i + 1}. {item.label}
                         </span>
-                        {item.done && (
+                        {item.status === "done" && (
                           <span className="bg-primary px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
                             Done
                           </span>
                         )}
+                        {item.status === "in-progress" && (
+                          <span className="bg-accent px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-wider text-accent-foreground">
+                            In Progress
+                          </span>
+                        )}
                       </div>
                       <p className="mt-1 font-body text-sm text-foreground/70">{item.description}</p>
-                      {item.action && !item.done && (
+                      {item.action && item.status !== "done" && (
                         <div className="mt-3">
                           {item.action.type === "link" ? (
                             <Link
@@ -183,6 +207,21 @@ const StudentInfo = () => {
                             >
                               {item.action.text}
                             </Link>
+                          ) : item.action.type === "disabled-link" ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span
+                                    className="inline-block cursor-not-allowed border-[2px] border-muted bg-muted px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground opacity-60"
+                                  >
+                                    {item.action.text}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Opens Term 4 2026 — we'll let you know when it's time</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           ) : (
                             <button
                               onClick={item.action.onClick}
@@ -252,7 +291,6 @@ const StudentInfo = () => {
 
 const TeacherInfo = () => {
   const [reportOpen, setReportOpen] = useState(false);
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -390,8 +428,6 @@ const TeacherInfo = () => {
         </div>
       </section>
 
-
-
       {/* Hardware / issue reporting */}
       <section className="bg-background py-12">
         <div className="container mx-auto px-4">
@@ -402,9 +438,11 @@ const TeacherInfo = () => {
                   <AlertTriangle className="h-5 w-5 text-accent-foreground" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">Something Not Working?</h3>
+                  <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
+                    Something Not Working?
+                  </h3>
                   <p className="mt-1 font-body text-sm text-foreground/70">
-                    Hardware issue, app glitch, or student problem? Report it here.
+                    Equipment issue? Technical problem? Let us know.
                   </p>
                   <button
                     onClick={() => setReportOpen(true)}
@@ -419,48 +457,44 @@ const TeacherInfo = () => {
         </div>
       </section>
 
-      {/* Our Vision */}
-      <section className="bg-secondary py-20">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 flex justify-center">
-              <div className="flex h-12 w-12 items-center justify-center bg-accent">
-                <Heart className="h-6 w-6 text-accent-foreground" />
-              </div>
-            </div>
-            <h2 className="mb-8 font-display text-3xl font-bold uppercase tracking-wider text-secondary-foreground md:text-4xl">Our Vision</h2>
-            <div className="space-y-4 font-body text-lg leading-relaxed text-secondary-foreground/90">
-              <p className="font-semibold text-accent">Free Wheeler isn't just about cycling.</p>
-              <p>It's about creating a pathway for rangatahi to move on their own terms.</p>
-              <p>To build confidence.</p>
-              <p>To find enjoyment in effort.</p>
-              <p>To feel part of something different.</p>
-            </div>
-            <div className="mt-10 inline-block tape-element-green px-8 py-4">
-              <span className="font-display text-2xl font-extrabold uppercase tracking-wider">Pedal Your Own Path.</span>
-            </div>
+      {/* Vision */}
+      <section className="bg-secondary py-16">
+        <div className="container mx-auto px-4 text-center">
+          <div className="mx-auto max-w-2xl">
+            <h2 className="font-display text-3xl font-bold uppercase tracking-wider text-accent">
+              The Vision
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl font-body text-base text-secondary-foreground/80">
+              Free Wheeler aims to create a scalable model for inclusive school sport — one that uses technology, data, and student voice to break barriers and build confidence.
+            </p>
+            <p className="tape-element-green mt-6 inline-block px-4 py-2 font-display text-lg font-bold uppercase">
+              Go hard — without having to go anywhere.
+            </p>
           </div>
         </div>
       </section>
 
       <footer className="border-t-4 border-primary bg-secondary px-4 py-10">
         <div className="container mx-auto text-center">
-          <div className="font-display text-lg font-bold uppercase text-accent">Free Wheeler Bike League</div>
-          <p className="mt-2 font-body text-sm text-secondary-foreground/60">Pedal Your Own Path · © 2026</p>
+          <div className="font-display text-lg font-bold uppercase text-accent">
+            Free Wheeler Bike League
+          </div>
+          <p className="mt-2 font-body text-sm text-secondary-foreground/60">
+            Pedal Your Own Path · © 2026
+          </p>
         </div>
       </footer>
 
       <ReportIssueForm open={reportOpen} onOpenChange={setReportOpen} />
     </div>
   );
-
 };
 
-// ── Route entry point ─────────────────────────────────────────────────────────
+// ── Route selector ────────────────────────────────────────────────────────────
 
 const Info = () => {
   const { role } = useAuth();
-  return role === 'admin' ? <TeacherInfo /> : <StudentInfo />;
+  return role === "admin" ? <TeacherInfo /> : <StudentInfo />;
 };
 
 export default Info;
