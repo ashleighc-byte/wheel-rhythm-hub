@@ -2,55 +2,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-function calculatePoints(sessionData: any): number {
-  let points = 15; // Base (10) + Screenshot (5) — always awarded
-
-  if (!sessionData) return points;
-
-  const distance = Number(sessionData.distance_km ?? 0);
-  const durationStr = String(sessionData.duration_hh_mm_ss ?? "0:00:00");
-  const speed = Number(sessionData.speed_kmh ?? 0);
-  const elevation = Number(sessionData.elevation_m ?? 0);
-
-  // Parse duration to minutes
-  const parts = durationStr.split(":").map(Number);
-  let totalMinutes = 0;
-  if (parts.length === 3) {
-    totalMinutes = parts[0] * 60 + parts[1] + parts[2] / 60;
-  } else if (parts.length === 2) {
-    totalMinutes = parts[0] + parts[1] / 60;
-  }
-
-  // Distance: 1 pt per km
-  points += Math.floor(distance);
-
-  // Duration: 1 pt per 5 mins
-  points += Math.floor(totalMinutes / 5);
-
-  // Elevation: 2 pts per 100m
-  points += Math.floor(elevation / 100) * 2;
-
-  // Speed bonus
-  if (speed > 30) {
-    points += 10;
-  } else if (speed > 25) {
-    points += 5;
-  }
-
-  return points;
-}
-
-function parseSessionData(raw: any): any | null {
-  if (!raw) return null;
-  try {
-    if (typeof raw === "string") return JSON.parse(raw);
-    if (typeof raw === "object") return raw;
-  } catch { /* ignore */ }
-  return null;
-}
+const BASE_POINTS = 10;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -67,6 +22,8 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
   const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
@@ -76,6 +33,9 @@ Deno.serve(async (req) => {
       status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+
+  // Use service role for inserting points (bypasses RLS)
+  const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
   const AIRTABLE_API_KEY = Deno.env.get('AIRTABLE_API_KEY')!;
   const AIRTABLE_BASE_ID = Deno.env.get('AIRTABLE_BASE_ID')!;
@@ -95,29 +55,92 @@ Deno.serve(async (req) => {
       offset = data.offset;
     } while (offset);
 
-    // Calculate and batch update
-    const updates: { id: string; fields: { "Points Earned": number } }[] = [];
-    const details: { id: string; name: string; oldPoints: number; newPoints: number; sessionData: any }[] = [];
+    // Build map of student email -> user_id from Supabase auth
+    const { data: authUsers } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+    const emailToUserId = new Map<string, string>();
+    if (authUsers?.users) {
+      for (const u of authUsers.users) {
+        if (u.email) emailToUserId.set(u.email.toLowerCase(), u.id);
+      }
+    }
+
+    // Fetch student emails from Airtable to map airtable_student_id -> email
+    const studentRecords: any[] = [];
+    let studentOffset: string | undefined;
+    do {
+      let url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent('Student Registration')}`;
+      if (studentOffset) url += `?offset=${studentOffset}`;
+      const res = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` },
+      });
+      const data = await res.json();
+      studentRecords.push(...(data.records || []));
+      studentOffset = data.offset;
+    } while (studentOffset);
+
+    const studentIdToEmail = new Map<string, string>();
+    for (const s of studentRecords) {
+      const email = s.fields["School Email"] || s.fields["Email"];
+      if (email) {
+        studentIdToEmail.set(s.id, email.toLowerCase());
+      }
+    }
+
+    // Get existing points from Supabase to avoid duplicates
+    const { data: existingPoints } = await adminClient
+      .from('student_points')
+      .select('airtable_student_id, session_date');
+    
+    const existingSet = new Set<string>();
+    if (existingPoints) {
+      for (const p of existingPoints) {
+        existingSet.add(`${p.airtable_student_id}|${p.session_date}`);
+      }
+    }
+
+    // Process each session
+    const airtableUpdates: { id: string; fields: { "Points Earned": number } }[] = [];
+    const supabaseInserts: { user_id: string; airtable_student_id: string; session_date: string; base_points: number; bonus_points: number; total_points: number }[] = [];
+    const skipped: string[] = [];
 
     for (const rec of allRecords) {
-      const sessionData = parseSessionData(rec.fields["Session Data Table"]);
-      const newPoints = calculatePoints(sessionData);
-      const oldPoints = Number(rec.fields["Points Earned"] ?? 0);
+      const studentLinks = rec.fields["Student Registration"] as string[] | undefined;
+      const airtableStudentId = studentLinks?.[0];
+      const dateRaw = rec.fields["Auto date"] || rec.createdTime || "";
+      const sessionDate = dateRaw ? dateRaw.slice(0, 10) : new Date().toISOString().slice(0, 10);
 
-      updates.push({ id: rec.id, fields: { "Points Earned": newPoints } });
-      details.push({
-        id: rec.id,
-        name: String(rec.fields["Student Name (from Student Registration)"] ?? rec.id),
-        oldPoints,
-        newPoints,
-        sessionData,
-      });
+      // Always update Airtable with base points
+      airtableUpdates.push({ id: rec.id, fields: { "Points Earned": BASE_POINTS } });
+
+      // Try to insert into Supabase if we can map to a user
+      if (airtableStudentId) {
+        const email = studentIdToEmail.get(airtableStudentId);
+        const userId = email ? emailToUserId.get(email) : undefined;
+
+        const key = `${airtableStudentId}|${sessionDate}`;
+        if (existingSet.has(key)) {
+          skipped.push(rec.id);
+          continue;
+        }
+
+        if (userId) {
+          supabaseInserts.push({
+            user_id: userId,
+            airtable_student_id: airtableStudentId,
+            session_date: sessionDate,
+            base_points: BASE_POINTS,
+            bonus_points: 0,
+            total_points: BASE_POINTS,
+          });
+          existingSet.add(key);
+        }
+      }
     }
 
     // Airtable PATCH in batches of 10
-    let patchedCount = 0;
-    for (let i = 0; i < updates.length; i += 10) {
-      const batch = updates.slice(i, i + 10);
+    let airtablePatched = 0;
+    for (let i = 0; i < airtableUpdates.length; i += 10) {
+      const batch = airtableUpdates.slice(i, i + 10);
       const res = await fetch(
         `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent('Session Reflections')}`,
         {
@@ -133,19 +156,27 @@ Deno.serve(async (req) => {
         const errText = await res.text();
         throw new Error(`Airtable PATCH error [${res.status}]: ${errText}`);
       }
-      patchedCount += batch.length;
+      airtablePatched += batch.length;
+    }
+
+    // Supabase insert in batches
+    let supabaseInserted = 0;
+    for (let i = 0; i < supabaseInserts.length; i += 50) {
+      const batch = supabaseInserts.slice(i, i + 50);
+      const { error: insertError } = await adminClient.from('student_points').insert(batch);
+      if (insertError) {
+        console.error('Supabase insert error:', insertError);
+      } else {
+        supabaseInserted += batch.length;
+      }
     }
 
     return new Response(JSON.stringify({
       success: true,
       totalSessions: allRecords.length,
-      updated: patchedCount,
-      details: details.map(d => ({
-        id: d.id,
-        oldPoints: d.oldPoints,
-        newPoints: d.newPoints,
-        hasSessionData: !!d.sessionData,
-      })),
+      airtableUpdated: airtablePatched,
+      supabaseInserted,
+      skipped: skipped.length,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
