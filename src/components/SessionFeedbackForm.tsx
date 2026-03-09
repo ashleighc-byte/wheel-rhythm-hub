@@ -167,10 +167,13 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
         fields["Use the ipad to take a screenshot of your session time and upload it here."] = [{ url: attachmentUrl }];
       }
 
-      await createSessionReflection(fields, nfcSession?.nfcToken);
+      const createResponse = await createSessionReflection(fields, nfcSession?.nfcToken);
+      const newSessionRecordId = createResponse?.records?.[0]?.id;
 
-      // Record points in Supabase
-      let pointsEarned = 0;
+      // Record points in Supabase and sync to Airtable
+      let pointsEarned = 10; // Base points always earned
+      
+      // Try to record in Supabase if user is logged in (not NFC)
       if (user?.id && studentRecordId) {
         try {
           const { recordSessionPoints } = await import("@/lib/points");
@@ -180,8 +183,21 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
         }
       }
 
+      // Always sync points back to Airtable
+      if (newSessionRecordId) {
+        try {
+          await updateSessionReflection(
+            newSessionRecordId,
+            { "Points Earned": pointsEarned },
+            nfcSession?.nfcToken
+          );
+        } catch (err) {
+          console.error("Failed to sync points to Airtable:", err);
+        }
+      }
+
       setSubmitted(true);
-      toast({ title: pointsEarned > 0 ? `🎉 +${pointsEarned} points earned!` : "Ride logged successfully! 🚴" });
+      toast({ title: `🎉 +${pointsEarned} points earned!` });
     } catch (err: any) {
       console.error("Submission error:", err);
       toast({ title: "Failed to submit feedback", description: err.message, variant: "destructive" });
