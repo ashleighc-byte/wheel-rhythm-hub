@@ -148,6 +148,16 @@ const Dashboard = () => {
         setSchoolRank(rank > 0 ? rank : null);
       }
 
+      // Fetch points from Supabase if user is logged in
+      if (user?.id) {
+        try {
+          const supabasePoints = await getTotalPoints(user.id);
+          if (supabasePoints > 0) {
+            studentData.totalPoints = supabasePoints;
+          }
+        } catch {}
+      }
+
       setStudent(studentData);
 
       // Map sessions — parse Session Data Table JSON
