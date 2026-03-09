@@ -68,7 +68,7 @@ const StudentInfo = () => {
   }, [user?.email]);
 
   // Determine ride log status: "empty" | "in-progress" | "done"
-  const rideStatus = sessionCount >= 10 ? "done" : sessionCount >= 1 ? "in-progress" : "empty";
+  const rideStatus: "done" | "in-progress" | "empty" = sessionCount >= 10 ? "done" : sessionCount >= 1 ? "in-progress" : "empty";
 
   const checklist = [
     {
