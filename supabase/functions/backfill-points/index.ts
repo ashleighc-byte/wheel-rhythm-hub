@@ -200,6 +200,7 @@ Deno.serve(async (req) => {
       success: true,
       totalSessions: allRecords.length,
       airtableUpdated: airtablePatched,
+      airtableError,
       supabaseInserted,
       skipped: skipped.length,
     }), {
