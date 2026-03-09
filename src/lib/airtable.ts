@@ -182,6 +182,14 @@ export async function createSessionReflection(fields: Record<string, any>, nfcTo
   });
 }
 
+export async function updateSessionReflection(recordId: string, fields: Record<string, any>, nfcToken?: string) {
+  if (!isValidRecordId(recordId)) throw new Error('Invalid record ID');
+  return callAirtable('Session Reflections', 'PATCH', {
+    body: { records: [{ id: recordId, fields }] },
+    ...(nfcToken ? { nfcToken } : {}),
+  });
+}
+
 export async function fetchSurveys(studentRecordId?: string) {
   const options: any = {};
   if (studentRecordId && isValidRecordId(studentRecordId)) {
