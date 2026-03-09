@@ -155,7 +155,7 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
                     </span>
                   ) : (
                     <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {rider.totalTime}
+                      <Clock className="h-3 w-3" /> {formatTime(rider.totalTime)}
                     </span>
                   )}
                 </div>
