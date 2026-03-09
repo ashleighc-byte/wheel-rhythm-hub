@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getLevelName } from "@/components/LevelProgress";
 import { Badge } from "@/components/ui/badge";
 import { pluraliseUnit } from "@/lib/dateFormat";
+import { supabase } from "@/integrations/supabase/client";
 
 /** Format "h:mm" string with correct pluralisation */
 function formatTime(timeStr: string): string {
