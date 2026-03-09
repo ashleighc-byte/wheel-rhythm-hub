@@ -137,11 +137,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Airtable PATCH in batches of 10
+    // Airtable PATCH in batches of 10 (skip if field doesn't exist)
     let airtablePatched = 0;
-    for (let i = 0; i < airtableUpdates.length; i += 10) {
-      const batch = airtableUpdates.slice(i, i + 10);
-      const res = await fetch(
+    let airtableError: string | null = null;
+    
+    if (airtableUpdates.length > 0) {
+      // Try first batch to see if field exists
+      const firstBatch = airtableUpdates.slice(0, Math.min(10, airtableUpdates.length));
+      const testRes = await fetch(
         `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent('Session Reflections')}`,
         {
           method: 'PATCH',
@@ -149,14 +152,36 @@ Deno.serve(async (req) => {
             'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ records: batch }),
+          body: JSON.stringify({ records: firstBatch }),
         }
       );
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Airtable PATCH error [${res.status}]: ${errText}`);
+
+      if (testRes.ok) {
+        airtablePatched += firstBatch.length;
+        
+        // Continue with remaining batches
+        for (let i = 10; i < airtableUpdates.length; i += 10) {
+          const batch = airtableUpdates.slice(i, i + 10);
+          const res = await fetch(
+            `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent('Session Reflections')}`,
+            {
+              method: 'PATCH',
+              headers: {
+                'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ records: batch }),
+            }
+          );
+          if (res.ok) {
+            airtablePatched += batch.length;
+          }
+        }
+      } else {
+        const errBody = await testRes.text();
+        airtableError = `Airtable field 'Points Earned' may not exist. Please create it in Airtable. Error: ${errBody}`;
+        console.error(airtableError);
       }
-      airtablePatched += batch.length;
     }
 
     // Supabase insert in batches
