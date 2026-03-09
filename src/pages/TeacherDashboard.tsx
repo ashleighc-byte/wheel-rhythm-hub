@@ -28,6 +28,7 @@ interface StudentRow {
   id: string;
   name: string;
   sessions: number;
+  points: number;
   prePilot: boolean;
   fourWeek: boolean;
   postPilot: boolean;

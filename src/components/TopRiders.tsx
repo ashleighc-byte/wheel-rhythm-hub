@@ -79,6 +79,19 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
           setSchoolName(org ? String(org.fields["Organisation Name"] ?? "") : "");
         }
 
+        // Fetch points from Supabase grouped by airtable_student_id
+        const { data: pointsRows } = await supabase
+          .from("student_points")
+          .select("airtable_student_id, total_points");
+
+        const pointsMap = new Map<string, number>();
+        if (pointsRows) {
+          for (const row of pointsRows) {
+            const prev = pointsMap.get(row.airtable_student_id) ?? 0;
+            pointsMap.set(row.airtable_student_id, prev + row.total_points);
+          }
+        }
+
         const mapped = allStudentsRes.records
           .filter((r) => {
             if (!schoolFilterId) return true;
@@ -86,7 +99,7 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
             return school?.[0] === schoolFilterId;
           })
           .map((r) => {
-            const totalPoints = Number(r.fields["Total Points"] ?? 0);
+            const totalPoints = pointsMap.get(r.id) ?? 0;
             return {
               name: String(r.fields["Full Name"] ?? ""),
               school: orgMap.get((r.fields["School"] as string[])?.[0] ?? "") ?? "",
