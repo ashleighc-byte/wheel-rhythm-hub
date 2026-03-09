@@ -8,7 +8,7 @@ import CTASection from "@/components/CTASection";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Leaderboards = () => {
-  const [mode, setMode] = useState<"time" | "points">("time");
+  const [mode, setMode] = useState<"time" | "points">("points");
 
   return (
     <div className="min-h-screen bg-background">
