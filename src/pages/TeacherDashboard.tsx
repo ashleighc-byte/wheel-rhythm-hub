@@ -327,6 +327,7 @@ const TeacherDashboard = () => {
                       <tr>
                         <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-wider">Student Name</th>
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Sessions</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Points</th>
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Pre-Pilot</th>
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">4 Week Check-In</th>
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Post-Pilot</th>
@@ -340,6 +341,7 @@ const TeacherDashboard = () => {
                           <tr key={s.id} className="hover:bg-secondary/20 transition-colors">
                             <td className="px-4 py-3 font-semibold text-foreground">{s.name}</td>
                             <td className="px-4 py-3 text-center text-foreground">{s.sessions}</td>
+                            <td className="px-4 py-3 text-center font-bold text-primary">{s.points}</td>
                             <td className="px-4 py-3 text-center"><StatusIcon done={s.prePilot} /></td>
                             <td className="px-4 py-3 text-center"><StatusIcon done={s.fourWeek} /></td>
                             <td className="px-4 py-3 text-center"><StatusIcon done={s.postPilot} /></td>
