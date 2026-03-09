@@ -156,6 +156,61 @@ const StudentInfo = () => {
         </div>
       </section>
 
+      {/* Points System */}
+      <section className="bg-muted py-12">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center bg-accent">
+                <Zap className="h-5 w-5 text-accent-foreground" />
+              </div>
+              <h2 className="font-display text-2xl font-bold uppercase tracking-wider text-foreground">
+                How Points Work
+              </h2>
+            </div>
+            <div className="space-y-4 font-body text-sm leading-relaxed text-foreground/90">
+              <p className="text-base font-semibold text-foreground">Every ride counts — and earns you points.</p>
+              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <span className="mt-0.5 text-lg">🚴</span>
+                    <span><strong>10 points</strong> for every completed ride session</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-0.5 text-lg">🔥</span>
+                    <span><strong>+5 bonus</strong> when you log 3 sessions in a single week</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-0.5 text-lg">⚡</span>
+                    <span><strong>+10 bonus</strong> when you ride on 5 different days in a week</span>
+                  </li>
+                </ul>
+              </div>
+              <p className="text-xs text-foreground/60">
+                That means a full week of riding earns up to <strong>65 points</strong> (5×10 + 5 + 10).
+              </p>
+              <div className="border-[3px] border-secondary bg-card p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-primary">Level Up</p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  {[
+                    { name: "Kickstand", pts: "0" },
+                    { name: "Pedal Pusher", pts: "50" },
+                    { name: "Gear Shifter", pts: "150" },
+                    { name: "Chain Breaker", pts: "300" },
+                    { name: "Freewheeler", pts: "500" },
+                  ].map((lvl) => (
+                    <div key={lvl.name} className="bg-muted px-2 py-2 text-center">
+                      <div className="font-display text-[10px] font-bold uppercase tracking-wider text-foreground">{lvl.name}</div>
+                      <div className="font-body text-xs text-primary font-semibold">{lvl.pts} pts</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Your Checklist */}
       <section className="bg-secondary py-12">
         <div className="container mx-auto px-4">
