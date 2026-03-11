@@ -52,6 +52,7 @@ const DropdownNavItem = ({ link }: { link: NavLink }) => {
     return (
       <Link
         to={link.path}
+        data-tour={link.tourId}
         className="px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
       >
         {link.label}
