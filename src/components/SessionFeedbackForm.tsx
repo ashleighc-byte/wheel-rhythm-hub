@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Upload, X, Loader2, CheckCircle, User } from "lucide-react";
+import { Star, Upload, X, Loader2, CheckCircle, User, Zap, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -34,22 +34,26 @@ function StarRating({
       </Label>
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
-          <button
+          <motion.button
             key={star}
             type="button"
             onClick={() => onChange(star)}
             onMouseEnter={() => setHover(star)}
             onMouseLeave={() => setHover(0)}
-            className="transition-transform hover:scale-110"
+            whileHover={{ scale: 1.2, rotate: 5 }}
+            whileTap={{ scale: 0.9 }}
+            animate={star <= value ? { scale: [1, 1.3, 1] } : {}}
+            transition={{ duration: 0.25 }}
+            className="transition-colors"
           >
             <Star
               className={`h-8 w-8 transition-colors ${
                 star <= (hover || value)
-                  ? "fill-primary text-primary"
+                  ? "fill-accent text-accent"
                   : "text-muted-foreground/40"
               }`}
             />
-          </button>
+          </motion.button>
         ))}
       </div>
     </div>
@@ -71,20 +75,15 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
   const [submitted, setSubmitted] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Auto-fill student name from NFC session or Airtable email lookup
   useEffect(() => {
     if (!open) return;
-
-    // NFC session takes priority
     if (nfcSession) {
       setStudentName(nfcSession.fullName);
       setStudentRecordId(nfcSession.studentId);
       setLoadingStudent(false);
       return;
     }
-
     if (!user?.email) return;
-
     setLoadingStudent(true);
     fetchStudents(user.email)
       .then((res) => {
@@ -134,16 +133,13 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
     setSubmitting(true);
     try {
       let attachmentUrl: string | undefined;
-
       if (file) {
         const ext = file.name.split(".").pop();
         const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("session-screenshots")
           .upload(path, file);
-
         if (uploadError) throw uploadError;
-
         const { data: urlData } = supabase.storage
           .from("session-screenshots")
           .getPublicUrl(path);
@@ -156,7 +152,6 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
         "What did you enjoy or not enjoy about today's session?": reflection.trim(),
       };
 
-      // Link to student record if found
       if (studentRecordId) {
         fields["Student Registration"] = [studentRecordId];
       } else {
@@ -170,10 +165,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
       const createResponse = await createSessionReflection(fields, nfcSession?.nfcToken);
       const newSessionRecordId = createResponse?.records?.[0]?.id;
 
-      // Record points in Supabase and sync to Airtable
-      let pointsEarned = 10; // Base points always earned
-      
-      // Try to record in Supabase if user is logged in (not NFC)
+      let pointsEarned = 10;
       if (user?.id && studentRecordId) {
         try {
           const { recordSessionPoints } = await import("@/lib/points");
@@ -183,7 +175,6 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
         }
       }
 
-      // Always sync points back to Airtable
       if (newSessionRecordId) {
         try {
           await updateSessionReflection(
@@ -197,7 +188,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
       }
 
       setSubmitted(true);
-      toast({ title: `🎉 +${pointsEarned} points earned!` });
+      toast({ title: `+${pointsEarned} points earned!` });
     } catch (err: any) {
       console.error("Submission error:", err);
       toast({ title: "Failed to submit feedback", description: err.message, variant: "destructive" });
@@ -224,18 +215,27 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
           {submitted ? (
             <motion.div
               key="success"
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 300 }}
               className="flex flex-col items-center gap-4 py-10 text-center"
             >
               <Link to="/" className="block">
                 <img src={logoSrc} alt="Free Wheeler" className="h-14 object-contain" />
               </Link>
-              <CheckCircle className="h-16 w-16 text-primary" />
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
+              >
+                <CheckCircle className="h-16 w-16 text-primary" />
+              </motion.div>
               <h3 className="font-display text-xl uppercase text-foreground">Ride Logged!</h3>
               <p className="font-body text-muted-foreground">Thanks for logging your ride today.</p>
-              <div className="w-full rounded border-[2px] border-secondary bg-muted px-4 py-3 text-left">
-                <p className="font-display text-xs uppercase tracking-wider text-muted-foreground">🏆 Points incoming</p>
+              <div className="w-full border-[2px] border-secondary bg-muted px-4 py-3 text-left">
+                <p className="flex items-center gap-2 font-display text-xs uppercase tracking-wider text-muted-foreground">
+                  <Zap className="h-4 w-4 text-primary" /> Points incoming
+                </p>
                 <p className="mt-1 font-body text-sm text-foreground">
                   Your points will appear once your screenshot is processed by our AI agent.
                 </p>
@@ -247,7 +247,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
                 }}
                 className="tape-element-green mt-4"
               >
-                View Your Stats →
+                View Your Stats
               </Button>
             </motion.div>
           ) : (
@@ -258,7 +258,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
               onSubmit={handleSubmit}
               className="space-y-6"
             >
-              {/* Student Name - Auto-filled */}
+              {/* Student Name */}
               <div>
                 <Label className="font-display text-sm uppercase tracking-wider text-foreground">
                   Rider
@@ -293,29 +293,35 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
                   className="hidden"
                 />
                 {preview ? (
-                  <div className="relative">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative"
+                  >
                     <img
                       src={preview}
                       alt="Session screenshot"
-                      className="max-h-48 w-full rounded border-[2px] border-secondary object-contain"
+                      className="max-h-48 w-full border-[2px] border-secondary object-contain"
                     />
                     <button
                       type="button"
                       onClick={() => { setFile(null); setPreview(null); }}
-                      className="absolute right-2 top-2 rounded-full bg-secondary p-1 text-secondary-foreground"
+                      className="absolute right-2 top-2 bg-secondary p-1 text-secondary-foreground hover-bounce"
                     >
                       <X className="h-4 w-4" />
                     </button>
-                  </div>
+                  </motion.div>
                 ) : (
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => fileRef.current?.click()}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     className="flex w-full items-center justify-center gap-2 border-[2px] border-dashed border-secondary bg-muted px-4 py-8 font-display text-sm uppercase tracking-wider text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
                   >
-                    <Upload className="h-5 w-5" />
+                    <Camera className="h-5 w-5" />
                     Tap to upload screenshot
-                  </button>
+                  </motion.button>
                 )}
               </div>
 
@@ -350,7 +356,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
               <Button
                 type="submit"
                 disabled={submitting || loadingStudent}
-                className="tape-element-green w-full text-lg transition-transform hover:rotate-0 hover:scale-105"
+                className="tape-element-green w-full text-lg"
               >
                 {submitting ? (
                   <span className="flex items-center gap-2">

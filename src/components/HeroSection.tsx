@@ -13,6 +13,9 @@ const HeroSection = () => {
 
   return (
     <section className="relative overflow-hidden bg-secondary">
+      {/* Speed lines decoration */}
+      <div className="absolute inset-0 speed-lines" />
+      
       {/* Hero image */}
       <div className="absolute inset-0">
         <img
@@ -28,7 +31,7 @@ const HeroSection = () => {
           <motion.h1
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.6, type: "spring" }}
             className="text-5xl leading-[0.95] text-secondary-foreground md:text-7xl lg:text-8xl"
           >
             NO PRESSURE.
@@ -37,9 +40,9 @@ const HeroSection = () => {
           </motion.h1>
 
           <motion.div
-            initial={{ opacity: 0, rotate: -5 }}
-            animate={{ opacity: 1, rotate: -3 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
+            initial={{ opacity: 0, x: -100, rotate: -5 }}
+            animate={{ opacity: 1, x: 0, rotate: -3 }}
+            transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
             className="my-8"
           >
             <span className="tape-element text-lg md:text-xl">GO ANYWHERE</span>
@@ -65,7 +68,7 @@ const HeroSection = () => {
             {isAdmin ? (
               <button
                 onClick={() => navigate("/teacher-dashboard")}
-                className="tape-element-green text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg"
+                className="tape-element-green text-base md:text-lg"
               >
                 TRACK YOUR STUDENTS
               </button>
@@ -73,13 +76,13 @@ const HeroSection = () => {
               <>
                 <button
                   onClick={() => setLogOpen(true)}
-                  className="tape-element text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg"
+                  className="tape-element text-base md:text-lg"
                 >
                   LOG A RIDE
                 </button>
                 <button
                   onClick={() => navigate("/info")}
-                  className="tape-element-green text-base transition-transform hover:rotate-0 hover:scale-105 md:text-lg"
+                  className="tape-element-green text-base md:text-lg"
                 >
                   LEARN MORE
                 </button>

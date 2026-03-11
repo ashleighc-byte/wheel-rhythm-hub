@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Bike, Clock, MapPin, TrendingUp, Trophy, Activity, Plus, Zap } from "lucide-react";
+import { Bike, Clock, MapPin, TrendingUp, Trophy, Activity, Plus, Zap, Frown, Meh, Smile, SmilePlus, Laugh } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import LevelProgress from "@/components/LevelProgress";
@@ -11,7 +11,8 @@ import { fetchStudents, fetchSessionReflections, callAirtable, hasCompletedFourW
 import { getTotalPoints } from "@/lib/points";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 
-const moodEmojis = ["😞", "😕", "😐", "🙂", "😁"];
+const moodIcons = [Frown, Frown, Meh, Smile, Laugh];
+const moodColors = ["text-destructive", "text-destructive/70", "text-muted-foreground", "text-primary", "text-accent"];
 
 interface SessionDataJSON {
   distance_km?: number | string;
@@ -53,6 +54,12 @@ function parseSessionData(raw: any): SessionDataJSON | null {
   return null;
 }
 
+function MoodIcon({ value }: { value: number }) {
+  if (value < 1 || value > 5) return <span>—</span>;
+  const Icon = moodIcons[value - 1];
+  return <Icon className={`h-5 w-5 ${moodColors[value - 1]}`} />;
+}
+
 const Dashboard = () => {
   const { user, role, nfcSession } = useAuth();
   const navigate = useNavigate();
@@ -66,7 +73,6 @@ const Dashboard = () => {
 
   const hasIdentity = !!user?.email || !!nfcSession;
 
-  // 4-week check-in trigger — skip for NFC users
   useEffect(() => {
     if (nfcSession) return;
     if (!user?.email || !user?.created_at || role !== "student") return;
@@ -148,7 +154,6 @@ const Dashboard = () => {
         setSchoolRank(rank > 0 ? rank : null);
       }
 
-      // Fetch points from Supabase if user is logged in
       if (user?.id) {
         try {
           const supabasePoints = await getTotalPoints(user.id);
@@ -160,7 +165,6 @@ const Dashboard = () => {
 
       setStudent(studentData);
 
-      // Map sessions — parse Session Data Table JSON
       const mapped: SessionRow[] = sessionsRes.records
         .map((s) => {
           const sessionJson = parseSessionData(s.fields["Session Data Table"]);
@@ -182,7 +186,6 @@ const Dashboard = () => {
 
       setSessions(mapped);
 
-      // Mood improvement
       const withMood = mapped.filter((s) => s.feelingBefore > 0 && s.feelingAfter > 0);
       if (withMood.length > 0) {
         const avgChange =
@@ -212,9 +215,13 @@ const Dashboard = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="font-display text-xl uppercase tracking-wider text-foreground animate-pulse">
+          <motion.div
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ repeat: Infinity, duration: 1.5 }}
+            className="font-display text-xl uppercase tracking-wider text-foreground"
+          >
             Loading your dashboard...
-          </div>
+          </motion.div>
         </div>
       </div>
     );
@@ -235,7 +242,7 @@ const Dashboard = () => {
         >
           <div>
             <h1 className="text-4xl text-foreground md:text-5xl">
-              Hey, {firstName}! 👋
+              Hey, {firstName}!
             </h1>
             <p className="mt-2 font-body text-lg text-muted-foreground">
               {student?.school ? student.school : ""}{schoolRank ? ` · Rank #${schoolRank}` : ""}
@@ -243,7 +250,7 @@ const Dashboard = () => {
           </div>
           <Button
             onClick={() => setLogOpen(true)}
-            className="tape-element-green flex items-center gap-2 text-lg transition-transform hover:rotate-0 hover:scale-105"
+            className="tape-element-green flex items-center gap-2 text-lg"
           >
             <Plus className="h-5 w-5" />
             Log a Ride
@@ -261,9 +268,9 @@ const Dashboard = () => {
           ].map((stat, i) => (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: i * 0.1, type: "spring", stiffness: 200 }}
               className="stat-card flex flex-col items-center px-4 py-6"
             >
               <stat.icon className="mb-2 h-6 w-6 text-primary" />
@@ -287,17 +294,22 @@ const Dashboard = () => {
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
+            transition={{ delay: 0.3, type: "spring" }}
+            className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce"
           >
             <div className="flex items-center gap-2 font-display text-lg font-bold uppercase text-foreground">
               <Trophy className="h-5 w-5 text-primary" />
               School Rank
             </div>
             <div className="mt-4 flex items-baseline gap-2">
-              <span className="font-display text-5xl font-bold text-primary">
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.5, type: "spring", stiffness: 300 }}
+                className="font-display text-5xl font-bold text-primary"
+              >
                 {schoolRank ? `#${schoolRank}` : "—"}
-              </span>
+              </motion.span>
               <span className="font-body text-muted-foreground">
                 at {schoolName || "your school"}
               </span>
@@ -310,8 +322,8 @@ const Dashboard = () => {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
+            transition={{ delay: 0.4, type: "spring" }}
+            className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce"
           >
             <div className="flex items-center gap-2 font-display text-lg font-bold uppercase text-foreground">
               <Activity className="h-5 w-5 text-primary" />
@@ -385,10 +397,14 @@ const Dashboard = () => {
                       <td className="px-4 py-4 font-display text-sm font-bold text-primary">
                         {session.points > 0 ? `+${session.points}` : "—"}
                       </td>
-                      <td className="px-4 py-4 text-lg">
-                        {session.feelingBefore > 0 && session.feelingAfter > 0
-                          ? `${moodEmojis[session.feelingBefore - 1]} → ${moodEmojis[session.feelingAfter - 1]}`
-                          : "—"}
+                      <td className="px-4 py-4">
+                        {session.feelingBefore > 0 && session.feelingAfter > 0 ? (
+                          <div className="flex items-center gap-1">
+                            <MoodIcon value={session.feelingBefore} />
+                            <span className="text-xs text-muted-foreground">&rarr;</span>
+                            <MoodIcon value={session.feelingAfter} />
+                          </div>
+                        ) : "—"}
                       </td>
                     </motion.tr>
                   ))}
@@ -399,7 +415,6 @@ const Dashboard = () => {
         </motion.div>
       </div>
 
-      {/* Session logging dialog */}
       <SessionFeedbackForm open={logOpen} onOpenChange={handleLogClose} />
     </div>
   );
