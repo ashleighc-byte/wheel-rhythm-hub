@@ -6,24 +6,25 @@ import brandLogo from "@/assets/fw-logo-new.png";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 
 const studentNavLinks = [
-  { label: "HOME", path: "/" },
-  { label: "ABOUT THE PILOT", path: "/info" },
-  { label: "LEADERBOARDS", path: "/leaderboards" },
-  { label: "YOUR STATS", path: "/dashboard" },
+  { label: "HOME", path: "/", tourId: "home" },
+  { label: "ABOUT THE PILOT", path: "/info", tourId: "about" },
+  { label: "LEADERBOARDS", path: "/leaderboards", tourId: "leaderboards" },
+  { label: "YOUR STATS", path: "/dashboard", tourId: "stats" },
 ];
 
 const teacherNavLinks = [
-  { label: "HOME", path: "/" },
+  { label: "HOME", path: "/", tourId: "home" },
   {
     label: "ABOUT THE PILOT",
     path: "/info",
+    tourId: "about",
     dropdown: [
       { label: "About the Pilot", path: "/info" },
       { label: "Setup Instructions", path: "/setup-instructions" },
     ],
   },
-  { label: "LEADERBOARDS", path: "/leaderboards" },
-  { label: "TEACHER DASHBOARD", path: "/teacher-dashboard" },
+  { label: "LEADERBOARDS", path: "/leaderboards", tourId: "leaderboards" },
+  { label: "TEACHER DASHBOARD", path: "/teacher-dashboard", tourId: "teacher-dashboard" },
 ];
 
 type NavLink = {
