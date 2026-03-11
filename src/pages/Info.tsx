@@ -129,10 +129,10 @@ const StudentInfo = () => {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl space-y-6 font-body text-base leading-relaxed text-foreground/90">
             <p className="text-xl font-bold text-foreground">
-              Free Wheeler Bike League is a new way to do sport — on your terms.
+              Free Wheeler Bike League is a new way to do sport.
             </p>
             <p>
-              Forget rigid team sports with pressure to perform. This is indoor cycling, digital racing, and friendly competition that works for everyone — whether you love sport or you've never felt like sport loves you back.
+              No teams. No trials. No pressure. Just jump on a bike and ride. Track your sessions, build your streak, and see how your school ranks on the leaderboard. Every ride counts.
             </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {[
