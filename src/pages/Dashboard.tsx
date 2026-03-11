@@ -235,27 +235,33 @@ const Dashboard = () => {
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Welcome header */}
+        {/* Welcome header with background art */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 flex flex-wrap items-center justify-between gap-4"
+          className="mb-8 relative overflow-hidden border-[3px] border-secondary bg-secondary p-6 shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
         >
-          <div>
-            <h1 className="text-4xl text-foreground md:text-5xl">
-              Hey, {firstName}!
-            </h1>
-            <p className="mt-2 font-body text-lg text-muted-foreground">
-              {student?.school ? student.school : ""}{schoolRank ? ` · Rank #${schoolRank}` : ""}
-            </p>
+          <div className="absolute inset-0">
+            <img src={artEliteRider} alt="" className="h-full w-full object-cover opacity-15" />
+            <div className="absolute inset-0 bg-secondary/70" />
           </div>
-          <Button
-            onClick={() => setLogOpen(true)}
-            className="tape-element-green flex items-center gap-2 text-lg"
-          >
-            <Plus className="h-5 w-5" />
-            Log a Ride
-          </Button>
+          <div className="relative flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-4xl text-secondary-foreground md:text-5xl">
+                Hey, {firstName}!
+              </h1>
+              <p className="mt-2 font-body text-lg text-secondary-foreground/70">
+                {student?.school ? student.school : ""}{schoolRank ? ` · Rank #${schoolRank}` : ""}
+              </p>
+            </div>
+            <Button
+              onClick={() => setLogOpen(true)}
+              className="tape-element-green flex items-center gap-2 text-lg"
+            >
+              <Plus className="h-5 w-5" />
+              Log a Ride
+            </Button>
+          </div>
         </motion.div>
 
         {/* Stats grid */}
