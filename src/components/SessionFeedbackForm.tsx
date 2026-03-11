@@ -231,7 +231,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
                 <CheckCircle className="h-16 w-16 text-primary" />
               </motion.div>
               <h3 className="font-display text-xl uppercase text-foreground">Ride Logged!</h3>
-              <p className="font-body text-muted-foreground">Thanks for logging your ride today.</p>
+              <p className="font-body text-muted-foreground">Upload your session screenshot, rate your mood, and log your effort. Every ride moves your school up the leaderboard.</p>
               <div className="w-full border-[2px] border-secondary bg-muted px-4 py-3 text-left">
                 <p className="flex items-center gap-2 font-display text-xs uppercase tracking-wider text-muted-foreground">
                   <Zap className="h-4 w-4 text-primary" /> Points incoming
