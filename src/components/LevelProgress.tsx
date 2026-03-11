@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
-import { Trophy } from "lucide-react";
+import { Trophy, Bike, Cog, Link2, Award } from "lucide-react";
 
 const LEVELS = [
-  { name: "Kickstand", min: 0, icon: "🚲" },
-  { name: "Pedal Pusher", min: 50, icon: "🦵" },
-  { name: "Gear Shifter", min: 150, icon: "⚙️" },
-  { name: "Chain Breaker", min: 300, icon: "⛓️" },
-  { name: "Freewheeler", min: 500, icon: "🏆" },
+  { name: "Kickstand", min: 0, icon: Bike },
+  { name: "Pedal Pusher", min: 50, icon: Cog },
+  { name: "Gear Shifter", min: 150, icon: Link2 },
+  { name: "Chain Breaker", min: 300, icon: Award },
+  { name: "Freewheeler", min: 500, icon: Trophy },
 ];
 
 export function getLevel(totalPoints: number) {
@@ -32,6 +32,7 @@ interface LevelProgressProps {
 
 const LevelProgress = ({ totalPoints }: LevelProgressProps) => {
   const { current, next } = getLevel(totalPoints);
+  const CurrentIcon = current.icon;
 
   const progress = next
     ? ((totalPoints - current.min) / (next.min - current.min)) * 100
@@ -42,7 +43,7 @@ const LevelProgress = ({ totalPoints }: LevelProgressProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.25 }}
-      className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
+      className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))] relative overflow-hidden speed-lines"
     >
       <div className="flex items-center gap-2 font-display text-lg font-bold uppercase text-foreground">
         <Trophy className="h-5 w-5 text-primary" />
@@ -50,7 +51,14 @@ const LevelProgress = ({ totalPoints }: LevelProgressProps) => {
       </div>
 
       <div className="mt-4 flex items-center gap-3">
-        <span className="text-3xl">{current.icon}</span>
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.5, type: "spring", stiffness: 300 }}
+          className="flex h-12 w-12 items-center justify-center bg-secondary"
+        >
+          <CurrentIcon className="h-6 w-6 text-accent" />
+        </motion.div>
         <div className="flex-1">
           <div className="flex items-baseline justify-between">
             <span className="font-display text-xl font-bold uppercase text-primary">
@@ -61,24 +69,24 @@ const LevelProgress = ({ totalPoints }: LevelProgressProps) => {
             </span>
           </div>
 
-          {/* XP bar */}
-          <div className="mt-2 h-4 w-full overflow-hidden border-[2px] border-secondary bg-muted">
+          {/* Glowing XP bar */}
+          <div className="glow-bar mt-2 h-5 w-full border-[2px] border-secondary bg-muted">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(progress, 100)}%` }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="h-full bg-primary"
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="glow-bar-fill h-full"
             />
           </div>
 
           <div className="mt-1 flex justify-between font-body text-xs text-muted-foreground">
             <span>{current.min} pts</span>
             {next ? (
-              <span>
-                {next.icon} {next.name} — {next.min} pts
+              <span className="flex items-center gap-1">
+                <next.icon className="h-3 w-3" /> {next.name} — {next.min} pts
               </span>
             ) : (
-              <span>MAX LEVEL 🎉</span>
+              <span className="font-bold text-primary">MAX LEVEL</span>
             )}
           </div>
         </div>

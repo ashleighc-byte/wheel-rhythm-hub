@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
-import { CheckCircle2, Circle, Bike, ClipboardList, Heart, AlertTriangle, Target, BarChart3, Calendar, Zap } from "lucide-react";
+import { CheckCircle2, Circle, Bike, ClipboardList, Heart, AlertTriangle, Target, BarChart3, Calendar, Zap, Flame, BoltIcon, Trophy } from "lucide-react";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { useState, useEffect } from "react";
 import ReportIssueForm from "@/components/ReportIssueForm";
@@ -67,33 +67,32 @@ const StudentInfo = () => {
       .catch(console.error);
   }, [user?.email]);
 
-  // Determine ride log status: "empty" | "in-progress" | "done"
   const rideStatus: "done" | "in-progress" | "empty" = sessionCount >= 10 ? "done" : sessionCount >= 1 ? "in-progress" : "empty";
 
   const checklist = [
     {
       status: "done" as const,
       label: "Pre-Pilot Survey",
-      description: "Completed on sign-up — you're good! ✅",
+      description: "Completed on sign-up — you're good!",
       action: null,
     },
     {
       status: "empty" as const,
       label: "4 Week Check-In",
       description: "A quick mid-pilot check-in — due around week 4.",
-      action: { type: "link" as const, to: "/four-week-check-in", text: "Start Check-In →" },
+      action: { type: "link" as const, to: "/four-week-check-in", text: "Start Check-In" },
     },
     {
       status: "empty" as const,
       label: "Post-Pilot Survey",
       description: "Coming Term 4 2026 — we'll remind you when it's time.",
-      action: { type: "disabled-link" as const, text: "Start Survey →" },
+      action: { type: "disabled-link" as const, text: "Start Survey" },
     },
     {
       status: rideStatus,
       label: "Log Your Ride After Every Session",
       description: "Every time you jump on the bike, log your data — it keeps your stats up and helps the programme.",
-      action: { type: "button" as const, text: "Log a Ride →", onClick: () => setLogOpen(true) },
+      action: { type: "button" as const, text: "Log a Ride", onClick: () => setLogOpen(true) },
     },
   ];
 
@@ -108,8 +107,8 @@ const StudentInfo = () => {
       <Navbar />
 
       {/* Hero */}
-      <section className="bg-secondary py-14 md:py-20">
-        <div className="container mx-auto px-4 text-center">
+      <section className="bg-secondary py-14 md:py-20 relative overflow-hidden speed-lines">
+        <div className="container mx-auto px-4 text-center relative z-10">
           <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
             What's This All About?
           </h1>
@@ -119,7 +118,7 @@ const StudentInfo = () => {
         </div>
       </section>
 
-      {/* What is Free Wheeler — condensed */}
+      {/* What is Free Wheeler */}
       <section className="bg-background py-12">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl space-y-6 font-body text-base leading-relaxed text-foreground/90">
@@ -131,15 +130,15 @@ const StudentInfo = () => {
             </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {[
-                { emoji: "🚴", label: "Ride at your own pace" },
-                { emoji: "📊", label: "Track your progress" },
-                { emoji: "🏆", label: "Compete with your school" },
+                { icon: Bike, label: "Ride at your own pace" },
+                { icon: BarChart3, label: "Track your progress" },
+                { icon: Trophy, label: "Compete with your school" },
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
+                  className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce"
                 >
-                  <div className="mb-1 text-2xl">{item.emoji}</div>
+                  <item.icon className="mx-auto mb-2 h-6 w-6 text-primary" />
                   <div className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
                     {item.label}
                   </div>
@@ -173,21 +172,21 @@ const StudentInfo = () => {
               <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
-                    <span className="mt-0.5 text-lg">🚴</span>
+                    <Bike className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                     <span><strong>10 points</strong> for every completed ride session</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="mt-0.5 text-lg">🔥</span>
+                    <Flame className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                     <span><strong>+5 bonus</strong> when you log 3 sessions in a single week</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="mt-0.5 text-lg">⚡</span>
+                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
                     <span><strong>+10 bonus</strong> when you ride on 5 different days in a week</span>
                   </li>
                 </ul>
               </div>
               <p className="text-xs text-foreground/60">
-                That means a full week of riding earns up to <strong>65 points</strong> (5×10 + 5 + 10).
+                That means a full week of riding earns up to <strong>65 points</strong> (5x10 + 5 + 10).
               </p>
               <div className="border-[3px] border-secondary bg-card p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
                 <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-primary">Level Up</p>
@@ -199,7 +198,7 @@ const StudentInfo = () => {
                     { name: "Chain Breaker", pts: "300" },
                     { name: "Freewheeler", pts: "500" },
                   ].map((lvl) => (
-                    <div key={lvl.name} className="bg-muted px-2 py-2 text-center">
+                    <div key={lvl.name} className="bg-muted px-2 py-2 text-center hover-bounce">
                       <div className="font-display text-[10px] font-bold uppercase tracking-wider text-foreground">{lvl.name}</div>
                       <div className="font-body text-xs text-primary font-semibold">{lvl.pts} pts</div>
                     </div>
@@ -228,7 +227,7 @@ const StudentInfo = () => {
               {checklist.map((item, i) => (
                 <div
                   key={i}
-                  className={`border-[3px] bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] ${
+                  className={`border-[3px] bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce ${
                     item.status === "done" ? "border-primary/40 opacity-75" : "border-secondary"
                   }`}
                 >
@@ -300,7 +299,7 @@ const StudentInfo = () => {
       <section className="bg-background py-12">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl">
-            <div className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+            <div className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
               <div className="flex items-start gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-accent">
                   <AlertTriangle className="h-5 w-5 text-accent-foreground" />
@@ -316,7 +315,7 @@ const StudentInfo = () => {
                     onClick={() => setReportOpen(true)}
                     className="mt-4 inline-block border-[2px] border-accent bg-accent px-5 py-2 font-display text-xs font-bold uppercase tracking-wider text-accent-foreground transition-transform hover:-translate-y-0.5"
                   >
-                    Report an Issue →
+                    Report an Issue
                   </button>
                 </div>
               </div>
@@ -352,8 +351,8 @@ const TeacherInfo = () => {
       <Navbar />
 
       {/* Hero */}
-      <section className="bg-secondary py-16 md:py-24">
-        <div className="container mx-auto px-4 text-center">
+      <section className="bg-secondary py-16 md:py-24 relative overflow-hidden speed-lines">
+        <div className="container mx-auto px-4 text-center relative z-10">
           <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
             Pilot Programme Information
           </h1>
@@ -422,7 +421,7 @@ const TeacherInfo = () => {
               <p className="font-semibold text-accent">Free Wheeler offers:</p>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {["Low barrier to entry", "Self-paced challenge", "Individual progress tracking", "Inclusive participation", "A new pathway into physical activity"].map((item) => (
-                  <div key={item} className="border-2 border-accent/30 bg-secondary px-4 py-3 font-display text-xs font-bold uppercase tracking-wider text-accent">
+                  <div key={item} className="border-2 border-accent/30 bg-secondary px-4 py-3 font-display text-xs font-bold uppercase tracking-wider text-accent hover-bounce">
                     {item}
                   </div>
                 ))}
@@ -466,21 +465,21 @@ const TeacherInfo = () => {
               <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
-                    <span className="mt-0.5 text-lg">🚴</span>
+                    <Bike className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                     <span><strong>10 points</strong> for every completed ride session</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="mt-0.5 text-lg">🔥</span>
+                    <Flame className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                     <span><strong>+5 bonus</strong> when a student logs 3 sessions in a single week</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="mt-0.5 text-lg">⚡</span>
+                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
                     <span><strong>+10 bonus</strong> when a student rides on 5 different days in a week</span>
                   </li>
                 </ul>
               </div>
               <p className="text-sm text-foreground/60">
-                A full week of riding earns up to <strong>65 points</strong> (5×10 + 5 + 10). Points are tracked on the student dashboard and leaderboards.
+                A full week of riding earns up to <strong>65 points</strong> (5x10 + 5 + 10). Points are tracked on the student dashboard and leaderboards.
               </p>
               <div className="border-[3px] border-secondary bg-card p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
                 <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-primary">Level Thresholds</p>
@@ -492,7 +491,7 @@ const TeacherInfo = () => {
                     { name: "Chain Breaker", pts: "300" },
                     { name: "Freewheeler", pts: "500" },
                   ].map((lvl) => (
-                    <div key={lvl.name} className="bg-muted px-2 py-2 text-center">
+                    <div key={lvl.name} className="bg-muted px-2 py-2 text-center hover-bounce">
                       <div className="font-display text-[10px] font-bold uppercase tracking-wider text-foreground">{lvl.name}</div>
                       <div className="font-body text-xs text-primary font-semibold">{lvl.pts} pts</div>
                     </div>
@@ -521,7 +520,7 @@ const TeacherInfo = () => {
               {timelinePhases.map((phase) => (
                 <div key={phase.phase} className="relative pb-10 pl-14 last:pb-0">
                   <div className="absolute left-3 top-1 h-5 w-5 border-[3px] border-primary bg-background" />
-                  <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                  <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
                     <div className="mb-1 font-display text-xs font-bold uppercase tracking-widest text-primary">{phase.phase}</div>
                     <h3 className="mb-3 font-display text-lg font-bold uppercase text-foreground">{phase.title}</h3>
                     <ul className="space-y-1.5 font-body text-sm text-foreground/80">
@@ -544,7 +543,7 @@ const TeacherInfo = () => {
       <section className="bg-background py-12">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl">
-            <div className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+            <div className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
               <div className="flex items-start gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-accent">
                   <AlertTriangle className="h-5 w-5 text-accent-foreground" />
@@ -560,7 +559,7 @@ const TeacherInfo = () => {
                     onClick={() => setReportOpen(true)}
                     className="mt-4 inline-block border-[2px] border-accent bg-accent px-5 py-2 font-display text-xs font-bold uppercase tracking-wider text-accent-foreground transition-transform hover:-translate-y-0.5"
                   >
-                    Report an Issue →
+                    Report an Issue
                   </button>
                 </div>
               </div>

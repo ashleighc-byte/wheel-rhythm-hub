@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { motion } from "framer-motion";
 
 interface AnimatedCounterProps {
   target: number;
@@ -12,7 +13,6 @@ const AnimatedCounter = ({ target, duration = 2000, label }: AnimatedCounterProp
   const started = useRef(false);
 
   useEffect(() => {
-    // Reset animation flag when target changes so new data triggers animation
     started.current = false;
   }, [target]);
 
@@ -42,14 +42,21 @@ const AnimatedCounter = ({ target, duration = 2000, label }: AnimatedCounterProp
   }, [target, duration]);
 
   return (
-    <div ref={ref} className="stat-card px-6 py-8 text-center">
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 20, rotate: -1 }}
+      whileInView={{ opacity: 1, y: 0, rotate: -1 }}
+      viewport={{ once: true }}
+      transition={{ type: "spring", stiffness: 200 }}
+      className="stat-card px-6 py-8 text-center"
+    >
       <div className="font-display text-4xl font-bold text-accent md:text-5xl">
         {count.toLocaleString()}
       </div>
       <div className="mt-2 font-display text-xs font-semibold uppercase tracking-widest text-accent/80">
         {label}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

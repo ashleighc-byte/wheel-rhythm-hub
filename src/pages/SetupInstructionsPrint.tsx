@@ -27,7 +27,7 @@ const steps = [
     num: "04",
     title: "Student Signs Up",
     body: `Students visit ${WEBSITE_LINK} and click Sign Up using their school email address (the same one used on the permission form). They'll receive a confirmation email to verify their account.`,
-    note: "⚠️ Must use their school email address.",
+    note: "Must use their school email address.",
   },
   {
     num: "05",

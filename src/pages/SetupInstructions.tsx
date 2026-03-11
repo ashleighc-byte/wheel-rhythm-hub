@@ -32,7 +32,7 @@ Your child has been handpicked because we think they'd really benefit from this 
 
 To confirm your child's place, we need both you and your child to complete a short permission form. This takes just a few minutes.
 
-👉 Permission form: ${PERMISSION_LINK}
+Permission form: ${PERMISSION_LINK}
 
 If you have any questions, please don't hesitate to get in touch.
 
@@ -53,7 +53,7 @@ const CaregiverMessageTemplate = () => {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
-          📋 Template Message — Copy &amp; Customise
+          <ClipboardList className="mr-1 inline h-3.5 w-3.5" /> Template Message — Copy &amp; Customise
         </p>
         <button
           onClick={handleCopy}
@@ -203,7 +203,7 @@ const steps = [
           </a>
         </div>
         <div className="border-l-4 border-accent bg-card px-4 py-3">
-          <p className="font-bold text-foreground">⚠️ Important</p>
+          <p className="font-bold text-foreground"><AlertTriangle className="mr-1 inline h-4 w-4" /> Important</p>
           <p className="mt-1 text-foreground/70">
             Students <span className="font-bold text-foreground">must use their school email address</span> — the
             same one used on the permission form — or they won't be recognised by the system.

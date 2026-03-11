@@ -65,7 +65,7 @@ const Slide1 = () => (
         </ol>
       </div>
       <div className="border-l-4 border-accent bg-card px-4 py-3">
-        <p className="font-semibold text-foreground">⚠️ Only approved school emails can sign up</p>
+        <p className="font-semibold text-foreground">Only approved school emails can sign up</p>
         <p className="mt-1 text-foreground/70">
           Your email must be registered in our system (via the school registration form) before you can create an account.
         </p>
@@ -89,7 +89,7 @@ const Slide2 = () => (
         </div>
       </div>
       <div className="border-l-4 border-accent bg-card px-4 py-3">
-        <p className="font-semibold text-foreground">🧪 Try it now!</p>
+        <p className="font-semibold text-foreground">Try it now!</p>
         <p className="mt-1 text-foreground/70">
           Click the "Something Not Working?" button on the home page and submit a test entry to see how issue reporting works.
         </p>
@@ -131,7 +131,7 @@ const Slide4 = () => (
       </p>
       <div className="border-[3px] border-primary bg-card p-5 shadow-[3px_3px_0px_hsl(var(--brand-dark))]">
         <p className="font-display text-xs font-bold uppercase tracking-wider text-primary">
-          📄 Download as PDF
+          Download as PDF
         </p>
         <p className="mt-2 text-foreground/70">
           Click the <span className="font-bold">"Download as PDF"</span> button at the top of the Setup Instructions page.
