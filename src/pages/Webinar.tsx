@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchTeacherOrg, callAirtable } from "@/lib/airtable";
 import brandLogo from "@/assets/fw-logo-new.png";
 
-const TOTAL_SLIDES = 7;
+const TOTAL_SLIDES = 6;
 
 const SlideWrapper = ({ children, title, icon: Icon, slideNum }: { children: React.ReactNode; title: string; icon: any; slideNum: number }) => (
   <div className="space-y-6">
