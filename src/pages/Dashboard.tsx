@@ -542,12 +542,135 @@ const Dashboard = () => {
           <LevelProgress totalPoints={grandTotal} />
         </div>
 
-        {/* ═══ TWO-COLUMN: Leaderboard + Challenges ═══ */}
+        {/* ═══ TWO-COLUMN: Recent Rides + Top Riders ═══ */}
         <div className="mb-6 grid gap-6 lg:grid-cols-2">
+
+          {/* Recent Rides */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
+          >
+            <div className="leaderboard-header flex items-center justify-between px-5 py-3">
+              <h3 className="flex items-center gap-2 text-base tracking-wider">
+                <Clock className="h-4 w-4" /> Recent Rides
+              </h3>
+              <button
+                onClick={() => setLogOpen(true)}
+                className="tape-element py-1 px-3 text-[10px] no-underline cursor-pointer"
+              >
+                LOG NEW
+              </button>
+            </div>
+            {rideSessions.length === 0 ? (
+              <div className="px-6 py-12 text-center">
+                <Bike className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
+                <p className="font-display text-lg uppercase text-muted-foreground">No rides yet</p>
+                <p className="mt-2 font-body text-sm text-muted-foreground">
+                  Log your first ride to start tracking!
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-muted">
+                {rideSessions.slice(0, 5).map((session, i) => (
+                  <motion.div
+                    key={session.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 + i * 0.05 }}
+                  >
+                    <button
+                      onClick={() => setExpandedSession(expandedSession === session.id ? null : session.id)}
+                      className="w-full text-left px-5 py-3 transition-colors hover:bg-muted"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-secondary">
+                          <Bike className="h-5 w-5 text-accent" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-display text-sm font-bold uppercase text-foreground">
+                              {formatFriendlyDate(session.date)}
+                            </span>
+                            {session.points > 0 && (
+                              <span className="font-display text-xs font-bold text-primary">
+                                +{session.points} pts
+                              </span>
+                            )}
+                          </div>
+                          {/* All metrics with icons, no mood faces */}
+                          <div className="mt-1 flex flex-wrap items-center gap-3 font-body text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Timer className="h-3 w-3" /> {Math.round(session.duration_minutes)} min
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" /> {session.distance_km} km
+                            </span>
+                            {session.elevation_m > 0 && (
+                              <span className="flex items-center gap-1">
+                                <Mountain className="h-3 w-3" /> {session.elevation_m} m
+                              </span>
+                            )}
+                            {session.avg_speed_kmh > 0 && (
+                              <span className="flex items-center gap-1">
+                                <Gauge className="h-3 w-3" /> {session.avg_speed_kmh} km/h
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${
+                          expandedSession === session.id ? "rotate-90" : ""
+                        }`} />
+                      </div>
+                    </button>
+                    <AnimatePresence>
+                      {expandedSession === session.id && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden border-t border-muted bg-muted/50 px-5 py-3"
+                        >
+                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                            <div>
+                              <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Timer className="h-3 w-3" /> Duration</p>
+                              <p className="font-display text-lg font-bold text-foreground">{Math.round(session.duration_minutes)} min</p>
+                            </div>
+                            <div>
+                              <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> Distance</p>
+                              <p className="font-display text-lg font-bold text-primary">{session.distance_km} km</p>
+                            </div>
+                            <div>
+                              <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Mountain className="h-3 w-3" /> Elevation</p>
+                              <p className="font-display text-lg font-bold text-foreground">{session.elevation_m} m</p>
+                            </div>
+                            <div>
+                              <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Gauge className="h-3 w-3" /> Avg Speed</p>
+                              <p className="font-display text-lg font-bold text-foreground">{session.avg_speed_kmh} km/h</p>
+                            </div>
+                          </div>
+                          {/* Points breakdown */}
+                          <div className="mt-2 flex items-center gap-1 font-display text-xs text-primary">
+                            <Zap className="h-3 w-3" /> {session.points} points earned this session
+                          </div>
+                          {session.reflection && (
+                            <p className="mt-2 font-body text-sm text-foreground/70 italic">
+                              "{session.reflection}"
+                            </p>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
 
           {/* Leaderboard Preview */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
             className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
@@ -572,7 +695,7 @@ const Dashboard = () => {
                 schoolRiders.map((rider, i) => (
                   <motion.div
                     key={rider.rank}
-                    initial={{ opacity: 0, x: -10 }}
+                    initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 + i * 0.08 }}
                     className={`flex items-center gap-3 px-5 py-3 transition-colors ${
@@ -609,163 +732,54 @@ const Dashboard = () => {
               )}
             </div>
           </motion.div>
-
-          {/* Challenges */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="mb-3 flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
-                Challenges
-              </h3>
-            </div>
-
-            {/* Daily */}
-            <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">Daily</p>
-            <div className="space-y-2 mb-4">
-              {dailyChallenges.map((c, i) => (
-                <ChallengeCard key={c.id} challenge={c} index={i} />
-              ))}
-            </div>
-
-            {/* Weekly */}
-            <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">Weekly</p>
-            <div className="space-y-2 mb-4">
-              {weeklyChallenges.map((c, i) => (
-                <ChallengeCard key={c.id} challenge={c} index={i + 3} />
-              ))}
-            </div>
-
-            {/* Milestones */}
-            <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">Milestones</p>
-            <div className="space-y-2">
-              {milestoneChallenges.map((c, i) => (
-                <ChallengeCard key={c.id} challenge={c} index={i + 7} />
-              ))}
-            </div>
-          </motion.div>
         </div>
 
-        {/* ═══ RECENT RIDES ═══ */}
+        {/* ═══ CHALLENGES (full width, below leaderboard + rides) ═══ */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mb-6 overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
+          className="mb-6"
         >
-          <div className="leaderboard-header flex items-center justify-between px-5 py-3">
-            <h3 className="flex items-center gap-2 text-base tracking-wider">
-              <Clock className="h-4 w-4" /> Recent Rides
+          <div className="mb-4 flex items-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
+            <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
+              Challenges
             </h3>
-            <button
-              onClick={() => setLogOpen(true)}
-              className="tape-element py-1 px-3 text-[10px] no-underline cursor-pointer"
-            >
-              LOG NEW
-            </button>
+            <span className="ml-auto font-display text-xs text-muted-foreground">
+              {challenges.filter(c => c.completed).length}/{challenges.length} completed
+            </span>
           </div>
-          {rideSessions.length === 0 ? (
-            <div className="px-6 py-12 text-center">
-              <Bike className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
-              <p className="font-display text-lg uppercase text-muted-foreground">No rides yet</p>
-              <p className="mt-2 font-body text-sm text-muted-foreground">
-                Log your first ride to start tracking!
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-muted">
-              {rideSessions.slice(0, 5).map((session, i) => (
-                <motion.div
-                  key={session.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 + i * 0.05 }}
-                >
-                  <button
-                    onClick={() => setExpandedSession(expandedSession === session.id ? null : session.id)}
-                    className="w-full text-left px-5 py-4 transition-colors hover:bg-muted"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-secondary">
-                        <Bike className="h-5 w-5 text-accent" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-display text-sm font-bold uppercase text-foreground">
-                            {formatFriendlyDate(session.date)}
-                          </span>
-                          {session.points > 0 && (
-                            <span className="font-display text-xs font-bold text-primary">
-                              +{session.points} pts
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-1 flex items-center gap-4 font-body text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" /> {Math.round(session.duration_minutes)} min
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" /> {session.distance_km} km
-                          </span>
-                          {session.feelingBefore > 0 && session.feelingAfter > 0 && (
-                            <span className="flex items-center gap-1">
-                              <MoodIcon value={session.feelingBefore} />
-                              <ChevronRight className="h-3 w-3" />
-                              <MoodIcon value={session.feelingAfter} />
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${
-                        expandedSession === session.id ? "rotate-90" : ""
-                      }`} />
-                    </div>
-                  </button>
-                  <AnimatePresence>
-                    {expandedSession === session.id && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden border-t border-muted bg-muted/50 px-5 py-3"
-                      >
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                          <div>
-                            <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Distance</p>
-                            <p className="font-display text-lg font-bold text-primary">{session.distance_km} km</p>
-                          </div>
-                          <div>
-                            <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Duration</p>
-                            <p className="font-display text-lg font-bold text-foreground">{Math.round(session.duration_minutes)} min</p>
-                          </div>
-                          {session.avg_speed_kmh > 0 && (
-                            <div>
-                              <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Speed</p>
-                              <p className="font-display text-lg font-bold text-foreground">{session.avg_speed_kmh} km/h</p>
-                            </div>
-                          )}
-                          {session.elevation_m > 0 && (
-                            <div>
-                              <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Elevation</p>
-                              <p className="font-display text-lg font-bold text-foreground">{session.elevation_m}m</p>
-                            </div>
-                          )}
-                        </div>
-                        {session.reflection && (
-                          <p className="mt-3 font-body text-sm text-foreground/70 italic">
-                            "{session.reflection}"
-                          </p>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))}
-            </div>
-          )}
+
+          {/* Daily */}
+          <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+            <Calendar className="h-3 w-3" /> Daily
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+            {dailyChallenges.map((c, i) => (
+              <ChallengeCard key={c.id} challenge={c} index={i} />
+            ))}
+          </div>
+
+          {/* Weekly */}
+          <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+            <Timer className="h-3 w-3" /> Weekly
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+            {weeklyChallenges.map((c, i) => (
+              <ChallengeCard key={c.id} challenge={c} index={i + 4} />
+            ))}
+          </div>
+
+          {/* Milestones */}
+          <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+            <Award className="h-3 w-3" /> Milestones
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {milestoneChallenges.map((c, i) => (
+              <ChallengeCard key={c.id} challenge={c} index={i + 12} />
+            ))}
+          </div>
         </motion.div>
 
         {/* ═══ ACHIEVEMENTS ═══ */}
@@ -780,8 +794,11 @@ const Dashboard = () => {
             <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
               Achievements
             </h3>
+            <span className="ml-auto font-display text-xs text-muted-foreground">
+              {achievements.filter(a => a.unlocked).length}/{achievements.length} unlocked
+            </span>
           </div>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-8">
             {achievements.map((a, i) => (
               <AchievementBadge key={a.id} achievement={a} index={i} />
             ))}
@@ -789,45 +806,79 @@ const Dashboard = () => {
         </motion.div>
 
         {/* ═══ STREAK MILESTONES ═══ */}
-        {riderTotals && riderTotals.streakMilestones.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="mb-6 border-[3px] border-secondary bg-card p-5 shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
-          >
-            <div className="mb-4 flex items-center gap-2">
-              <Flame className="h-5 w-5 text-primary animate-flame-flicker" />
-              <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
-                Streak Milestones
-              </h3>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {[3, 5, 7, 14, 30].map((m) => {
-                const reached = riderTotals.streakMilestones.includes(m);
-                return (
-                  <motion.div
-                    key={m}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", delay: 0.8 }}
-                    className={`flex flex-col items-center gap-1 border-[3px] p-3 ${
-                      reached
-                        ? "border-primary bg-secondary shadow-[0_0_12px_hsl(var(--brand-neon)/0.3)]"
-                        : "border-muted bg-muted opacity-40"
-                    }`}
-                  >
-                    <Flame className={`h-6 w-6 ${reached ? "text-accent animate-flame-flicker" : "text-muted-foreground"}`} />
-                    <span className="font-display text-sm font-bold text-foreground">{m} Days</span>
-                    <span className="font-display text-[10px] text-primary">
-                      +{({ 3: 5, 5: 10, 7: 20, 14: 40, 30: 100 } as Record<number, number>)[m]} pts
-                    </span>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="mb-6 border-[3px] border-secondary bg-card p-5 shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
+        >
+          <div className="mb-4 flex items-center gap-2">
+            <Flame className="h-5 w-5 text-primary animate-flame-flicker" />
+            <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
+              Streak Milestones
+            </h3>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {[3, 5, 7, 14, 30].map((m) => {
+              const reached = riderTotals?.streakMilestones.includes(m) ?? false;
+              return (
+                <motion.div
+                  key={m}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", delay: 0.8 }}
+                  className={`flex flex-col items-center gap-1 border-[3px] p-3 ${
+                    reached
+                      ? "border-primary bg-secondary shadow-[0_0_12px_hsl(var(--brand-neon)/0.3)]"
+                      : "border-muted bg-muted opacity-40"
+                  }`}
+                >
+                  <Flame className={`h-6 w-6 ${reached ? "text-accent animate-flame-flicker" : "text-muted-foreground"}`} />
+                  <span className="font-display text-sm font-bold text-foreground">{m} Days</span>
+                  <span className="font-display text-[10px] text-primary">
+                    +{({ 3: 5, 5: 10, 7: 20, 14: 40, 30: 100 } as Record<number, number>)[m]} pts
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* ═══ POINTS BREAKDOWN ═══ */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="mb-6 border-[3px] border-secondary bg-card p-5 shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
+              How Points Work
+            </h3>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { icon: Bike, label: "Ride Completion", value: "10 pts" },
+              { icon: Timer, label: "Time Bonus", value: "+1 pt / 10 min" },
+              { icon: MapPin, label: "Distance Bonus", value: "+1 pt / 5 km" },
+              { icon: Mountain, label: "Elevation Bonus", value: "+1 pt / 25 m" },
+              { icon: Mountain, label: "Hard Course (150m+)", value: "+5 to +15 pts" },
+              { icon: Gauge, label: "Speed (20+ km/h)", value: "+2 to +6 pts" },
+              { icon: Clock, label: "Long Ride (45+ min)", value: "+5 to +10 pts" },
+              { icon: Flame, label: "Streak Milestones", value: "+5 to +100 pts" },
+              { icon: Target, label: "Challenge Rewards", value: "+5 to +50 pts" },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-3 border-[2px] border-secondary bg-muted p-3">
+                <item.icon className="h-4 w-4 shrink-0 text-primary" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-display text-xs font-bold uppercase tracking-wider text-foreground">{item.label}</p>
+                </div>
+                <span className="font-display text-xs font-bold text-accent whitespace-nowrap">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
 
       </div>
 
