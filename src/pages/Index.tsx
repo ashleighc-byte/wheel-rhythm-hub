@@ -10,6 +10,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 const Index = () => {
   const location = useLocation();
   const [logOpen, setLogOpen] = useState(false);
+  const { showTour, completeTour, role } = useOnboarding();
 
   useEffect(() => {
     if (location.state?.openLogRide) {
