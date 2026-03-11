@@ -110,6 +110,10 @@ const StudentInfo = () => {
 
       {/* Hero */}
       <section className="bg-secondary py-14 md:py-20 relative overflow-hidden speed-lines">
+        <div className="absolute inset-0">
+          <img src={artSmartBike} alt="" className="h-full w-full object-cover opacity-20" />
+          <div className="absolute inset-0 bg-secondary/75" />
+        </div>
         <div className="container mx-auto px-4 text-center relative z-10">
           <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
             What's This All About?
