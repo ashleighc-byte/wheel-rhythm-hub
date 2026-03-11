@@ -8,7 +8,7 @@ import TopRiders from "@/components/TopRiders";
 import ImpactStats from "@/components/ImpactStats";
 import CTASection from "@/components/CTASection";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import artRaceMode from "@/assets/art-race-mode.jpeg";
+import artRideCompleteNew from "@/assets/art-ride-complete-new.png";
 
 const Leaderboards = () => {
   const [mode, setMode] = useState<"time" | "points">("points");
