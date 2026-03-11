@@ -3,6 +3,7 @@ import { Users, ExternalLink, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import brandLogo from "@/assets/fw-logo-new.png";
+import artDynamic from "@/assets/art-dynamic-bg.jpeg";
 
 const PERMISSION_LINK = "https://bit.ly/GameFITPermission";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -41,9 +42,12 @@ const StudentRegistration = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-primary border-b-4 border-secondary">
-        <div className="container mx-auto flex items-center gap-3 px-4 py-4">
+      {/* Header with dynamic background */}
+      <header className="bg-primary border-b-4 border-secondary relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={artDynamic} alt="" className="h-full w-full object-cover opacity-20" />
+        </div>
+        <div className="container relative mx-auto flex items-center gap-3 px-4 py-4">
           <img src={brandLogo} alt="Free Wheeler" className="h-12 w-auto rounded" />
           <div>
             <h1 className="font-display text-2xl font-extrabold uppercase tracking-wider text-primary-foreground">

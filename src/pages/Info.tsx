@@ -7,6 +7,8 @@ import { useState, useEffect } from "react";
 import ReportIssueForm from "@/components/ReportIssueForm";
 import { fetchStudents } from "@/lib/airtable";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import artSmartBike from "@/assets/art-smart-bike.jpeg";
+import artEcycling from "@/assets/art-ecycling.jpeg";
 
 const timelinePhases = [
   {
@@ -108,6 +110,10 @@ const StudentInfo = () => {
 
       {/* Hero */}
       <section className="bg-secondary py-14 md:py-20 relative overflow-hidden speed-lines">
+        <div className="absolute inset-0">
+          <img src={artSmartBike} alt="" className="h-full w-full object-cover opacity-20" />
+          <div className="absolute inset-0 bg-secondary/75" />
+        </div>
         <div className="container mx-auto px-4 text-center relative z-10">
           <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
             What's This All About?
@@ -123,10 +129,10 @@ const StudentInfo = () => {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl space-y-6 font-body text-base leading-relaxed text-foreground/90">
             <p className="text-xl font-bold text-foreground">
-              Free Wheeler Bike League is a new way to do sport — on your terms.
+              Free Wheeler Bike League is a new way to do sport.
             </p>
             <p>
-              Forget rigid team sports with pressure to perform. This is indoor cycling, digital racing, and friendly competition that works for everyone — whether you love sport or you've never felt like sport loves you back.
+              No teams. No trials. No pressure. Just jump on a bike and ride. Track your sessions, build your streak, and see how your school ranks on the leaderboard. Every ride counts.
             </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {[
@@ -352,6 +358,10 @@ const TeacherInfo = () => {
 
       {/* Hero */}
       <section className="bg-secondary py-16 md:py-24 relative overflow-hidden speed-lines">
+        <div className="absolute inset-0">
+          <img src={artEcycling} alt="" className="h-full w-full object-cover opacity-20" />
+          <div className="absolute inset-0 bg-secondary/75" />
+        </div>
         <div className="container mx-auto px-4 text-center relative z-10">
           <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
             Pilot Programme Information

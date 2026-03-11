@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import fwChainPoster from "@/assets/fw-chain-poster.png";
+import artTeamRide from "@/assets/art-team-ride.jpeg";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -19,11 +19,11 @@ const HeroSection = () => {
       {/* Hero image */}
       <div className="absolute inset-0">
         <img
-          src={fwChainPoster}
-          alt="Free Wheeler - Go hard without having to go anywhere"
-          className="h-full w-full object-cover opacity-40"
+          src={artTeamRide}
+          alt="Free Wheeler Bike League – teens riding together"
+          className="h-full w-full object-cover opacity-30"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/80 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/85 to-secondary/40" />
       </div>
 
       <div className="container relative mx-auto px-4 py-20 md:py-32">
@@ -45,7 +45,7 @@ const HeroSection = () => {
             transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
             className="my-8"
           >
-            <span className="tape-element text-lg md:text-xl">GO ANYWHERE</span>
+            <span className="tape-element text-lg md:text-xl">JUST RIDE.</span>
           </motion.div>
 
           <motion.p
@@ -56,7 +56,7 @@ const HeroSection = () => {
           >
             {isAdmin
               ? "Keep tabs on your students' progress, track sessions, and celebrate their achievements — all in one place."
-              : "Ride whenever you want, wherever you want. No commitments, no stress—just you and your bike. Join in whenever it works for you."}
+              : "Free Wheeler Bike League is indoor cycling on your terms. Jump on a smart bike, race in MyWhoosh, and log your rides. Ride when you want. Track your progress. Compete with your school."}
           </motion.p>
 
           <motion.div
