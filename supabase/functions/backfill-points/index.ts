@@ -5,14 +5,79 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const BASE_POINTS = 10;
+// ── Points Calculation (mirrors src/lib/gamification.ts) ──
+function calculateSessionPoints(session: {
+  duration_minutes: number;
+  distance_km: number;
+  elevation_m: number;
+  avg_speed_kmh: number;
+}): number {
+  const { duration_minutes, distance_km, elevation_m, avg_speed_kmh } = session;
+  if (duration_minutes <= 0 && distance_km <= 0) return 0;
+
+  let pts = 10; // base
+
+  // Time bonus: 1pt per 10 min
+  pts += Math.floor(duration_minutes / 10);
+  // Distance bonus: 1pt per 5 km
+  pts += Math.floor(distance_km / 5);
+  // Elevation bonus: 1pt per 25 m
+  pts += Math.floor(elevation_m / 25);
+
+  // Hard course bonus
+  if (elevation_m >= 500) pts += 15;
+  else if (elevation_m >= 300) pts += 10;
+  else if (elevation_m >= 150) pts += 5;
+  else if (elevation_m >= 75) pts += 2;
+
+  // Speed bonus
+  if (avg_speed_kmh >= 30) pts += 6;
+  else if (avg_speed_kmh >= 25) pts += 4;
+  else if (avg_speed_kmh >= 20) pts += 2;
+
+  // Long ride bonus
+  if (duration_minutes >= 60) pts += 10;
+  else if (duration_minutes >= 45) pts += 5;
+
+  return pts;
+}
+
+function parseDuration(dur: string | number | undefined): number {
+  if (dur === undefined || dur === null) return 0;
+  if (typeof dur === "number") return dur;
+  const str = String(dur).trim();
+  const hms = str.match(/^(\d+):(\d+):(\d+)$/);
+  if (hms) return parseInt(hms[1]) * 60 + parseInt(hms[2]) + parseInt(hms[3]) / 60;
+  const hm = str.match(/^(\d+):(\d+)$/);
+  if (hm) {
+    const a = parseInt(hm[1]);
+    const b = parseInt(hm[2]);
+    return a < 10 ? a * 60 + b : a + b / 60;
+  }
+  const n = parseFloat(str);
+  return isNaN(n) ? 0 : n;
+}
+
+function parseSessionData(raw: any): { distance_km: number; duration_hh_mm_ss: string; elevation_m: number; avg_speed_kmh: number } | null {
+  if (!raw) return null;
+  try {
+    const obj = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return {
+      distance_km: Number(obj.distance_km ?? 0),
+      duration_hh_mm_ss: String(obj.duration_hh_mm_ss ?? "0:00"),
+      elevation_m: Number(obj.elevation_m ?? 0),
+      avg_speed_kmh: Number(obj.avg_speed_kmh ?? 0),
+    };
+  } catch {
+    return null;
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Auth check — admin only
   const authHeader = req.headers.get('authorization');
   if (!authHeader) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -34,9 +99,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Use service role for inserting points (bypasses RLS)
   const adminClient = createClient(supabaseUrl, serviceRoleKey);
-
   const AIRTABLE_API_KEY = Deno.env.get('AIRTABLE_API_KEY')!;
   const AIRTABLE_BASE_ID = Deno.env.get('AIRTABLE_BASE_ID')!;
 
@@ -55,7 +118,7 @@ Deno.serve(async (req) => {
       offset = data.offset;
     } while (offset);
 
-    // Build map of student email -> user_id from Supabase auth
+    // Build email -> userId map
     const { data: authUsers } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
     const emailToUserId = new Map<string, string>();
     if (authUsers?.users) {
@@ -64,7 +127,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch student emails from Airtable to map airtable_student_id -> email
+    // Fetch students for studentId -> email mapping
     const studentRecords: any[] = [];
     let studentOffset: string | undefined;
     do {
@@ -81,27 +144,22 @@ Deno.serve(async (req) => {
     const studentIdToEmail = new Map<string, string>();
     for (const s of studentRecords) {
       const email = s.fields["School Email"] || s.fields["Email"];
-      if (email) {
-        studentIdToEmail.set(s.id, email.toLowerCase());
-      }
+      if (email) studentIdToEmail.set(s.id, email.toLowerCase());
     }
 
-    // Get existing points from Supabase to avoid duplicates
-    const { data: existingPoints } = await adminClient
+    // Delete ALL existing student_points to do a clean recalculation
+    const { error: deleteError } = await adminClient
       .from('student_points')
-      .select('airtable_student_id, session_date');
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // delete all rows
     
-    const existingSet = new Set<string>();
-    if (existingPoints) {
-      for (const p of existingPoints) {
-        existingSet.add(`${p.airtable_student_id}|${p.session_date}`);
-      }
+    if (deleteError) {
+      console.error('Failed to clear student_points:', deleteError);
     }
 
-    // Process each session
+    // Process each session with new formula
     const airtableUpdates: { id: string; fields: { "Points Earned": number } }[] = [];
     const supabaseInserts: { user_id: string; airtable_student_id: string; session_date: string; base_points: number; bonus_points: number; total_points: number }[] = [];
-    const skipped: string[] = [];
 
     for (const rec of allRecords) {
       const studentLinks = rec.fields["Student Registration"] as string[] | undefined;
@@ -109,42 +167,49 @@ Deno.serve(async (req) => {
       const dateRaw = rec.fields["Auto date"] || rec.createdTime || "";
       const sessionDate = dateRaw ? dateRaw.slice(0, 10) : new Date().toISOString().slice(0, 10);
 
-      // Always update Airtable with base points
-      airtableUpdates.push({ id: rec.id, fields: { "Points Earned": BASE_POINTS } });
+      // Parse session data for points calculation
+      const rawData = rec.fields["Session Data Table"];
+      const parsed = parseSessionData(
+        typeof rawData === "object" && rawData !== null && "value" in rawData
+          ? rawData.value
+          : rawData
+      );
+      const durationStr = String(rec.fields["Total minutes"] ?? parsed?.duration_hh_mm_ss ?? "0:00");
+      const duration_minutes = parseDuration(rec.fields["Rollup Minutes"] ?? durationStr);
+      const distance_km = Number(rec.fields["Total km "] ?? parsed?.distance_km ?? 0);
+      const elevation_m = Number(rec.fields["Total Elevation"] ?? parsed?.elevation_m ?? 0);
+      const avg_speed_kmh = Number(rec.fields["Avg Speed"] ?? parsed?.avg_speed_kmh ?? 0);
 
-      // Try to insert into Supabase if we can map to a user
+      const points = calculateSessionPoints({ duration_minutes, distance_km, elevation_m, avg_speed_kmh });
+
+      // Update Airtable with computed points
+      airtableUpdates.push({ id: rec.id, fields: { "Points Earned": points } });
+
+      // Insert into Supabase
       if (airtableStudentId) {
         const email = studentIdToEmail.get(airtableStudentId);
         const userId = email ? emailToUserId.get(email) : undefined;
-
-        const key = `${airtableStudentId}|${sessionDate}`;
-        if (existingSet.has(key)) {
-          skipped.push(rec.id);
-          continue;
-        }
 
         if (userId) {
           supabaseInserts.push({
             user_id: userId,
             airtable_student_id: airtableStudentId,
             session_date: sessionDate,
-            base_points: BASE_POINTS,
+            base_points: points,
             bonus_points: 0,
-            total_points: BASE_POINTS,
+            total_points: points,
           });
-          existingSet.add(key);
         }
       }
     }
 
-    // Airtable PATCH in batches of 10 (skip if field doesn't exist)
+    // Airtable PATCH in batches of 10
     let airtablePatched = 0;
     let airtableError: string | null = null;
-    
-    if (airtableUpdates.length > 0) {
-      // Try first batch to see if field exists
-      const firstBatch = airtableUpdates.slice(0, Math.min(10, airtableUpdates.length));
-      const testRes = await fetch(
+
+    for (let i = 0; i < airtableUpdates.length; i += 10) {
+      const batch = airtableUpdates.slice(i, i + 10);
+      const res = await fetch(
         `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent('Session Reflections')}`,
         {
           method: 'PATCH',
@@ -152,39 +217,19 @@ Deno.serve(async (req) => {
             'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ records: firstBatch }),
+          body: JSON.stringify({ records: batch }),
         }
       );
-
-      if (testRes.ok) {
-        airtablePatched += firstBatch.length;
-        
-        // Continue with remaining batches
-        for (let i = 10; i < airtableUpdates.length; i += 10) {
-          const batch = airtableUpdates.slice(i, i + 10);
-          const res = await fetch(
-            `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent('Session Reflections')}`,
-            {
-              method: 'PATCH',
-              headers: {
-                'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ records: batch }),
-            }
-          );
-          if (res.ok) {
-            airtablePatched += batch.length;
-          }
-        }
-      } else {
-        const errBody = await testRes.text();
-        airtableError = `Airtable field 'Points Earned' may not exist. Please create it in Airtable. Error: ${errBody}`;
-        console.error(airtableError);
+      if (res.ok) {
+        airtablePatched += batch.length;
+      } else if (i === 0) {
+        airtableError = await res.text();
+        console.error('Airtable patch error:', airtableError);
+        break;
       }
     }
 
-    // Supabase insert in batches
+    // Supabase insert in batches of 50
     let supabaseInserted = 0;
     for (let i = 0; i < supabaseInserts.length; i += 50) {
       const batch = supabaseInserts.slice(i, i + 50);
@@ -202,7 +247,7 @@ Deno.serve(async (req) => {
       airtableUpdated: airtablePatched,
       airtableError,
       supabaseInserted,
-      skipped: skipped.length,
+      pointsFormula: "10 base + floor(min/10) + floor(km/5) + floor(elev/25) + speed_bonus + elevation_bonus + long_ride_bonus",
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
