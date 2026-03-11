@@ -19,7 +19,7 @@ import {
 } from "@/lib/airtable";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 import artEliteRider from "@/assets/art-elite-rider.jpeg";
-import { supabase } from "@/integrations/supabase/client";
+import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import {
   calculateSessionPoints, parseDurationToMinutes, isValidSession,
   computeStreaks, getStreakBonusPoints, computeRiderTotals,
