@@ -207,7 +207,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
       <DialogContent className="max-h-[90vh] overflow-y-auto border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl uppercase tracking-wider text-foreground">
-            Log a Daily Ride
+            Tell Us About Your Ride
           </DialogTitle>
         </DialogHeader>
 
