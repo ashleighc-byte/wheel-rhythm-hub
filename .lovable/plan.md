@@ -1,178 +1,90 @@
 
 
-# Plan: Webinar Page, Student Registration, and In-App Onboarding
+# Gamification & Points System — Implementation Plan
 
-This is a large feature set. Here's the full implementation plan.
+## How it works
 
----
-
-## What We're Building
-
-1. **`/webinar`** — A static 7-slide walkthrough page for teacher Teams sessions
-2. **`/studentregistration`** — A public page (no login required) that links to the external permission form and shows remaining spots per school
-3. **In-app tooltip onboarding tour** — For both teachers and students on first login, with "mark as done" persistence
-4. **Airtable "Onboarding Questions" field** — Save teacher questions from the webinar into Airtable Organisations table
-5. **Auth flow refinements** — Better messaging when unapproved users try to sign up
-6. **Setup Instructions updates** — Update URLs/links to reflect new registration flow
+Your Airtable AI agent extracts distance, duration, speed, and elevation from MyWhoosh screenshots and writes them as a JSON blob into a **"Session Data Table"** field on each Session Reflection record. It also calculates and writes a **"Points Earned"** value. The website's job is to **read and display** this data — not calculate it.
 
 ---
 
-## 1. `/webinar` Page (Static Walkthrough)
+## What you need to set up in Airtable first
 
-New file: `src/pages/Webinar.tsx`
+Before I build anything, these fields must exist:
 
-A multi-step page with Next/Back navigation, 7 slides:
+**Session Reflections table:**
+- `Session Data Table` — already exists (your agent writes JSON here with `distance_km`, `duration_hh_mm_ss`, plus speed/elevation)
+- `Points Earned` — Number field. Your agent calculates and writes this.
 
-| Slide | Content |
-|---|---|
-| 1 | Registration: fill out form link, sign up on site, verify email, sign back in |
-| 2 | Home page: describe buttons, CTA section, "Something Not Working" — prompt test submission |
-| 3 | About the Pilot: click-through each section |
-| 4 | Setup Instructions: describe download PDF, print workflow |
-| 5 | Leaderboards: toggle time/points, how points work |
-| 6 | Teacher Dashboard: features, surveys timeline |
-| 7 | Any Questions: embedded question form that saves to Airtable |
-
-Each slide is a React component rendered inside a slide container with progress bar and navigation buttons. No login required for this page.
-
-For slide 7, a simple text input + submit that calls `callAirtable('Organisations', 'PATCH', ...)` to append to the "Onboarding Questions" field. Since this is a teacher-only webinar page, we'll require auth and look up the teacher's org record.
-
-**Route**: Public initially, but slide 7 question submission requires auth (we'll show a note if not logged in).
+**Student Registration table:**
+- `Total Points` — Rollup field that sums `Points Earned` from linked Session Reflections
+- (Optional) `Level` — Formula field based on Total Points thresholds, or I calculate client-side
 
 ---
 
-## 2. `/studentregistration` Page
+## What I will build
 
-New file: `src/pages/StudentRegistration.tsx`
+### 1. Make mood ratings optional, screenshot mandatory
+**File:** `src/components/SessionFeedbackForm.tsx`
+- Remove the `preRating === 0 || postRating === 0` validation check
+- Add validation requiring a screenshot upload before submission
+- Update star rating labels to remove the asterisk (*)
 
-A **public page** (no auth required, accessible without login):
+### 2. Parse session data JSON on the dashboard
+**File:** `src/pages/Dashboard.tsx`
+- Read `Session Data Table` field from each Session Reflection record
+- Parse the JSON to extract `distance_km`, `duration_hh_mm_ss`, speed, elevation
+- Read `Points Earned` per session and `Total Points` from Student Registration
+- Add a **Total Points** stat card to the stats grid
+- Add **Speed** and **Elevation** columns to the recent sessions table
+- Show points earned per session in the table
 
-- Branded header with FW logo
-- School selector dropdown (fetches active schools from Airtable Organisations)
-- Shows current registration count vs 24 limit per school
-- If spots available: prominent link to external form `https://bit.ly/GameFITPermission`
-- If full (24+): shows "Registrations full for this school" with disabled link
-- Registration count derived from counting Student Registration records per school in Airtable
+### 3. Build a Level Progress component
+**New file:** `src/components/LevelProgress.tsx`
+- Cycling-themed XP bar showing current level and progress to next
+- Levels: Kickstand (0), Pedal Pusher (50), Chain Breaker (150), Hill Climber (300), Sprint King/Queen (500), Tour Legend (800)
+- Displayed on dashboard below the stats grid
 
-To make this accessible without auth, we need to update the Airtable proxy edge function to allow GET requests to `Student Registration` and `Organisations` from unauthenticated users — OR create a new lightweight edge function `registration-count` that returns school counts without exposing student data.
+### 4. Add a Points leaderboard tab
+**Files:** `src/pages/Leaderboards.tsx`, `src/components/TopRiders.tsx`
+- Add tabs to toggle between "Time" and "Points" rankings
+- Points tab reads `Total Points` from Student Registration and ranks accordingly
+- Show level badge/name next to each rider
 
-**Recommended approach**: New edge function `registration-count/index.ts` that:
-- Fetches all active organisations from Airtable
-- For each, counts Student Registration records linked to that org
-- Returns `{ schools: [{ name, spotsRemaining }] }`
-- No auth required, read-only, no PII exposed
-
----
-
-## 3. In-App Tooltip Onboarding Tour
-
-New files:
-- `src/components/OnboardingTour.tsx` — Main tour component
-- `src/hooks/useOnboarding.ts` — Hook to manage tour state
-
-**Persistence**: New database table `onboarding_completed` with columns:
-- `id` (uuid, PK)
-- `user_id` (uuid, NOT NULL)
-- `role` (text — 'student' or 'admin')
-- `completed_at` (timestamptz, default now())
-
-RLS: Users can read/insert their own records.
-
-**Tour implementation**: Use a step-based approach with floating tooltip divs positioned relative to target elements (using refs or query selectors). Each step highlights an element with a backdrop overlay and shows a description tooltip with Next/Skip/Done buttons.
-
-**Teacher tour steps** (shown on first login after auth):
-1. Home page — "Welcome! Here's where you'll find ride logging and quick actions"
-2. About the Pilot dropdown — "Learn about the pilot and access setup instructions"
-3. Leaderboards — "See all schools and top riders"
-4. Teacher Dashboard — "Monitor your students' progress here"
-5. Sign Out — "You're all set!"
-
-**Student tour steps** (shown after pre-pilot survey completion):
-1. Home page — "Welcome to Free Wheeler! Log your rides here"
-2. About the Pilot — "Learn how the programme works and check your progress"
-3. Leaderboards — "See how you rank against other riders"
-4. Your Stats — "Track your personal dashboard"
-5. Log a Ride — "After every session, log your ride here"
-
-The tour renders on the Index page. On mount, check if `onboarding_completed` has a record for this user. If not, start the tour.
+### 5. Enhanced ride success screen
+**File:** `src/components/SessionFeedbackForm.tsx`
+- After successful submission, show a summary card with:
+  - "Points will appear once your screenshot is processed"
+  - Current level progress (reads from Student Registration)
 
 ---
 
-## 4. Auth Flow Updates
+## Points formula for your Airtable agent
 
-Update `src/pages/Auth.tsx`:
-- When signup fails approval check, differentiate the toast message:
-  - For students: "Your email isn't registered yet. Please fill out the permission form at https://bit.ly/GameFITPermission and ask your teacher if you're unsure."
-  - For teachers: "Your email isn't in our system. Please complete the school registration form at https://bit.ly/Freewheelerschoolreg"
+Here's what I'd suggest your agent uses to calculate `Points Earned` per session:
 
-Update `validateUserApproval` in `src/lib/airtable.ts`:
-- For teacher check: also verify `Status` field = 'active' (not just email exists)
-
----
-
-## 5. Setup Instructions Updates
-
-Update `src/pages/SetupInstructions.tsx` and `SetupInstructionsPrint.tsx`:
-- Change permission form link from `FreewheelerPermission` to `GameFITPermission`
-- Update registration flow text to reflect the new workflow
-- Add link to `/studentregistration` page for checking spots
-
----
-
-## 6. Route & Navigation Changes
-
-In `src/App.tsx`:
-- Add `/webinar` route (public, no auth wrapper)
-- Add `/studentregistration` route (public, no auth wrapper)
-
-In `src/components/Navbar.tsx`:
-- No navbar changes needed (webinar and registration are standalone pages)
-
----
-
-## New Files Summary
-
-| File | Purpose |
-|---|---|
-| `src/pages/Webinar.tsx` | 7-slide teacher walkthrough |
-| `src/pages/StudentRegistration.tsx` | Public registration page with spot counter |
-| `src/components/OnboardingTour.tsx` | Tooltip-style first-login tour |
-| `src/hooks/useOnboarding.ts` | Tour state management + DB check |
-| `supabase/functions/registration-count/index.ts` | Public edge function for school spot counts |
-
-## Database Migration
-
-```sql
-CREATE TABLE public.onboarding_completed (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  role text NOT NULL,
-  completed_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(user_id)
-);
-ALTER TABLE public.onboarding_completed ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can read own onboarding" ON public.onboarding_completed
-  FOR SELECT TO authenticated USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own onboarding" ON public.onboarding_completed
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+```text
+Base log:           10 pts
+Screenshot:          5 pts (always true since mandatory)
+Distance:            1 pt per km
+Duration:            1 pt per 5 mins
+Elevation:           2 pts per 100m
+Speed bonus:         5 pts if avg > 25 km/h, 10 pts if > 30 km/h
 ```
 
-## Edge Function: `registration-count`
-
-- No auth required (`verify_jwt = false`)
-- Fetches Organisations (active) and counts linked Student Registration records
-- Returns `{ schools: [{ name, spots_taken, spots_remaining }] }`
+You can adjust these however you like — the website just reads the final number.
 
 ---
 
-## Implementation Order
+## Files changed
 
-1. Database migration (onboarding_completed table)
-2. Registration-count edge function
-3. `/studentregistration` page
-4. `/webinar` page (all 7 slides)
-5. Onboarding tour components + hook
-6. Auth flow message updates
-7. Setup Instructions link updates
-8. Route registration in App.tsx
+```text
+src/components/SessionFeedbackForm.tsx  — Mood optional, screenshot required, success card
+src/pages/Dashboard.tsx                 — Points stat, session data parsing, new columns
+src/components/LevelProgress.tsx        — New: XP progress bar component
+src/pages/Leaderboards.tsx              — Tabs for Time vs Points
+src/components/TopRiders.tsx            — Support points-based ranking mode
+```
+
+No database migrations needed. No edge function changes needed — `Session Data Table` and `Points Earned` are standard Airtable fields read through the existing proxy.
 

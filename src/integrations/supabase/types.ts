@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      onboarding_completed: {
+        Row: {
+          completed_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       student_nudges: {
         Row: {
           id: string

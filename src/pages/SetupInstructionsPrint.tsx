@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import fwLogo from "@/assets/fw-logo-new.png";
 
-const PERMISSION_LINK = "https://bit.ly/FreewheelerPermission";
-const WEBSITE_LINK = "https://wheel-rhythm-hub.lovable.app/auth";
+const PERMISSION_LINK = "https://bit.ly/GameFITPermission";
+const WEBSITE_LINK = "https://freewheeler.lovable.app/auth";
 
 const steps = [
   {

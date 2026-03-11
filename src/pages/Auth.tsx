@@ -24,7 +24,7 @@ const Auth = () => {
         await supabase.auth.signOut();
         toast({
           title: "Not registered yet",
-          description: "Your email isn't approved. Please complete the registration form first, then try again once your status is active.",
+          description: "Your email isn't in our system. If you're a student, please fill out the permission form at https://bit.ly/GameFITPermission. If you're a teacher, complete the school registration at https://bit.ly/Freewheelerschoolreg",
           variant: "destructive",
         });
         return false;
@@ -84,7 +84,7 @@ const Auth = () => {
         if (!approved) {
           toast({
             title: "Not registered yet",
-            description: "Your email isn't in our system. Please complete the registration or teacher onboarding form first.",
+            description: "Your email isn't in our system. Students: fill out the permission form at https://bit.ly/GameFITPermission. Teachers: complete school registration at https://bit.ly/Freewheelerschoolreg",
             variant: "destructive",
           });
           return;

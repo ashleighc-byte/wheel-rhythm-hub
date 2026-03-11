@@ -20,7 +20,7 @@ import {
   FileDown,
 } from "lucide-react";
 
-const PERMISSION_LINK = "https://bit.ly/FreewheelerPermission";
+const PERMISSION_LINK = "https://bit.ly/GameFITPermission";
 
 const messageTemplate = `Tēnā koe,
 
@@ -194,12 +194,12 @@ const steps = [
             Website Sign-Up Link
           </p>
           <a
-            href="https://wheel-rhythm-hub.lovable.app/auth"
+            href="https://freewheeler.lovable.app/auth"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-1 block font-body text-base font-semibold text-primary underline underline-offset-2 hover:opacity-80"
           >
-            wheel-rhythm-hub.lovable.app/auth
+            freewheeler.lovable.app/auth
           </a>
         </div>
         <div className="border-l-4 border-accent bg-card px-4 py-3">
