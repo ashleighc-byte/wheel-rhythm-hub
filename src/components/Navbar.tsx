@@ -64,6 +64,7 @@ const DropdownNavItem = ({ link }: { link: NavLink }) => {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
+        data-tour={link.tourId}
         className="flex items-center gap-1 px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
       >
         {link.label}
