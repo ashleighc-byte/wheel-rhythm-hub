@@ -32,7 +32,7 @@ Your child has been handpicked because we think they'd really benefit from this 
 
 To confirm your child's place, we need both you and your child to complete a short permission form. This takes just a few minutes.
 
-👉 Permission form: ${PERMISSION_LINK}
+Permission form: ${PERMISSION_LINK}
 
 If you have any questions, please don't hesitate to get in touch.
 

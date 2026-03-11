@@ -131,7 +131,7 @@ const Slide4 = () => (
       </p>
       <div className="border-[3px] border-primary bg-card p-5 shadow-[3px_3px_0px_hsl(var(--brand-dark))]">
         <p className="font-display text-xs font-bold uppercase tracking-wider text-primary">
-          📄 Download as PDF
+          Download as PDF
         </p>
         <p className="mt-2 text-foreground/70">
           Click the <span className="font-bold">"Download as PDF"</span> button at the top of the Setup Instructions page.
