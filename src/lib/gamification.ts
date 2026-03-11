@@ -42,11 +42,19 @@ export function calculateSessionPoints(session: {
   // Distance bonus: 1pt per 5 km
   pts += Math.floor(distance_km / 5);
 
-  // Elevation bonus: 1pt per 50 m
-  pts += Math.floor(elevation_m / 50);
+  // Elevation bonus: boosted for harder courses
+  // 1pt per 25 m (was 50 m) — rewards hill climbing more
+  pts += Math.floor(elevation_m / 25);
+
+  // High elevation single-ride bonus (hard course rewards)
+  if (elevation_m >= 500) pts += 15;
+  else if (elevation_m >= 300) pts += 10;
+  else if (elevation_m >= 150) pts += 5;
+  else if (elevation_m >= 75) pts += 2;
 
   // Speed bonus
-  if (avg_speed_kmh >= 25) pts += 4;
+  if (avg_speed_kmh >= 30) pts += 6;
+  else if (avg_speed_kmh >= 25) pts += 4;
   else if (avg_speed_kmh >= 20) pts += 2;
 
   // Long ride bonus
