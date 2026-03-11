@@ -26,6 +26,7 @@ const Index = () => {
       <HeroSection />
       <CTASection />
       <SessionFeedbackForm open={logOpen} onOpenChange={setLogOpen} />
+      {showTour && <OnboardingTour role={role} onComplete={completeTour} />}
 
       <footer className="border-t-4 border-primary bg-secondary px-4 py-10">
         <div className="container mx-auto text-center">
