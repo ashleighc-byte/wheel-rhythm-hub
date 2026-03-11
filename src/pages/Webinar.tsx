@@ -89,7 +89,7 @@ const Slide2 = () => (
         </div>
       </div>
       <div className="border-l-4 border-accent bg-card px-4 py-3">
-        <p className="font-semibold text-foreground">🧪 Try it now!</p>
+        <p className="font-semibold text-foreground">Try it now!</p>
         <p className="mt-1 text-foreground/70">
           Click the "Something Not Working?" button on the home page and submit a test entry to see how issue reporting works.
         </p>
