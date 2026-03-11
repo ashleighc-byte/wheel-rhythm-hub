@@ -1,10 +1,6 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, ExternalLink, FileDown, Send, CheckCircle2, Trophy, BarChart3, Users, HelpCircle, Bike, ClipboardList } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, FileDown, Trophy, BarChart3, Users, Bike, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { fetchTeacherOrg, callAirtable } from "@/lib/airtable";
 import brandLogo from "@/assets/fw-logo-new.png";
 
 const TOTAL_SLIDES = 6;
