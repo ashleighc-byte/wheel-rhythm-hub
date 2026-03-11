@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import artTeamRide from "@/assets/art-team-ride.jpeg";
+import artRaceModeHero from "@/assets/art-race-mode-hero.png";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 import { useAuth } from "@/hooks/useAuth";
 
