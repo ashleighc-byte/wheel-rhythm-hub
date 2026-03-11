@@ -174,35 +174,91 @@ const StudentInfo = () => {
               </h2>
             </div>
             <div className="space-y-4 font-body text-sm leading-relaxed text-foreground/90">
-              <p className="text-base font-semibold text-foreground">Every ride counts — and earns you points.</p>
+              <p className="text-base font-semibold text-foreground">Every ride counts — and earns you points. The harder you ride, the more you earn.</p>
+
+              {/* Base Points */}
               <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">Session Points</p>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <Bike className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>10 points</strong> for every completed ride session</span>
+                    <span><strong>10 points</strong> base for every completed ride</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <Flame className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>+5 bonus</strong> when you log 3 sessions in a single week</span>
+                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span><strong>+1 point</strong> for every 10 minutes ridden</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                    <span><strong>+10 bonus</strong> when you ride on 5 different days in a week</span>
+                    <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span><strong>+1 point</strong> for every 5 km distance</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Mountain className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span><strong>+1 point</strong> for every 25 m climbed</span>
                   </li>
                 </ul>
               </div>
+
+              {/* Speed Bonus */}
+              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-accent">Speed Bonus</p>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-3">
+                    <Gauge className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                    <span>20+ km/h avg = <strong>+2 pts</strong> · 25+ km/h = <strong>+4 pts</strong> · 30+ km/h = <strong>+6 pts</strong></span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Elevation / Hard Course Bonus */}
+              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-accent">Hard Course Bonus</p>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-3">
+                    <Mountain className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                    <span>75 m+ climb = <strong>+2 pts</strong> · 150 m+ = <strong>+5 pts</strong> · 300 m+ = <strong>+10 pts</strong> · 500 m+ = <strong>+15 pts</strong></span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Long Ride Bonus */}
+              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">Long Ride Bonus</p>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-3">
+                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span>45+ minutes = <strong>+5 pts</strong> · 60+ minutes = <strong>+10 pts</strong></span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Streaks */}
+              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">Streak Bonuses</p>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-3">
+                    <Flame className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span>3-day streak = <strong>+5 pts</strong> · 5-day = <strong>+10</strong> · 7-day = <strong>+20</strong> · 14-day = <strong>+40</strong> · 30-day = <strong>+100</strong></span>
+                  </li>
+                </ul>
+              </div>
+
               <p className="text-xs text-foreground/60">
-                That means a full week of riding earns up to <strong>65 points</strong> (5x10 + 5 + 10).
+                Challenge rewards stack on top — daily (+5), weekly (+15–25), and milestone (+15–50) challenges all add bonus points.
               </p>
+
+              {/* Level Up */}
               <div className="border-[3px] border-secondary bg-card p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
                 <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-primary">Level Up</p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {[
-                    { name: "Kickstand", pts: "0" },
-                    { name: "Pedal Pusher", pts: "50" },
-                    { name: "Gear Shifter", pts: "150" },
-                    { name: "Chain Breaker", pts: "300" },
-                    { name: "Freewheeler", pts: "500" },
+                    { name: "Pedal Pusher", pts: "0" },
+                    { name: "Gear Shifter", pts: "50" },
+                    { name: "Hill Climber", pts: "150" },
+                    { name: "Breakaway Rider", pts: "300" },
+                    { name: "Pace Setter", pts: "500" },
+                    { name: "Sprint Leader", pts: "800" },
+                    { name: "FW Legend", pts: "1200" },
                   ].map((lvl) => (
                     <div key={lvl.name} className="bg-muted px-2 py-2 text-center hover-bounce">
                       <div className="font-display text-[10px] font-bold uppercase tracking-wider text-foreground">{lvl.name}</div>
