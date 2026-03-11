@@ -19,8 +19,8 @@ const HeroSection = () => {
       {/* Hero image */}
       <div className="absolute inset-0">
         <img
-          src={artTeamRide}
-          alt="Free Wheeler Bike League – teens riding together"
+          src={artRaceModeHero}
+          alt="Free Wheeler Bike League – Race Mode"
           className="h-full w-full object-cover opacity-30"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/85 to-secondary/40" />

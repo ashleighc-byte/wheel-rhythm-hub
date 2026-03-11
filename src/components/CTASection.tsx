@@ -19,7 +19,7 @@ const CTASection = () => {
       <section className="relative bg-secondary py-20 overflow-hidden">
         {/* Background illustration */}
         <div className="absolute inset-0">
-          <img src={artRideComplete} alt="" className="h-full w-full object-cover opacity-15" />
+          <img src={artRideCompleteNew} alt="" className="h-full w-full object-cover opacity-15" />
           <div className="absolute inset-0 bg-secondary/80" />
         </div>
 
