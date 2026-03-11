@@ -115,6 +115,7 @@ const Navbar = () => {
             {!isAdmin && (
               <button
                 onClick={() => setLogOpen(true)}
+                data-tour="log-ride"
                 className="px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
               >
                 LOG A RIDE
