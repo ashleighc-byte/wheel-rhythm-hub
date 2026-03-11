@@ -324,35 +324,28 @@ const Dashboard = () => {
       setChallenges(ch);
       setGrandTotal(grand);
 
-      // School leaderboard preview (compute all riders' points)
+      // School leaderboard preview (compute all riders' points via gamification engine)
       if (schoolIds?.length) {
-        // Build all schoolmates' session data
         const schoolmates = allStudentsRes.records
           .filter((s) => {
             const sSchool = s.fields["School"] as string[] | undefined;
             return sSchool?.[0] === schoolIds[0];
           });
 
-        // For each schoolmate, compute rough points from Airtable session count + Supabase
-        // For accurate points we'd need all sessions, but we approximate with Supabase points
-        const { data: pointsRows } = await supabase
-          .from("student_points")
-          .select("airtable_student_id, total_points");
-        const supaPointsMap = new Map<string, number>();
-        if (pointsRows) {
-          for (const row of pointsRows) {
-            supaPointsMap.set(row.airtable_student_id, (supaPointsMap.get(row.airtable_student_id) ?? 0) + row.total_points);
-          }
-        }
+        // Fetch computed points for ALL riders using the gamification engine
+        const riderPointsMap = await computeAllRiderPoints();
 
         const ranked = schoolmates
-          .map((s) => ({
-            id: s.id,
-            name: String(s.fields["Full Name"] ?? ""),
-            sessions: Number(s.fields["Count (Session Reflections)"] ?? 0),
-            // Use app-calculated grand total for current user, Supabase for others
-            totalPoints: s.id === rec.id ? grand : (supaPointsMap.get(s.id) ?? 0),
-          }))
+          .map((s) => {
+            const computed = riderPointsMap.get(s.id);
+            return {
+              id: s.id,
+              name: String(s.fields["Full Name"] ?? ""),
+              sessions: computed?.sessions ?? 0,
+              // Use the current user's grand total (includes challenges/streaks), computed points for others
+              totalPoints: s.id === rec.id ? grand : (computed?.totalPoints ?? 0),
+            };
+          })
           .sort((a, b) => b.totalPoints - a.totalPoints);
 
         const rank = ranked.findIndex((s) => s.id === rec.id) + 1;
