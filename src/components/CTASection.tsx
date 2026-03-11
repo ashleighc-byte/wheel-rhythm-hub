@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 import ReportIssueForm from "./ReportIssueForm";
 import { useAuth } from "@/hooks/useAuth";
-import artRideComplete from "@/assets/art-ride-complete.jpeg";
+import artRideCompleteNew from "@/assets/art-ride-complete-new.png";
 
 const CTASection = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -19,7 +19,7 @@ const CTASection = () => {
       <section className="relative bg-secondary py-20 overflow-hidden">
         {/* Background illustration */}
         <div className="absolute inset-0">
-          <img src={artRideComplete} alt="" className="h-full w-full object-cover opacity-15" />
+          <img src={artRideCompleteNew} alt="" className="h-full w-full object-cover opacity-15" />
           <div className="absolute inset-0 bg-secondary/80" />
         </div>
 

@@ -8,7 +8,7 @@ import TopRiders from "@/components/TopRiders";
 import ImpactStats from "@/components/ImpactStats";
 import CTASection from "@/components/CTASection";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import artRaceMode from "@/assets/art-race-mode.jpeg";
+import artRideCompleteNew from "@/assets/art-ride-complete-new.png";
 
 const Leaderboards = () => {
   const [mode, setMode] = useState<"time" | "points">("points");
@@ -21,7 +21,7 @@ const Leaderboards = () => {
       {/* Leaderboard hero banner */}
       <section className="relative overflow-hidden bg-secondary py-12">
         <div className="absolute inset-0">
-          <img src={artRaceMode} alt="" className="h-full w-full object-cover opacity-20" />
+          <img src={artRideCompleteNew} alt="" className="h-full w-full object-cover opacity-20" />
           <div className="absolute inset-0 bg-secondary/75" />
         </div>
         <div className="container relative mx-auto px-4 text-center">
