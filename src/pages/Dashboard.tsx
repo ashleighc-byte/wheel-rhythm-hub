@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, fetchSessionReflections, callAirtable, hasCompletedFourWeekCheckIn, isValidRecordId } from "@/lib/airtable";
 import { getTotalPoints } from "@/lib/points";
 import { formatFriendlyDate } from "@/lib/dateFormat";
+import artEliteRider from "@/assets/art-elite-rider.jpeg";
 
 const moodIcons = [Frown, Frown, Meh, Smile, Laugh];
 const moodColors = ["text-destructive", "text-destructive/70", "text-muted-foreground", "text-primary", "text-accent"];
