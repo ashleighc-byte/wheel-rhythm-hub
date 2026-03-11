@@ -65,7 +65,7 @@ const Slide1 = () => (
         </ol>
       </div>
       <div className="border-l-4 border-accent bg-card px-4 py-3">
-        <p className="font-semibold text-foreground">⚠️ Only approved school emails can sign up</p>
+        <p className="font-semibold text-foreground">Only approved school emails can sign up</p>
         <p className="mt-1 text-foreground/70">
           Your email must be registered in our system (via the school registration form) before you can create an account.
         </p>
