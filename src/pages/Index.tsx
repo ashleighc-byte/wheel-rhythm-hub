@@ -4,6 +4,8 @@ import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import CTASection from "@/components/CTASection";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
+import OnboardingTour from "@/components/OnboardingTour";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 const Index = () => {
   const location = useLocation();
