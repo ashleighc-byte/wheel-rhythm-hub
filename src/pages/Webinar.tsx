@@ -1,13 +1,9 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, ExternalLink, FileDown, Send, CheckCircle2, Trophy, BarChart3, Users, HelpCircle, Bike, ClipboardList } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, FileDown, Trophy, BarChart3, Users, Bike, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { fetchTeacherOrg, callAirtable } from "@/lib/airtable";
 import brandLogo from "@/assets/fw-logo-new.png";
 
-const TOTAL_SLIDES = 7;
+const TOTAL_SLIDES = 6;
 
 const SlideWrapper = ({ children, title, icon: Icon, slideNum }: { children: React.ReactNode; title: string; icon: any; slideNum: number }) => (
   <div className="space-y-6">
@@ -209,90 +205,7 @@ const Slide6 = () => (
   </SlideWrapper>
 );
 
-const Slide7 = () => {
-  const { session, user } = useAuth();
-  const [question, setQuestion] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!question.trim()) return;
-    if (!session || !user?.email) {
-      toast({ title: "Sign in required", description: "Please sign in to submit a question.", variant: "destructive" });
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const org = await fetchTeacherOrg(user.email);
-      if (!org) {
-        toast({ title: "Not found", description: "We couldn't find your organisation. Please contact support.", variant: "destructive" });
-        return;
-      }
-      // Append to Onboarding Questions field
-      await callAirtable("Organisations", "PATCH", {
-        body: {
-          records: [{
-            id: org.id,
-            fields: { "Onboarding Questions": question.trim() },
-          }],
-        },
-      });
-      setSubmitted(true);
-      setQuestion("");
-      toast({ title: "Question submitted!", description: "We'll review your question shortly." });
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <SlideWrapper title="Any Questions?" icon={HelpCircle} slideNum={7}>
-      <div className="space-y-4 font-body text-sm leading-relaxed text-foreground/85">
-        <p>
-          Have a question about the pilot, the platform, or the setup? Submit it below and we'll
-          follow up.
-        </p>
-        {submitted ? (
-          <div className="flex items-center gap-3 border-[3px] border-primary bg-primary/10 p-5">
-            <CheckCircle2 className="h-6 w-6 text-primary" />
-            <div>
-              <p className="font-display text-sm font-bold uppercase text-foreground">Question Submitted</p>
-              <p className="mt-1 text-foreground/70">Thank you! We'll get back to you.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <Textarea
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Type your question here..."
-              className="min-h-[100px] border-2 border-secondary bg-background font-body"
-            />
-            <Button
-              onClick={handleSubmit}
-              disabled={submitting || !question.trim()}
-              className="tape-element-green w-full text-lg transition-transform hover:rotate-0 hover:scale-105"
-            >
-              <Send className="mr-2 h-5 w-5" />
-              {submitting ? "Submitting..." : "Submit Question"}
-            </Button>
-            {!session && (
-              <p className="text-center text-xs text-muted-foreground">
-                You need to be signed in to submit a question.{" "}
-                <a href="/auth" className="font-semibold text-primary underline">Sign in here</a>
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-    </SlideWrapper>
-  );
-};
-
-const slides = [Slide1, Slide2, Slide3, Slide4, Slide5, Slide6, Slide7];
+const slides = [Slide1, Slide2, Slide3, Slide4, Slide5, Slide6];
 
 const Webinar = () => {
   const [current, setCurrent] = useState(0);

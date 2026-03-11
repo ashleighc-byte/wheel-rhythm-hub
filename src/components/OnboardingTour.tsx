@@ -1,12 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { X, ChevronRight, ChevronLeft, Bike } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, Bike, Send, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { fetchTeacherOrg, callAirtable } from "@/lib/airtable";
 
 interface TourStep {
-  target: string; // CSS selector
+  target: string;
   title: string;
   description: string;
   position?: "top" | "bottom" | "left" | "right";
+  hasQuestionForm?: boolean;
 }
 
 const teacherSteps: TourStep[] = [
@@ -36,9 +41,10 @@ const teacherSteps: TourStep[] = [
   },
   {
     target: '[data-tour="signout"]',
-    title: "You're All Set!",
-    description: "That's the tour complete. You can always revisit any section from the navigation bar.",
+    title: "Any Questions?",
+    description: "That's the tour! If you have any questions about the pilot or platform, submit them below.",
     position: "bottom",
+    hasQuestionForm: true,
   },
 ];
 
@@ -80,6 +86,66 @@ interface OnboardingTourProps {
   onComplete: () => void;
 }
 
+const QuestionForm = () => {
+  const { user } = useAuth();
+  const [question, setQuestion] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!question.trim() || !user?.email) return;
+    setSubmitting(true);
+    try {
+      const org = await fetchTeacherOrg(user.email);
+      if (!org) {
+        toast({ title: "Not found", description: "We couldn't find your organisation.", variant: "destructive" });
+        return;
+      }
+      await callAirtable("Organisations", "PATCH", {
+        body: {
+          records: [{ id: org.id, fields: { "Onboarding Questions": question.trim() } }],
+        },
+      });
+      setSubmitted(true);
+      setQuestion("");
+      toast({ title: "Question submitted!", description: "We'll review your question shortly." });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="mt-3 flex items-center gap-2 border-2 border-primary bg-primary/10 p-3">
+        <CheckCircle2 className="h-4 w-4 text-primary" />
+        <p className="font-body text-xs text-foreground">Thanks! We'll get back to you.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-2">
+      <Textarea
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+        placeholder="Type your question here..."
+        className="min-h-[60px] border-2 border-secondary bg-background font-body text-xs"
+      />
+      <Button
+        size="sm"
+        onClick={handleSubmit}
+        disabled={submitting || !question.trim()}
+        className="w-full bg-primary font-display text-xs uppercase text-primary-foreground"
+      >
+        <Send className="mr-1 h-3 w-3" />
+        {submitting ? "Submitting..." : "Submit Question"}
+      </Button>
+    </div>
+  );
+};
+
 const OnboardingTour = ({ role, onComplete }: OnboardingTourProps) => {
   const [step, setStep] = useState(0);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
@@ -90,7 +156,6 @@ const OnboardingTour = ({ role, onComplete }: OnboardingTourProps) => {
     if (!current) return;
     const el = document.querySelector(current.target);
     if (!el) {
-      // Element not found — center the tooltip
       setTooltipStyle({
         position: "fixed",
         top: "50%",
@@ -100,20 +165,15 @@ const OnboardingTour = ({ role, onComplete }: OnboardingTourProps) => {
       return;
     }
 
-    const rect = el.getBoundingClientRect();
-    const scrollY = window.scrollY;
-    const pad = 12;
-
-    // Scroll element into view
     el.scrollIntoView({ behavior: "smooth", block: "center" });
 
     setTimeout(() => {
       const updatedRect = el.getBoundingClientRect();
       setTooltipStyle({
         position: "fixed",
-        top: updatedRect.bottom + pad,
-        left: Math.max(16, Math.min(updatedRect.left, window.innerWidth - 340)),
-        maxWidth: 320,
+        top: updatedRect.bottom + 12,
+        left: Math.max(16, Math.min(updatedRect.left, window.innerWidth - 360)),
+        maxWidth: current.hasQuestionForm ? 340 : 320,
       });
     }, 350);
   }, [current]);
@@ -136,7 +196,6 @@ const OnboardingTour = ({ role, onComplete }: OnboardingTourProps) => {
     if (step > 0) setStep(step - 1);
   };
 
-  // Highlight the current target element
   useEffect(() => {
     const el = current ? document.querySelector(current.target) as HTMLElement : null;
     if (el) {
@@ -155,18 +214,12 @@ const OnboardingTour = ({ role, onComplete }: OnboardingTourProps) => {
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-[10000] bg-foreground/50"
-        onClick={onComplete}
-      />
+      <div className="fixed inset-0 z-[10000] bg-foreground/50" onClick={onComplete} />
 
-      {/* Tooltip */}
       <div
         style={tooltipStyle}
         className="z-[10002] border-[3px] border-secondary bg-card p-5 shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
       >
-        {/* Close */}
         <button
           onClick={onComplete}
           className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
@@ -189,7 +242,8 @@ const OnboardingTour = ({ role, onComplete }: OnboardingTourProps) => {
           {current.description}
         </p>
 
-        {/* Nav */}
+        {current.hasQuestionForm && <QuestionForm />}
+
         <div className="mt-4 flex items-center justify-between">
           <Button
             variant="ghost"
@@ -210,7 +264,6 @@ const OnboardingTour = ({ role, onComplete }: OnboardingTourProps) => {
           </Button>
         </div>
 
-        {/* Skip link */}
         <button
           onClick={onComplete}
           className="mt-2 block w-full text-center font-body text-[11px] text-muted-foreground underline hover:text-foreground"
