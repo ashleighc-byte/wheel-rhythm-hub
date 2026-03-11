@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 import ReportIssueForm from "./ReportIssueForm";
 import { useAuth } from "@/hooks/useAuth";
-import artRideComplete from "@/assets/art-ride-complete.jpeg";
+import artRideCompleteNew from "@/assets/art-ride-complete-new.png";
 
 const CTASection = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
