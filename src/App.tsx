@@ -21,6 +21,8 @@ import SetupInstructions from "./pages/SetupInstructions";
 import SetupInstructionsPrint from "./pages/SetupInstructionsPrint";
 import NfcTap from "./pages/NfcTap";
 import ResetPassword from "./pages/ResetPassword";
+import Webinar from "./pages/Webinar";
+import StudentRegistration from "./pages/StudentRegistration";
 
 
 const queryClient = new QueryClient();
