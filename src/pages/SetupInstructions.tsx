@@ -20,7 +20,7 @@ import {
   FileDown,
 } from "lucide-react";
 
-const PERMISSION_LINK = "https://bit.ly/FreewheelerPermission";
+const PERMISSION_LINK = "https://bit.ly/GameFITPermission";
 
 const messageTemplate = `Tēnā koe,
 
