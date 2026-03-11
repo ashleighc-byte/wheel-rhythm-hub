@@ -84,7 +84,7 @@ const Auth = () => {
         if (!approved) {
           toast({
             title: "Not registered yet",
-            description: "Your email isn't in our system. Please complete the registration or teacher onboarding form first.",
+            description: "Your email isn't in our system. Students: fill out the permission form at https://bit.ly/GameFITPermission. Teachers: complete school registration at https://bit.ly/Freewheelerschoolreg",
             variant: "destructive",
           });
           return;

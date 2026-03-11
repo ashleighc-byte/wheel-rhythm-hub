@@ -126,6 +126,7 @@ const Navbar = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={signOut}
+              data-tour="signout"
               className="hidden items-center gap-1 px-3 py-2 font-display text-xs font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground md:flex"
               aria-label="Sign out"
             >

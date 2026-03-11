@@ -143,7 +143,9 @@ const App = () => (
              <Route path="/setup-instructions" element={<AdminRoute><SetupInstructions /></AdminRoute>} />
              <Route path="/setup-instructions/print" element={<SetupInstructionsPrint />} />
               <Route path="/og-download" element={<OgImageDownload />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
+               <Route path="/reset-password" element={<ResetPassword />} />
+               <Route path="/webinar" element={<Webinar />} />
+               <Route path="/studentregistration" element={<StudentRegistration />} />
              <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
           </Routes>
