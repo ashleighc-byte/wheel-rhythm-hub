@@ -1,30 +1,21 @@
 import { motion } from "framer-motion";
-import { Trophy, Bike, Cog, Link2, Award } from "lucide-react";
+import { Trophy, Bike, Cog, Mountain, Gauge, Timer, Crown, Zap } from "lucide-react";
+import {
+  getLevel as getGameLevel,
+  getLevelName as getGameLevelName,
+  LEVELS,
+  type LevelInfo,
+} from "@/lib/gamification";
 
-const LEVELS = [
-  { name: "Kickstand", min: 0, icon: Bike },
-  { name: "Pedal Pusher", min: 50, icon: Cog },
-  { name: "Gear Shifter", min: 150, icon: Link2 },
-  { name: "Chain Breaker", min: 300, icon: Award },
-  { name: "Freewheeler", min: 500, icon: Trophy },
-];
-
+// Re-export for backward compatibility
 export function getLevel(totalPoints: number) {
-  let current = LEVELS[0];
-  let next = LEVELS[1];
-  for (let i = LEVELS.length - 1; i >= 0; i--) {
-    if (totalPoints >= LEVELS[i].min) {
-      current = LEVELS[i];
-      next = LEVELS[i + 1] ?? null;
-      break;
-    }
-  }
-  return { current, next };
+  return getGameLevel(totalPoints);
+}
+export function getLevelName(totalPoints: number) {
+  return getGameLevelName(totalPoints);
 }
 
-export function getLevelName(totalPoints: number) {
-  return getLevel(totalPoints).current.name;
-}
+const LEVEL_ICONS = [Bike, Cog, Mountain, Zap, Gauge, Timer, Crown];
 
 interface LevelProgressProps {
   totalPoints: number;
@@ -32,7 +23,7 @@ interface LevelProgressProps {
 
 const LevelProgress = ({ totalPoints }: LevelProgressProps) => {
   const { current, next } = getLevel(totalPoints);
-  const CurrentIcon = current.icon;
+  const CurrentIcon = LEVEL_ICONS[current.index] ?? Bike;
 
   const progress = next
     ? ((totalPoints - current.min) / (next.min - current.min)) * 100
@@ -48,6 +39,35 @@ const LevelProgress = ({ totalPoints }: LevelProgressProps) => {
       <div className="flex items-center gap-2 font-display text-lg font-bold uppercase text-foreground">
         <Trophy className="h-5 w-5 text-primary" />
         Level Progress
+      </div>
+
+      {/* Level roadmap dots */}
+      <div className="mt-4 flex items-center justify-between px-1">
+        {LEVELS.map((lvl, i) => {
+          const Icon = LEVEL_ICONS[i];
+          const reached = totalPoints >= lvl.min;
+          return (
+            <div key={lvl.name} className="flex flex-col items-center gap-1">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.4 + i * 0.08, type: "spring" }}
+                className={`flex h-8 w-8 items-center justify-center border-[2px] ${
+                  reached
+                    ? "border-primary bg-secondary shadow-[0_0_8px_hsl(var(--brand-neon)/0.3)]"
+                    : "border-muted bg-muted"
+                }`}
+              >
+                <Icon className={`h-4 w-4 ${reached ? "text-accent" : "text-muted-foreground"}`} />
+              </motion.div>
+              <span className={`font-display text-[7px] font-bold uppercase tracking-wider ${
+                reached ? "text-primary" : "text-muted-foreground"
+              }`}>
+                {lvl.min}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-4 flex items-center gap-3">
@@ -83,7 +103,8 @@ const LevelProgress = ({ totalPoints }: LevelProgressProps) => {
             <span>{current.min} pts</span>
             {next ? (
               <span className="flex items-center gap-1">
-                <next.icon className="h-3 w-3" /> {next.name} — {next.min} pts
+                {(() => { const NextIcon = LEVEL_ICONS[next.index]; return <NextIcon className="h-3 w-3" />; })()}
+                {next.name} — {next.min} pts
               </span>
             ) : (
               <span className="font-bold text-primary">MAX LEVEL</span>

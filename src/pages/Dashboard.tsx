@@ -2,61 +2,39 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Bike, Clock, MapPin, TrendingUp, Trophy, Activity, Plus, Zap,
+  Bike, Clock, MapPin, TrendingUp, Trophy, Plus, Zap,
   Frown, Meh, Smile, Laugh, Flame, Target, Award, Star,
-  ChevronRight, Timer, Calendar, Sparkles
+  ChevronRight, Timer, Calendar, Sparkles, Mountain, Repeat,
+  Gauge
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
-import LevelProgress, { getLevel, getLevelName } from "@/components/LevelProgress";
+import LevelProgress from "@/components/LevelProgress";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchStudents, fetchSessionReflections, callAirtable,
   hasCompletedFourWeekCheckIn, isValidRecordId
 } from "@/lib/airtable";
-import { getTotalPoints } from "@/lib/points";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 import artEliteRider from "@/assets/art-elite-rider.jpeg";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  calculateSessionPoints, parseDurationToMinutes, isValidSession,
+  computeStreaks, getStreakBonusPoints, computeRiderTotals,
+  computeChallenges, computeAchievements, computeGrandTotalPoints,
+  getLevel, getLevelName,
+  type RideSession, type Challenge, type Achievement, type RiderTotals,
+} from "@/lib/gamification";
 
 // ── Types ─────────────────────────────────────────────────
-interface SessionDataJSON {
-  distance_km?: number | string;
-  duration_hh_mm_ss?: string;
-  speed_kmh?: number | string;
-  elevation_m?: number | string;
-}
-
-interface StudentData {
-  name: string;
-  school: string;
-  totalSessions: number;
-  totalKm: number;
-  totalMinutes: number;
-  totalTimeFormatted: string;
-  totalPoints: number;
-  recordId: string;
-}
-
-interface SessionRow {
-  id: string;
-  date: string;
-  km: number;
-  minutes: string;
-  feelingBefore: number;
-  feelingAfter: number;
-  reflection: string;
-  speed: number | null;
-  elevation: number | null;
-  points: number;
-}
-
 interface SchoolmateRider {
   rank: number;
   name: string;
   points: number;
   sessions: number;
+  level: string;
   isCurrentUser: boolean;
 }
 
@@ -67,13 +45,21 @@ const moodColors = [
   "text-muted-foreground", "text-primary", "text-accent"
 ];
 
-function parseSessionData(raw: any): SessionDataJSON | null {
+const ACHIEVEMENT_ICONS: Record<string, any> = {
+  Bike, Flame, Clock, Trophy, TrendingUp, Target, MapPin, Mountain, Repeat, Gauge,
+};
+
+function parseSessionData(raw: any): { distance_km: number; duration_hh_mm_ss: string; speed_kmh: number; elevation_m: number } | null {
   if (!raw) return null;
   try {
-    if (typeof raw === "string") return JSON.parse(raw);
-    if (typeof raw === "object") return raw as SessionDataJSON;
-  } catch { /* ignore */ }
-  return null;
+    const obj = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return {
+      distance_km: Number(obj.distance_km ?? 0),
+      duration_hh_mm_ss: String(obj.duration_hh_mm_ss ?? "0:00"),
+      speed_kmh: Number(obj.speed_kmh ?? 0),
+      elevation_m: Number(obj.elevation_m ?? 0),
+    };
+  } catch { return null; }
 }
 
 function MoodIcon({ value }: { value: number }) {
@@ -101,23 +87,9 @@ function AnimatedNumber({ value, delay = 0 }: { value: number; delay?: number })
   return <>{display.toLocaleString()}</>;
 }
 
-function computeStreak(sessions: SessionRow[]): number {
-  if (sessions.length === 0) return 0;
-  const uniqueDates = [...new Set(sessions.map(s => s.date))].sort((a, b) => b.localeCompare(a));
-  let streak = 1;
-  for (let i = 1; i < uniqueDates.length; i++) {
-    const curr = new Date(uniqueDates[i - 1]);
-    const prev = new Date(uniqueDates[i]);
-    const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
-    if (diffDays <= 2) streak++;
-    else break;
-  }
-  return streak;
-}
-
 // ── Stat Card ─────────────────────────────────────────────
-function StatCard({ icon: Icon, value, label, isFormatted, index }: {
-  icon: any; value: number | string; label: string; isFormatted?: boolean; index: number;
+function StatCard({ icon: Icon, value, label, isFormatted, index, suffix }: {
+  icon: any; value: number | string; label: string; isFormatted?: boolean; index: number; suffix?: string;
 }) {
   return (
     <motion.div
@@ -131,6 +103,7 @@ function StatCard({ icon: Icon, value, label, isFormatted, index }: {
         {isFormatted ? value : typeof value === "number" ? (
           <AnimatedNumber value={value} delay={200 + index * 100} />
         ) : value}
+        {suffix && <span className="text-lg">{suffix}</span>}
       </div>
       <div className="mt-1 font-display text-[9px] font-semibold uppercase tracking-widest text-accent/70 md:text-[10px]">
         {label}
@@ -140,41 +113,45 @@ function StatCard({ icon: Icon, value, label, isFormatted, index }: {
 }
 
 // ── Challenge Card ────────────────────────────────────────
-function ChallengeCard({ icon: Icon, title, current, goal, reward, index }: {
-  icon: any; title: string; current: number; goal: number; reward: number; index: number;
-}) {
+function ChallengeCard({ challenge, index }: { challenge: Challenge; index: number }) {
+  const { title, current, goal, reward, completed, type } = challenge;
   const progress = Math.min((current / goal) * 100, 100);
-  const isComplete = current >= goal;
+  const typeColors = { daily: "text-accent", weekly: "text-primary", milestone: "text-accent" };
+  const typeIcons = { daily: Calendar, weekly: Timer, milestone: Award };
+  const TypeIcon = typeIcons[type];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 + index * 0.1 }}
+      transition={{ delay: 0.3 + index * 0.06 }}
       className={`border-[3px] bg-card p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce ${
-        isComplete ? "border-primary" : "border-secondary"
+        completed ? "border-primary" : "border-secondary"
       }`}
     >
       <div className="flex items-start gap-3">
         <div className={`flex h-10 w-10 shrink-0 items-center justify-center ${
-          isComplete ? "bg-primary" : "bg-secondary"
+          completed ? "bg-primary" : "bg-secondary"
         }`}>
-          {isComplete ? (
+          {completed ? (
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           ) : (
-            <Icon className={`h-5 w-5 ${isComplete ? "text-primary-foreground" : "text-accent"}`} />
+            <TypeIcon className={`h-5 w-5 ${typeColors[type]}`} />
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
-            {title}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="font-display text-xs font-bold uppercase tracking-wider text-foreground">{title}</p>
+            <Badge variant="secondary" className="text-[8px] px-1.5 py-0">
+              {type}
+            </Badge>
+          </div>
           <div className="mt-2 h-3 w-full border-[2px] border-secondary bg-muted overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.8, delay: 0.5 + index * 0.1 }}
-              className={`h-full ${isComplete ? "bg-primary" : "bg-accent"}`}
+              transition={{ duration: 0.8, delay: 0.5 + index * 0.06 }}
+              className={`h-full ${completed ? "bg-primary" : "bg-accent"}`}
             />
           </div>
           <div className="mt-1 flex items-center justify-between">
@@ -191,28 +168,27 @@ function ChallengeCard({ icon: Icon, title, current, goal, reward, index }: {
   );
 }
 
-// ── Badge ─────────────────────────────────────────────────
-function AchievementBadge({ icon: Icon, title, unlocked, index }: {
-  icon: any; title: string; unlocked: boolean; index: number;
-}) {
+// ── Achievement Badge ─────────────────────────────────────
+function AchievementBadge({ achievement, index }: { achievement: Achievement; index: number }) {
+  const Icon = ACHIEVEMENT_ICONS[achievement.icon] ?? Star;
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.2 + index * 0.08, type: "spring" }}
+      transition={{ delay: 0.2 + index * 0.06, type: "spring" }}
       className={`flex flex-col items-center gap-2 p-3 text-center transition-all ${
-        unlocked ? "" : "opacity-30 grayscale"
+        achievement.unlocked ? "" : "opacity-30 grayscale"
       }`}
     >
       <div className={`flex h-14 w-14 items-center justify-center border-[3px] ${
-        unlocked
+        achievement.unlocked
           ? "border-primary bg-secondary shadow-[0_0_12px_hsl(var(--brand-neon)/0.4)]"
           : "border-muted bg-muted"
       }`}>
-        <Icon className={`h-7 w-7 ${unlocked ? "text-accent" : "text-muted-foreground"}`} />
+        <Icon className={`h-7 w-7 ${achievement.unlocked ? "text-accent" : "text-muted-foreground"}`} />
       </div>
       <span className="font-display text-[10px] font-bold uppercase tracking-wider text-foreground">
-        {title}
+        {achievement.title}
       </span>
     </motion.div>
   );
@@ -222,8 +198,11 @@ function AchievementBadge({ icon: Icon, title, unlocked, index }: {
 const Dashboard = () => {
   const { user, role, nfcSession } = useAuth();
   const navigate = useNavigate();
-  const [student, setStudent] = useState<StudentData | null>(null);
-  const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [riderTotals, setRiderTotals] = useState<RiderTotals | null>(null);
+  const [rideSessions, setRideSessions] = useState<RideSession[]>([]);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [grandTotal, setGrandTotal] = useState(0);
   const [schoolRank, setSchoolRank] = useState<number | null>(null);
   const [schoolName, setSchoolName] = useState("");
   const [moodImprovement, setMoodImprovement] = useState<string | null>(null);
@@ -233,9 +212,6 @@ const Dashboard = () => {
   const [schoolRiders, setSchoolRiders] = useState<SchoolmateRider[]>([]);
 
   const hasIdentity = !!user?.email || !!nfcSession;
-  const streak = computeStreak(sessions);
-  const totalPoints = student?.totalPoints ?? 0;
-  const { current: currentLevel } = getLevel(totalPoints);
 
   // ── 4-week check-in redirect ──
   useEffect(() => {
@@ -270,99 +246,136 @@ const Dashboard = () => {
       const schoolIds = f["School"] as string[] | undefined;
       const sessionIds = f["Session Reflections"] as string[] | undefined;
 
-      const studentData: StudentData = {
-        name: String(f["Full Name"] ?? ""),
-        school: "",
-        totalSessions: Number(f["Count (Session Reflections)"] ?? 0),
-        totalKm: Number(f["Total km  Rollup (from Session Reflections)"] ?? 0),
-        totalMinutes: Number(f["Total minutes Rollup (from Session Reflections)"] ?? 0),
-        totalTimeFormatted: String(f["Total Time (h:mm)"] ?? "0:00"),
-        totalPoints: Number(f["Total Points"] ?? 0),
-        recordId: rec.id,
-      };
-
       const [orgsRes, allStudentsRes, sessionsRes] = await Promise.all([
         callAirtable("Organisations", "GET"),
         callAirtable("Student Registration", "GET"),
         fetchSessionReflections(sessionIds),
       ]);
 
-      // Points from Supabase
-      const { data: pointsRows } = await supabase
-        .from("student_points")
-        .select("airtable_student_id, total_points");
-      const pointsMap = new Map<string, number>();
-      if (pointsRows) {
-        for (const row of pointsRows) {
-          const prev = pointsMap.get(row.airtable_student_id) ?? 0;
-          pointsMap.set(row.airtable_student_id, prev + row.total_points);
-        }
-      }
-
+      // Resolve school name
+      let mySchoolId = "";
+      let mySchoolName = "";
       if (schoolIds?.length) {
         const org = orgsRes.records.find((o) => o.id === schoolIds[0]);
-        studentData.school = org ? String(org.fields["Organisation Name"] ?? "") : "";
-        setSchoolName(studentData.school);
+        mySchoolId = schoolIds[0];
+        mySchoolName = org ? String(org.fields["Organisation Name"] ?? "") : "";
+        setSchoolName(mySchoolName);
+      }
 
+      const riderName = String(f["Full Name"] ?? nfcSession?.fullName ?? "Rider");
+
+      // Parse sessions into RideSession format with app-calculated points
+      const mappedSessions: RideSession[] = sessionsRes.records
+        .map((s) => {
+          const rawData = s.fields["Session Data Table"];
+          const parsed = parseSessionData(
+            typeof rawData === "object" && rawData !== null && "value" in (rawData as any)
+              ? (rawData as any).value
+              : rawData
+          );
+          const durationStr = String(s.fields["Total minutes"] ?? parsed?.duration_hh_mm_ss ?? "0:00");
+          const duration_minutes = parseDurationToMinutes(s.fields["Rollup Minutes"] ?? durationStr);
+          const distance_km = Number(s.fields["Total km "] ?? parsed?.distance_km ?? 0);
+          const elevation_m = Number(parsed?.elevation_m ?? 0);
+          const avg_speed_kmh = Number(parsed?.speed_kmh ?? 0);
+
+          const sessionInput = { duration_minutes, distance_km, elevation_m, avg_speed_kmh };
+          const points = calculateSessionPoints(sessionInput);
+
+          return {
+            id: s.id,
+            riderId: rec.id,
+            riderName,
+            schoolId: mySchoolId,
+            schoolName: mySchoolName,
+            date: String(s.fields["Auto date"] ?? s.createdTime).slice(0, 10),
+            distance_km,
+            duration_minutes,
+            elevation_m,
+            avg_speed_kmh,
+            feelingBefore: Number(s.fields["How did you feel before you jumped on the bike?"] ?? 0),
+            feelingAfter: Number(s.fields["How did you feel after your bike session today?"] ?? 0),
+            reflection: String(s.fields["What did you enjoy or not enjoy about today's session?"] ?? ""),
+            screenshotUrl: undefined,
+            points,
+          } satisfies RideSession;
+        })
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+      setRideSessions(mappedSessions);
+
+      // Compute rider totals using gamification engine
+      const totals = computeRiderTotals(rec.id, riderName, mySchoolId, mySchoolName, mappedSessions);
+
+      // Compute challenges & achievements
+      const ch = computeChallenges(totals, mappedSessions);
+      const completedChallengeIds = ch.filter(c => c.completed).map(c => c.id);
+      totals.completedChallenges = completedChallengeIds;
+
+      const grand = computeGrandTotalPoints(mappedSessions, totals.streakMilestones, ch);
+      totals.totalPoints = grand;
+      // Recompute level with grand total
+      const { current, next } = getLevel(grand);
+      totals.level = current;
+      totals.nextLevel = next;
+      totals.xpToNextLevel = next ? next.min - grand : 0;
+
+      setRiderTotals(totals);
+      setChallenges(ch);
+      setGrandTotal(grand);
+
+      // School leaderboard preview (compute all riders' points)
+      if (schoolIds?.length) {
+        // Build all schoolmates' session data
         const schoolmates = allStudentsRes.records
           .filter((s) => {
             const sSchool = s.fields["School"] as string[] | undefined;
             return sSchool?.[0] === schoolIds[0];
-          })
+          });
+
+        // For each schoolmate, compute rough points from Airtable session count + Supabase
+        // For accurate points we'd need all sessions, but we approximate with Supabase points
+        const { data: pointsRows } = await supabase
+          .from("student_points")
+          .select("airtable_student_id, total_points");
+        const supaPointsMap = new Map<string, number>();
+        if (pointsRows) {
+          for (const row of pointsRows) {
+            supaPointsMap.set(row.airtable_student_id, (supaPointsMap.get(row.airtable_student_id) ?? 0) + row.total_points);
+          }
+        }
+
+        const ranked = schoolmates
           .map((s) => ({
             id: s.id,
             name: String(s.fields["Full Name"] ?? ""),
             sessions: Number(s.fields["Count (Session Reflections)"] ?? 0),
-            totalPoints: pointsMap.get(s.id) ?? 0,
-            totalMinutes: Number(s.fields["Total minutes Rollup (from Session Reflections)"] ?? 0),
+            // Use app-calculated grand total for current user, Supabase for others
+            totalPoints: s.id === rec.id ? grand : (supaPointsMap.get(s.id) ?? 0),
           }))
           .sort((a, b) => b.totalPoints - a.totalPoints);
 
-        const rank = schoolmates.findIndex((s) => s.id === rec.id) + 1;
+        const rank = ranked.findIndex((s) => s.id === rec.id) + 1;
         setSchoolRank(rank > 0 ? rank : null);
 
         setSchoolRiders(
-          schoolmates.slice(0, 5).map((s, i) => ({
+          ranked.slice(0, 5).map((s, i) => ({
             rank: i + 1,
             name: s.name,
             points: s.totalPoints,
             sessions: s.sessions,
+            level: getLevelName(s.totalPoints),
             isCurrentUser: s.id === rec.id,
           }))
         );
       }
 
-      if (user?.id) {
-        try {
-          const supabasePoints = await getTotalPoints(user.id);
-          if (supabasePoints > 0) studentData.totalPoints = supabasePoints;
-        } catch {}
-      }
+      // Achievements
+      const ach = computeAchievements(totals, schoolRank);
+      setAchievements(ach);
 
-      setStudent(studentData);
-
-      const mapped: SessionRow[] = sessionsRes.records
-        .map((s) => {
-          const sessionJson = parseSessionData(s.fields["Session Data Table"]);
-          return {
-            id: s.id,
-            date: String(s.fields["Auto date"] ?? s.createdTime).slice(0, 10),
-            km: Number(s.fields["Total km "] ?? sessionJson?.distance_km ?? 0),
-            minutes: String(s.fields["Total minutes"] ?? sessionJson?.duration_hh_mm_ss ?? "0:00"),
-            feelingBefore: Number(s.fields["How did you feel before you jumped on the bike?"] ?? 0),
-            feelingAfter: Number(s.fields["How did you feel after your bike session today?"] ?? 0),
-            reflection: String(s.fields["What did you enjoy or not enjoy about today's session?"] ?? ""),
-            speed: sessionJson?.speed_kmh ? Number(sessionJson.speed_kmh) : null,
-            elevation: sessionJson?.elevation_m ? Number(sessionJson.elevation_m) : null,
-            points: Number(s.fields["Points Earned"] ?? 0),
-          };
-        })
-        .sort((a, b) => b.date.localeCompare(a.date))
-        .slice(0, 10);
-
-      setSessions(mapped);
-
-      const withMood = mapped.filter((s) => s.feelingBefore > 0 && s.feelingAfter > 0);
+      // Mood improvement
+      const withMood = mappedSessions.filter((s) => s.feelingBefore > 0 && s.feelingAfter > 0);
       if (withMood.length > 0) {
         const avgChange = withMood.reduce((sum, s) => sum + (s.feelingAfter - s.feelingBefore), 0) / withMood.length;
         setMoodImprovement(avgChange >= 0 ? `+${avgChange.toFixed(1)}` : avgChange.toFixed(1));
@@ -381,34 +394,23 @@ const Dashboard = () => {
     if (!open) loadData();
   };
 
-  // ── Challenges computed from session data ──
-  const thisWeekSessions = sessions.filter((s) => {
-    const d = new Date(s.date);
-    const now = new Date();
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay());
-    weekStart.setHours(0, 0, 0, 0);
-    return d >= weekStart;
-  });
-  const totalMinutesNum = student?.totalMinutes ?? 0;
-  const bestSessionKm = sessions.length > 0 ? Math.max(...sessions.map(s => s.km)) : 0;
+  // ── Derived values ──
+  const firstName = riderTotals?.riderName.split(" ")[0] ?? nfcSession?.firstName ?? "Rider";
+  const currentLevel = riderTotals ? riderTotals.level : getLevel(0).current;
+  const streak = riderTotals?.currentStreak ?? 0;
 
-  const challenges = [
-    { icon: Target, title: "Ride 3 times this week", current: thisWeekSessions.length, goal: 3, reward: 5 },
-    { icon: Timer, title: "Ride 100 total minutes", current: Math.round(totalMinutesNum), goal: 100, reward: 10 },
-    { icon: Flame, title: "Build a 5-ride streak", current: streak, goal: 5, reward: 15 },
-  ];
+  // This-week sessions
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+  weekStart.setHours(0, 0, 0, 0);
+  const weekStartStr = weekStart.toISOString().slice(0, 10);
+  const thisWeekSessions = rideSessions.filter(s => s.date >= weekStartStr && isValidSession(s));
 
-  // ── Achievements ──
-  const totalRides = student?.totalSessions ?? 0;
-  const achievements = [
-    { icon: Bike, title: "First Ride", unlocked: totalRides >= 1 },
-    { icon: Flame, title: "5 Ride Streak", unlocked: streak >= 5 },
-    { icon: Clock, title: "100 Minutes", unlocked: totalMinutesNum >= 100 },
-    { icon: Trophy, title: "Top 3", unlocked: (schoolRank ?? 99) <= 3 },
-    { icon: Star, title: "50 Points", unlocked: totalPoints >= 50 },
-    { icon: Award, title: "Level Up", unlocked: totalPoints >= 50 },
-  ];
+  // Split challenges by type
+  const dailyChallenges = challenges.filter(c => c.type === "daily");
+  const weeklyChallenges = challenges.filter(c => c.type === "weekly");
+  const milestoneChallenges = challenges.filter(c => c.type === "milestone");
 
   // ── Loading ──
   if (loading) {
@@ -429,8 +431,6 @@ const Dashboard = () => {
     );
   }
 
-  const firstName = student?.name.split(" ")[0] ?? nfcSession?.firstName ?? "Rider";
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -450,7 +450,6 @@ const Dashboard = () => {
           <div className="relative">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                {/* Rider avatar */}
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -465,7 +464,7 @@ const Dashboard = () => {
                   </h1>
                   <div className="mt-1 flex flex-wrap items-center gap-3">
                     <span className="font-body text-sm text-secondary-foreground/70">
-                      {student?.school || ""}
+                      {schoolName || ""}
                     </span>
                     {schoolRank && (
                       <span className="border-[2px] border-accent bg-secondary px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-wider text-accent">
@@ -476,9 +475,13 @@ const Dashboard = () => {
                       {currentLevel.name}
                     </span>
                     {streak > 0 && (
-                      <span className="flex items-center gap-1 border-[2px] border-accent bg-accent px-2 py-0.5 font-display text-[10px] font-bold uppercase text-accent-foreground">
-                        <Flame className="h-3 w-3" /> {streak} streak
-                      </span>
+                      <motion.span
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ repeat: Infinity, duration: 1.5 }}
+                        className="flex items-center gap-1 border-[2px] border-accent bg-accent px-2 py-0.5 font-display text-[10px] font-bold uppercase text-accent-foreground"
+                      >
+                        <Flame className="h-3 w-3 animate-flame-flicker" /> {streak} streak
+                      </motion.span>
                     )}
                   </div>
                 </div>
@@ -488,12 +491,15 @@ const Dashboard = () => {
         </motion.div>
 
         {/* ═══ STATS CARDS ═══ */}
-        <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4">
-          <StatCard icon={Bike} value={student?.totalSessions ?? 0} label="Total Rides" index={0} />
-          <StatCard icon={Clock} value={student?.totalTimeFormatted ?? "0:00"} label="Total Time" isFormatted index={1} />
-          <StatCard icon={Zap} value={student?.totalPoints ?? 0} label="Total Points" index={2} />
-          <StatCard icon={TrendingUp} value={moodImprovement ?? "—"} label="Mood Change" isFormatted index={3} />
-          <StatCard icon={Flame} value={streak} label="Current Streak" index={4} />
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 md:gap-4">
+          <StatCard icon={Bike} value={riderTotals?.totalSessions ?? 0} label="Rides" index={0} />
+          <StatCard icon={Clock} value={riderTotals ? `${riderTotals.totalHours}h` : "0h"} label="Total Time" isFormatted index={1} />
+          <StatCard icon={Zap} value={grandTotal} label="Points" index={2} />
+          <StatCard icon={MapPin} value={riderTotals ? `${riderTotals.totalDistance}` : "0"} label="Distance (km)" isFormatted index={3} />
+          <StatCard icon={Mountain} value={riderTotals?.totalElevation ?? 0} label="Elevation (m)" index={4} />
+          <StatCard icon={Gauge} value={riderTotals ? `${riderTotals.avgSpeed}` : "0"} label="Avg Speed" isFormatted index={5} />
+          <StatCard icon={TrendingUp} value={moodImprovement ?? "—"} label="Mood Change" isFormatted index={6} />
+          <StatCard icon={Flame} value={streak} label="Streak" index={7} />
         </div>
 
         {/* ═══ LOG A RIDE CTA ═══ */}
@@ -515,7 +521,7 @@ const Dashboard = () => {
               <Target className="mx-auto mb-1 h-4 w-4 text-primary" />
               <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Next Challenge</p>
               <p className="font-display text-xs font-bold text-foreground">
-                {challenges.find(c => c.current < c.goal)?.title ?? "All done!"}
+                {challenges.find(c => !c.completed)?.title ?? "All done!"}
               </p>
             </div>
             <div className="border-[2px] border-secondary bg-card p-3 text-center hover-bounce">
@@ -533,7 +539,7 @@ const Dashboard = () => {
 
         {/* ═══ LEVEL PROGRESS ═══ */}
         <div className="mb-6">
-          <LevelProgress totalPoints={totalPoints} />
+          <LevelProgress totalPoints={grandTotal} />
         </div>
 
         {/* ═══ TWO-COLUMN: Leaderboard + Challenges ═══ */}
@@ -579,11 +585,16 @@ const Dashboard = () => {
                       {rider.rank}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className={`font-display text-sm font-bold uppercase ${
-                        rider.isCurrentUser ? "text-primary" : "text-foreground"
-                      }`}>
-                        {rider.name} {rider.isCurrentUser && "(You)"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`font-display text-sm font-bold uppercase ${
+                          rider.isCurrentUser ? "text-primary" : "text-foreground"
+                        }`}>
+                          {rider.name} {rider.isCurrentUser && "(You)"}
+                        </span>
+                        <Badge variant="secondary" className="text-[8px]">
+                          {rider.level}
+                        </Badge>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -611,9 +622,28 @@ const Dashboard = () => {
                 Challenges
               </h3>
             </div>
-            <div className="space-y-3">
-              {challenges.map((c, i) => (
-                <ChallengeCard key={c.title} {...c} index={i} />
+
+            {/* Daily */}
+            <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">Daily</p>
+            <div className="space-y-2 mb-4">
+              {dailyChallenges.map((c, i) => (
+                <ChallengeCard key={c.id} challenge={c} index={i} />
+              ))}
+            </div>
+
+            {/* Weekly */}
+            <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">Weekly</p>
+            <div className="space-y-2 mb-4">
+              {weeklyChallenges.map((c, i) => (
+                <ChallengeCard key={c.id} challenge={c} index={i + 3} />
+              ))}
+            </div>
+
+            {/* Milestones */}
+            <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">Milestones</p>
+            <div className="space-y-2">
+              {milestoneChallenges.map((c, i) => (
+                <ChallengeCard key={c.id} challenge={c} index={i + 7} />
               ))}
             </div>
           </motion.div>
@@ -637,7 +667,7 @@ const Dashboard = () => {
               LOG NEW
             </button>
           </div>
-          {sessions.length === 0 ? (
+          {rideSessions.length === 0 ? (
             <div className="px-6 py-12 text-center">
               <Bike className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
               <p className="font-display text-lg uppercase text-muted-foreground">No rides yet</p>
@@ -647,7 +677,7 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="divide-y divide-muted">
-              {sessions.slice(0, 5).map((session, i) => (
+              {rideSessions.slice(0, 5).map((session, i) => (
                 <motion.div
                   key={session.id}
                   initial={{ opacity: 0, x: -10 }}
@@ -675,10 +705,10 @@ const Dashboard = () => {
                         </div>
                         <div className="mt-1 flex items-center gap-4 font-body text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" /> {session.minutes}
+                            <Clock className="h-3 w-3" /> {Math.round(session.duration_minutes)} min
                           </span>
                           <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" /> {session.km} km
+                            <MapPin className="h-3 w-3" /> {session.distance_km} km
                           </span>
                           {session.feelingBefore > 0 && session.feelingAfter > 0 && (
                             <span className="flex items-center gap-1">
@@ -705,22 +735,22 @@ const Dashboard = () => {
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                           <div>
                             <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Distance</p>
-                            <p className="font-display text-lg font-bold text-primary">{session.km} km</p>
+                            <p className="font-display text-lg font-bold text-primary">{session.distance_km} km</p>
                           </div>
                           <div>
                             <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Duration</p>
-                            <p className="font-display text-lg font-bold text-foreground">{session.minutes}</p>
+                            <p className="font-display text-lg font-bold text-foreground">{Math.round(session.duration_minutes)} min</p>
                           </div>
-                          {session.speed != null && (
+                          {session.avg_speed_kmh > 0 && (
                             <div>
                               <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Speed</p>
-                              <p className="font-display text-lg font-bold text-foreground">{session.speed} km/h</p>
+                              <p className="font-display text-lg font-bold text-foreground">{session.avg_speed_kmh} km/h</p>
                             </div>
                           )}
-                          {session.elevation != null && (
+                          {session.elevation_m > 0 && (
                             <div>
                               <p className="font-display text-[10px] uppercase tracking-wider text-muted-foreground">Elevation</p>
-                              <p className="font-display text-lg font-bold text-foreground">{session.elevation}m</p>
+                              <p className="font-display text-lg font-bold text-foreground">{session.elevation_m}m</p>
                             </div>
                           )}
                         </div>
@@ -751,12 +781,53 @@ const Dashboard = () => {
               Achievements
             </h3>
           </div>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
             {achievements.map((a, i) => (
-              <AchievementBadge key={a.title} {...a} index={i} />
+              <AchievementBadge key={a.id} achievement={a} index={i} />
             ))}
           </div>
         </motion.div>
+
+        {/* ═══ STREAK MILESTONES ═══ */}
+        {riderTotals && riderTotals.streakMilestones.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="mb-6 border-[3px] border-secondary bg-card p-5 shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
+          >
+            <div className="mb-4 flex items-center gap-2">
+              <Flame className="h-5 w-5 text-primary animate-flame-flicker" />
+              <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
+                Streak Milestones
+              </h3>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {[3, 5, 7, 14, 30].map((m) => {
+                const reached = riderTotals.streakMilestones.includes(m);
+                return (
+                  <motion.div
+                    key={m}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", delay: 0.8 }}
+                    className={`flex flex-col items-center gap-1 border-[3px] p-3 ${
+                      reached
+                        ? "border-primary bg-secondary shadow-[0_0_12px_hsl(var(--brand-neon)/0.3)]"
+                        : "border-muted bg-muted opacity-40"
+                    }`}
+                  >
+                    <Flame className={`h-6 w-6 ${reached ? "text-accent animate-flame-flicker" : "text-muted-foreground"}`} />
+                    <span className="font-display text-sm font-bold text-foreground">{m} Days</span>
+                    <span className="font-display text-[10px] text-primary">
+                      +{({ 3: 5, 5: 10, 7: 20, 14: 40, 30: 100 } as Record<number, number>)[m]} pts
+                    </span>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
 
       </div>
 

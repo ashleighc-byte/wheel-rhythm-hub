@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Bike, Clock, Zap } from "lucide-react";
 import { fetchStudents, callAirtable } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
-import { getLevelName } from "@/components/LevelProgress";
+import { getLevelName } from "@/lib/gamification";
 import { Badge } from "@/components/ui/badge";
 import { pluraliseUnit } from "@/lib/dateFormat";
 import { supabase } from "@/integrations/supabase/client";
