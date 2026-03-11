@@ -53,7 +53,7 @@ const CaregiverMessageTemplate = () => {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
-          📋 Template Message — Copy &amp; Customise
+          <ClipboardList className="mr-1 inline h-3.5 w-3.5" /> Template Message — Copy &amp; Customise
         </p>
         <button
           onClick={handleCopy}
