@@ -203,7 +203,7 @@ const steps = [
           </a>
         </div>
         <div className="border-l-4 border-accent bg-card px-4 py-3">
-          <p className="font-bold text-foreground">⚠️ Important</p>
+          <p className="font-bold text-foreground"><AlertTriangle className="mr-1 inline h-4 w-4" /> Important</p>
           <p className="mt-1 text-foreground/70">
             Students <span className="font-bold text-foreground">must use their school email address</span> — the
             same one used on the permission form — or they won't be recognised by the system.
