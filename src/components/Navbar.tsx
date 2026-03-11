@@ -30,6 +30,7 @@ const teacherNavLinks = [
 type NavLink = {
   label: string;
   path: string;
+  tourId?: string;
   dropdown?: { label: string; path: string }[];
 };
 
