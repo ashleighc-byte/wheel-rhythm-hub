@@ -59,7 +59,7 @@ function parseFTMS(dv: DataView) {
 async function requestFTMSControl(cp: any) {
   try { await cp.writeValue(new Uint8Array([0x00]).buffer); } catch (_) {}
 }
-async function setFTMSGrade(cp: BluetoothRemoteGATTCharacteristic, grade: number) {
+async function setFTMSGrade(cp: any, grade: number) {
   const buf = new ArrayBuffer(7);
   const dv  = new DataView(buf);
   dv.setUint8(0, 0x11);
