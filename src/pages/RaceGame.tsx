@@ -302,7 +302,7 @@ export default function RaceGame() {
   // ── FTMS ─────────────────────────────────────────────────────────
   const connectFTMS=useCallback(async()=>{
     try{
-      const dev=await navigator.bluetooth.requestDevice({filters:[{services:[FTMS_SVC]}],optionalServices:[FTMS_SVC]});
+      const dev=await (navigator as any).bluetooth.requestDevice({filters:[{services:[FTMS_SVC]}],optionalServices:[FTMS_SVC]});
       const srv=await dev.gatt!.connect();const svc=await srv.getPrimaryService(FTMS_SVC);
       const dataChr=await svc.getCharacteristic(BIKE_DATA_CHAR);await dataChr.startNotifications();
       dataChr.addEventListener("characteristicvaluechanged",(e:any)=>{const d=parseFTMS(e.target.value);ftmsLiveRef.current=d;setLiveStats({cadence:Math.round(d.cadence),power:Math.round(d.power)});});
