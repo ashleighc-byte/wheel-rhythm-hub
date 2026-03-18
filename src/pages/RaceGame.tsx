@@ -428,7 +428,7 @@ export default function RaceGame() {
           `Avg ${Math.round(avgSpeedKph)} km/h · ${track.avgElevationM}m elevation · ` +
           `${ptsFinal} pts (${track.ptsMultiplier}× multiplier).`,
         "Points Earned":      ptsFinal,
-        "Session Data Table": sessionDataJSON,
+        
       };
       if (studentRecordId) fields["Student Registration"] = [studentRecordId];
       else                 fields["Student Name"]         = riderName;
