@@ -33,7 +33,7 @@ interface Props {
 // Your Avaturn subdomain from developer.avaturn.me
 // Falls back to "demo" so it works straight away for testing
 const AVATURN_SUBDOMAIN =
-  import.meta.env.VITE_AVATURN_SUBDOMAIN || "demo";
+  (import.meta.env.VITE_AVATURN_SUBDOMAIN || "demo").replace(/\.avaturn\.dev$/i, "");
 
 export default function AvatarSetup({
   studentRecordId,
