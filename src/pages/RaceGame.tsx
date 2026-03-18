@@ -281,6 +281,7 @@ export default function RaceGame() {
   const [riderName,      setRiderName]      = useState("");
   const [studentRecordId,setStudentRecordId]= useState<string | null>(null);
   const [prevPoints,     setPrevPoints]     = useState(0);
+  const [avatarUrl,      setAvatarUrl]      = useState<string | null>(null);
 
   // Game UI state
   const [phase,       setPhase]       = useState<GamePhase>("loading");
