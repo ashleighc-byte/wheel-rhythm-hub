@@ -23,6 +23,7 @@ import NfcTap from "./pages/NfcTap";
 import ResetPassword from "./pages/ResetPassword";
 import Webinar from "./pages/Webinar";
 import StudentRegistration from "./pages/StudentRegistration";
+import RaceGame from "./pages/RaceGame";
 
 
 const queryClient = new QueryClient();
