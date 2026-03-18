@@ -56,7 +56,7 @@ function parseFTMS(dv: DataView) {
   if (flags & 0x40) power = dv.getInt16(off, true);
   return { speed, cadence, power };
 }
-async function requestFTMSControl(cp: BluetoothRemoteGATTCharacteristic) {
+async function requestFTMSControl(cp: any) {
   try { await cp.writeValue(new Uint8Array([0x00]).buffer); } catch (_) {}
 }
 async function setFTMSGrade(cp: BluetoothRemoteGATTCharacteristic, grade: number) {
