@@ -335,7 +335,7 @@ export default function RaceGame() {
               filterByFormula: `FIND("${rec.id}",ARRAYJOIN({Student Registration}))`,
               maxRecords: 200,
             });
-            const total = (sessions as any).records.reduce(
+            const total = sessions.records.reduce(
               (s: number, r: any) => s + Number(r.fields["Points Earned"] || 0), 0
             );
             setPrevPoints(total);
@@ -412,6 +412,13 @@ export default function RaceGame() {
     const nfcToken = nfcSession?.nfcToken;
 
     try {
+      const sessionDataJSON = JSON.stringify({
+        distance_km:      Math.round(distKm * 10) / 10,
+        duration_hh_mm_ss:`0:${fmtTime(timeSec)}`,
+        speed_kmh:        Math.round(avgSpeedKph * 10) / 10,
+        elevation_m:      track.avgElevationM,
+      });
+
       const fields: Record<string, any> = {
         "How did you feel before you jumped on the bike?": 3,
         "How did you feel after your bike session today?": postFeel || 4,
@@ -421,6 +428,7 @@ export default function RaceGame() {
           `Avg ${Math.round(avgSpeedKph)} km/h · ${track.avgElevationM}m elevation · ` +
           `${ptsFinal} pts (${track.ptsMultiplier}× multiplier).`,
         "Points Earned":      ptsFinal,
+        
       };
       if (studentRecordId) fields["Student Registration"] = [studentRecordId];
       else                 fields["Student Name"]         = riderName;
