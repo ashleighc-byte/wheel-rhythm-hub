@@ -502,13 +502,20 @@ const Dashboard = () => {
           transition={{ delay: 0.3 }}
           className="mb-6"
         >
-          <button
-            onClick={() => setLogOpen(true)}
-            className="tape-element-green flex w-full items-center justify-center gap-3 py-5 text-xl md:text-2xl"
-          >
-            <Bike className="h-7 w-7" />
-            LOG A RIDE
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setLogOpen(true)}
+              className="tape-element-green flex flex-1 items-center justify-center gap-3 py-5 text-xl md:text-2xl"
+            >
+              <Bike className="h-7 w-7" />
+              LOG A RIDE
+            </button>
+            <Link to="/race">
+              <button className="tape-element flex h-full items-center justify-center gap-2 px-5 py-5 text-base md:text-lg">
+                🏁 RACE
+              </button>
+            </Link>
+          </div>
           <div className="mt-3 grid grid-cols-3 gap-3">
             <div className="border-[2px] border-secondary bg-card p-3 text-center hover-bounce">
               <Target className="mx-auto mb-1 h-4 w-4 text-primary" />

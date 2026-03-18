@@ -23,6 +23,7 @@ import NfcTap from "./pages/NfcTap";
 import ResetPassword from "./pages/ResetPassword";
 import Webinar from "./pages/Webinar";
 import StudentRegistration from "./pages/StudentRegistration";
+import RaceGame from "./pages/RaceGame";
 
 
 const queryClient = new QueryClient();
@@ -146,6 +147,7 @@ const App = () => (
                <Route path="/reset-password" element={<ResetPassword />} />
                <Route path="/webinar" element={<Webinar />} />
                <Route path="/studentregistration" element={<StudentRegistration />} />
+             <Route path="/race" element={<ProtectedRoute><RaceGame /></ProtectedRoute>} />
              <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
           </Routes>
