@@ -14,7 +14,7 @@
  * 4. npm install three   (if not already installed)
  */
 
-/// <reference types="web-bluetooth" />
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
