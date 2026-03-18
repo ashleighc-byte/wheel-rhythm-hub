@@ -832,6 +832,18 @@ export default function RaceGame() {
     </div>
   );
 
+  // ── Avatar setup ───────────────────────────────────────────────────────────
+  if (phase==="avatar") return (
+    <div style={{position:"relative",width:"100%",height:"100vh"}}>
+      <AvatarSetup
+        studentRecordId={studentRecordId}
+        existingUrl={avatarUrl}
+        onDone={(url) => { setAvatarUrl(url); setPhase("trackSelect"); }}
+        onSkip={() => setPhase("trackSelect")}
+      />
+    </div>
+  );
+
   // ── Track select ───────────────────────────────────────────────────────────
   if (phase==="trackSelect") return (
     <div style={OV}>
