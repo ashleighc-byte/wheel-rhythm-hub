@@ -260,7 +260,7 @@ function mkHandlebarRig() {
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
-type GamePhase = "loading" | "trackSelect" | "race" | "results";
+type GamePhase = "loading" | "avatar" | "trackSelect" | "race" | "results";
 type InputMode = "keyboard" | "demo" | "ftms";
 
 interface RaceResult {
