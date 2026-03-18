@@ -327,14 +327,9 @@ export default function RaceGame() {
           "What did you enjoy or not enjoy about today's session?":
             `Cycle Cup Session – ${track.name} (${track.difficultyLabel}). `+
             `${laps} laps in ${fmtMins(durationSecs)}. `+
-            `Avg ${Math.round(avgWatts)}W · ${Math.round(avgCadence)} rpm · ${Math.round(distKm*10)/10} km · ${totalPts} pts.`,
+            `Avg ${Math.round(avgWatts)}W · ${Math.round(avgCadence)} rpm · ${Math.round(distKm*10)/10} km · `+
+            `${Math.round(elevationM)}m elevation · ${totalPts} pts.`,
           "Points Earned":totalPts,
-          "Session Data Table":JSON.stringify({
-            distance_km:Math.round(distKm*10)/10,
-            duration_hh_mm_ss:`0:${fmtTime(durationSecs)}`,
-            speed_kmh:durationSecs>0?Math.round((distKm/durationSecs*3600)*10)/10:0,
-            elevation_m:elevationM,
-          }),
         };
       } else if(challengeResult){
         const{track,timeSec,avgSpeedKph,distKm,ptsFinal,position}=challengeResult;
