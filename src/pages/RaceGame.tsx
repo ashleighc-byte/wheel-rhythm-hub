@@ -315,21 +315,36 @@ export default function RaceGame() {
     if (authLoading) return;
 
     async function resolve() {
+      let recId: string | null = null;
+      let existingAvatarUrl: string | null = null;
+
       // NFC bracelet login
       if (nfcSession) {
         setRiderName(nfcSession.firstName || nfcSession.fullName);
         setStudentRecordId(nfcSession.studentId);
-        setPhase("trackSelect");
-        return;
+        recId = nfcSession.studentId;
+        // Fetch avatar URL for NFC student
+        try {
+          const { callAirtable } = await import("@/lib/airtable");
+          const res = await callAirtable("Student Registration", "GET", {
+            filterByFormula: `RECORD_ID()="${nfcSession.studentId}"`,
+            maxRecords: 1,
+          });
+          if (res.records.length > 0) {
+            existingAvatarUrl = res.records[0].fields["Avatar URL"] as string || null;
+          }
+        } catch (_) {}
       }
       // Supabase email login
-      if (user?.email) {
+      else if (user?.email) {
         try {
           const res = await fetchStudents(user.email);
           if (res.records.length > 0) {
             const rec = res.records[0];
             setRiderName(String(rec.fields["Full Name"] ?? user.email));
             setStudentRecordId(rec.id);
+            recId = rec.id;
+            existingAvatarUrl = rec.fields["Avatar URL"] as string || null;
             // Fetch previous points total
             const { callAirtable } = await import("@/lib/airtable");
             const sessions = await callAirtable("Session Reflections", "GET", {
@@ -346,11 +361,18 @@ export default function RaceGame() {
         } catch (_) {
           setRiderName(user.email ?? "Rider");
         }
-        setPhase("trackSelect");
+      } else {
+        navigate("/auth");
         return;
       }
-      // Not logged in — send to auth
-      navigate("/auth");
+
+      // If avatar URL exists, skip avatar phase
+      if (existingAvatarUrl) {
+        setAvatarUrl(existingAvatarUrl);
+        setPhase("trackSelect");
+      } else {
+        setPhase("avatar");
+      }
     }
     resolve();
   }, [authLoading, user, nfcSession, navigate]);
