@@ -287,7 +287,7 @@ export default function RaceGame() {
             const rec=res.records[0];
             name=String(rec.fields["Full Name"]??user.email);recId=rec.id;
             savedAvatar=rec.fields["Avatar URL"]?String(rec.fields["Avatar URL"]):null;
-            const sessions=await callAirtable("Session Reflections","GET",{filterByFormula:`FIND("${rec.id}",ARRAYJOIN({Student Registration}))`,maxRecords:"200"});
+            const sessions=await callAirtable("Session Reflections","GET",{filterByFormula:`FIND("${rec.id}",ARRAYJOIN({Student Registration}))`,maxRecords:200});
             pts=sessions.records.reduce((s:number,r:any)=>s+Number(r.fields["Points Earned"]||0),0);
           } else {name=user.email??name;}
         }catch(_){name=user.email??name;}
