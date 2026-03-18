@@ -18,6 +18,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
+import AvatarSetup from "@/components/AvatarSetup";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchStudents,
