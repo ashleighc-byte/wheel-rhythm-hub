@@ -339,14 +339,8 @@ export default function RaceGame() {
           "How did you feel after your bike session today?":postFeel||4,
           "What did you enjoy or not enjoy about today's session?":
             `Cycle Cup Challenge – ${track.name}. Finished ${posLabel} in ${fmtTime(timeSec)}. `+
-            `Avg ${Math.round(avgSpeedKph)} km/h · ${ptsFinal} pts.`,
+            `Avg ${Math.round(avgSpeedKph)} km/h · ${track.avgElevationM}m elevation · ${ptsFinal} pts.`,
           "Points Earned":ptsFinal,
-          "Session Data Table":JSON.stringify({
-            distance_km:Math.round(distKm*10)/10,
-            duration_hh_mm_ss:`0:${fmtTime(timeSec)}`,
-            speed_kmh:Math.round(avgSpeedKph*10)/10,
-            elevation_m:track.avgElevationM,
-          }),
         };
       } else return;
 
