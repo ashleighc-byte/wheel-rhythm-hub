@@ -255,7 +255,7 @@ export default function RaceGame() {
   const keysRef       = useRef<Record<string,boolean>>({});
   const touchRef      = useRef({left:false,right:false,accel:false});
   const ftmsLiveRef   = useRef({speed:0,cadence:0,power:0});
-  const ftmsCPRef     = useRef<BluetoothRemoteGATTCharacteristic|null>(null);
+  const ftmsCPRef     = useRef<any>(null);
   const ftmsOkRef     = useRef(false);
   const lastGradeRef  = useRef(0);
   const gradeTimerRef = useRef(0);
