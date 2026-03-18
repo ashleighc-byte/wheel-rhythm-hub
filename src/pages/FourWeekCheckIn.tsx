@@ -114,7 +114,7 @@ const FourWeekCheckIn = () => {
           </p>
         </div>
 
-        <div className="tape-element rotate-[-1deg] !px-5 !py-5 space-y-6">
+        <div className="tape-element !transform-none !rotate-0 !px-5 !py-5 space-y-6" style={{ transform: 'none' }}>
           <h2 className="font-display text-lg uppercase tracking-wider text-accent-foreground">
             <Bike className="mr-2 inline h-5 w-5" />
             Your Experience So Far
