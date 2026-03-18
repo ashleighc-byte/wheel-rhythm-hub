@@ -333,9 +333,9 @@ export default function RaceGame() {
             const { callAirtable } = await import("@/lib/airtable");
             const sessions = await callAirtable("Session Reflections", "GET", {
               filterByFormula: `FIND("${rec.id}",ARRAYJOIN({Student Registration}))`,
-              maxRecords: "200",
+              maxRecords: 200,
             });
-            const total = sessions.records.reduce(
+            const total = (sessions as any).records.reduce(
               (s: number, r: any) => s + Number(r.fields["Points Earned"] || 0), 0
             );
             setPrevPoints(total);
