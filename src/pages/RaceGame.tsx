@@ -369,7 +369,7 @@ export default function RaceGame() {
   // ── FTMS connect ───────────────────────────────────────────────────────────
   const connectFTMS = useCallback(async () => {
     try {
-      const dev = await navigator.bluetooth.requestDevice({
+      const dev = await (navigator as any).bluetooth.requestDevice({
         filters: [{ services: [FTMS_SVC] }],
         optionalServices: [FTMS_SVC],
       });
