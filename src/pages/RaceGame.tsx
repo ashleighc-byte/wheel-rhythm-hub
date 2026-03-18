@@ -63,7 +63,7 @@ async function requestFTMSControl(cp: any) {
  * grade is in percent (e.g. 5.0 = 5% incline → real resistance increase)
  */
 async function setFTMSGrade(
-  cp: BluetoothRemoteGATTCharacteristic,
+  cp: any,
   gradePct: number
 ) {
   const buf = new ArrayBuffer(7);
