@@ -51,7 +51,7 @@ function parseFTMS(dv: DataView) {
 }
 
 /** Request control of the bike's resistance system */
-async function requestFTMSControl(cp: BluetoothRemoteGATTCharacteristic) {
+async function requestFTMSControl(cp: any) {
   const buf = new ArrayBuffer(1);
   new DataView(buf).setUint8(0, 0x00);
   try { await cp.writeValue(buf); } catch (_) { /* some bikes auto-grant */ }
