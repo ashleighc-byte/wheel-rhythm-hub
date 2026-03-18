@@ -412,13 +412,6 @@ export default function RaceGame() {
     const nfcToken = nfcSession?.nfcToken;
 
     try {
-      const sessionDataJSON = JSON.stringify({
-        distance_km:      Math.round(distKm * 10) / 10,
-        duration_hh_mm_ss:`0:${fmtTime(timeSec)}`,
-        speed_kmh:        Math.round(avgSpeedKph * 10) / 10,
-        elevation_m:      track.avgElevationM,
-      });
-
       const fields: Record<string, any> = {
         "How did you feel before you jumped on the bike?": 3,
         "How did you feel after your bike session today?": postFeel || 4,
@@ -428,7 +421,6 @@ export default function RaceGame() {
           `Avg ${Math.round(avgSpeedKph)} km/h · ${track.avgElevationM}m elevation · ` +
           `${ptsFinal} pts (${track.ptsMultiplier}× multiplier).`,
         "Points Earned":      ptsFinal,
-        "Session Data Table": sessionDataJSON,
       };
       if (studentRecordId) fields["Student Registration"] = [studentRecordId];
       else                 fields["Student Name"]         = riderName;
