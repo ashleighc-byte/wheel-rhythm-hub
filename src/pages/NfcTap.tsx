@@ -1,42 +1,25 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, ShieldX, Bike, Gamepad2 } from "lucide-react";
+import { Loader2, ShieldX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { callAirtable, escapeFormulaValue } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
-import { getLevel } from "@/lib/gamification";
-import { supabase } from "@/integrations/supabase/client";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import logoSrc from "@/assets/fw-logo-new.png";
+import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
+import { getLevel } from "@/lib/gamification";
 
-type Phase = "checking" | "invalid" | "choose";
+type Phase = "checking" | "invalid" | "ready";
 
 const NfcTap = () => {
   const { token } = useParams<{ token: string }>();
   const [phase, setPhase] = useState<Phase>("checking");
   const [totalPoints, setTotalPoints] = useState(0);
   const [showSessionForm, setShowSessionForm] = useState(false);
-  const { setNfcSession, nfcSession, user } = useAuth();
-  const navigate = useNavigate();
+  const { setNfcSession, nfcSession } = useAuth();
 
   const firstName = nfcSession?.firstName ?? "Rider";
-
-  // Fetch points for the student
-  useEffect(() => {
-    if (phase !== "choose") return;
-    const fetchPoints = async () => {
-      try {
-        if (user?.id) {
-          const { data } = await supabase.rpc("get_student_total_points", { _user_id: user.id });
-          if (typeof data === "number") setTotalPoints(data);
-        }
-      } catch {
-        // non-fatal
-      }
-    };
-    fetchPoints();
-  }, [phase, user?.id]);
 
   useEffect(() => {
     if (!token) {
@@ -104,7 +87,19 @@ const NfcTap = () => {
           nfcToken: token,
         });
 
-        setPhase("choose");
+        // Fetch real points from gamification engine
+        try {
+          const allRiders = await computeAllRiderPoints();
+          const riderData = allRiders.get(rec.id);
+          if (riderData) {
+            setTotalPoints(riderData.totalPoints);
+          }
+        } catch {
+          // Non-fatal — points will show as 0
+        }
+
+        setPhase("ready");
+        setShowSessionForm(true);
       } catch (err) {
         console.error("NFC lookup error:", err);
         setPhase("invalid");
@@ -166,19 +161,17 @@ const NfcTap = () => {
           </motion.div>
         )}
 
-        {phase === "choose" && (
+        {phase === "ready" && !showSessionForm && (
           <motion.div
-            key="choose"
+            key="ready"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex w-full max-w-lg flex-col items-center gap-6 text-center"
           >
             <Logo />
-
-            {/* Greeting */}
             <div>
               <h1 className="font-display text-3xl uppercase tracking-wider text-foreground">
-                Hey {firstName}! 👋
+                Hey {firstName}!
               </h1>
               <div className="mt-2 flex items-center justify-center gap-3 font-body text-sm text-muted-foreground">
                 <span className="rounded-full bg-primary/20 px-3 py-1 font-display text-xs uppercase tracking-wider text-primary">
@@ -187,54 +180,17 @@ const NfcTap = () => {
                 <span>{totalPoints} pts</span>
               </div>
             </div>
-
-            {/* Choice cards */}
-            <div className="grid w-full gap-4">
-              {/* MyWhoosh Session */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setShowSessionForm(true)}
-                className="flex items-center gap-5 border-[3px] border-primary bg-card p-6 text-left shadow-[5px_5px_0px_hsl(var(--brand-dark))] transition-colors hover:bg-primary/10"
-              >
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/20">
-                  <Bike className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <p className="font-display text-xl uppercase tracking-wider text-foreground">
-                    Log a MyWhoosh Session
-                  </p>
-                  <p className="mt-1 font-body text-sm text-muted-foreground">
-                    Upload your screenshot and log your ride
-                  </p>
-                </div>
-              </motion.button>
-
-              {/* Cycle Cup */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => navigate("/race")}
-                className="flex items-center gap-5 border-[3px] border-accent bg-card p-6 text-left shadow-[5px_5px_0px_hsl(var(--brand-dark))] transition-colors hover:bg-accent/10"
-              >
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-accent/20">
-                  <Gamepad2 className="h-8 w-8 text-accent" />
-                </div>
-                <div>
-                  <p className="font-display text-xl uppercase tracking-wider text-foreground">
-                    Play Cycle Cup
-                  </p>
-                  <p className="mt-1 font-body text-sm text-muted-foreground">
-                    Hop on and ride — points logged automatically
-                  </p>
-                </div>
-              </motion.button>
-            </div>
+            <Button
+              onClick={() => setShowSessionForm(true)}
+              className="tape-element w-full font-display uppercase tracking-wider"
+            >
+              Log a Session
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Session feedback modal — unchanged component */}
+      {/* Session feedback modal */}
       <SessionFeedbackForm open={showSessionForm} onOpenChange={setShowSessionForm} />
     </div>
   );
