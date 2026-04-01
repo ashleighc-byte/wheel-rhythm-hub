@@ -1,68 +1,71 @@
 
-## What We're Building
 
-Three things to get Free Wheeler ready for schools:
+## Plan: Student Registration Flow, NFC Onboarding Tour & Newsletter Flyer
 
-### 1. Clarify the Registration Flow (No Code Changes Needed)
+### How the Flow Works (No Major Code Changes Needed)
 
-The flow already works end-to-end:
-1. **School newsletter** includes link to permission form (`https://bit.ly/FreewheelerPermission`)
-2. **Caregiver fills out Airtable form** — selects school, provides consent
-3. **You (admin) review** in Airtable, set Consent Status to "active"
-4. **You create NFC bracelet** — write a unique token, enter it in the student's Airtable record, set NFC Status to "active"
-5. **Student receives bracelet + merch pack** from their teacher
-6. **Student taps bracelet** → `/tap/:token` → validated → session form opens
+Your existing system already supports the full bracelet-only flow:
 
-**Students do NOT need email/password signup.** The NFC bracelet bypasses all auth. They never need to visit `/auth`. The existing "What Happens Next?" on the registration page mentions email signup — we'll update that to remove the email signup step and explain they'll receive a bracelet instead.
+1. **Newsletter flyer** goes to schools with link to permission form
+2. **Caregiver fills out Airtable form** — selects school, signs MoU
+3. **You review in Airtable** — set Consent Status to "active"
+4. **You create NFC bracelet** — write unique token, add to student's Airtable record, set NFC Status to "active"
+5. **Hand out bracelet packs** to schools
+6. **Student taps bracelet** → `/tap/:token` → validated → ready to ride
 
-### 2. NFC First-Tap Onboarding Tour
+**Students do NOT need email/password signup.** The NFC bracelet bypasses all authentication. They never visit `/auth`. The registration page currently tells them to sign up with email — we'll fix that.
 
-When a student taps their bracelet for the **first time**, show a guided walkthrough before opening the session form. This teaches them the full workflow.
+After the Airtable permission form, show a confirmation message like: *"You're registered! Your teacher will give you your Free Wheeler bracelet and merch pack. Tap your bracelet on the school iPad to start riding — no account or password needed."*
 
-**Persistence**: Use `localStorage` keyed by the NFC token (since NFC users have no Supabase user ID).
+---
 
-**Tour steps** (5 steps):
-1. **Welcome** — "Hey {name}! Welcome to Free Wheeler Bike League. Let's show you how it works."
-2. **The Ride** — "Hop on the smart bike and select a track in MyWhoosh. Ride for as long as you want — every minute counts!"
-3. **Take a Screenshot** — "When you finish your ride, take a screenshot on the iPad or tablet. On iPad: press the top button + volume up at the same time. On Android: press power + volume down."
-4. **Log Your Session** — "Scan your bracelet, find your screenshot, rate how you felt, and hit submit. Your points update instantly!"
-5. **Check Your Stats** — "Visit the Leaderboards to see how you rank. Check Your Stats for your personal progress. Now let's log your first ride!"
+### What We'll Build
 
-After completing or skipping the tour → open the session form as normal.
+#### 1. Update Student Registration Page Copy
+**File:** `src/pages/StudentRegistration.tsx`
 
-**Files to change:**
-- `src/pages/NfcTap.tsx` — add onboarding state, show tour before session form
-- `src/components/NfcOnboardingTour.tsx` — new component, simpler than the existing tooltip-based tour (full-screen card-based slides, no DOM targeting needed since NFC users land on a blank page)
-
-### 3. School Newsletter Flyer
-
-Generate a downloadable PDF/image flyer for school newsletters containing:
-- Free Wheeler logo and branding
-- Headline: "Join the Free Wheeler Bike League!"
-- Brief description of the programme
-- QR code linking to `https://bit.ly/FreewheelerPermission`
-- The URL written out for non-QR scanning
-- "Limited to 24 spots per school" urgency note
-- Brand colours (#2B220D, #84A914, #DBFE66, #D5E7C4)
-
-This will be generated as a downloadable artifact to `/mnt/documents/`.
-
-### 4. Update Student Registration Page
-
-Update the "What Happens Next?" section on `/studentregistration` to reflect the bracelet flow:
+Change the "What Happens Next?" section to reflect the bracelet flow:
 1. Complete the permission form with your caregiver
 2. Wait for confirmation from your school
-3. Receive your Free Wheeler bracelet and merch pack
+3. Receive your Free Wheeler bracelet and merch pack from your teacher
 4. Tap your bracelet on the school iPad to start riding
-5. That's it — no passwords, no accounts needed!
+5. No passwords, no accounts — just tap and ride!
 
 Remove the mention of signing up at freewheeler.lovable.app with email.
 
+#### 2. NFC First-Tap Onboarding Tour
+**New file:** `src/components/NfcOnboardingTour.tsx`
+**Modified file:** `src/pages/NfcTap.tsx`
+
+When a student taps their bracelet for the **first time**, show a full-screen card-based walkthrough (not tooltip-based — there's nothing to point at on the NFC page). Persisted via `localStorage` keyed by NFC token.
+
+**5 slides:**
+1. **Welcome** — "Hey {name}! Welcome to Free Wheeler Bike League."
+2. **The Ride** — "Hop on the smart bike, select a track in MyWhoosh, and ride for as long as you want."
+3. **Screenshot** — "When you finish, take a screenshot. iPad: top button + volume up. Android: power + volume down."
+4. **Log Your Session** — "Scan your bracelet, find your screenshot, rate how you felt, and submit. Points update instantly!"
+5. **Explore** — "Check the Leaderboards to see how you rank. Visit Your Stats for personal progress. Let's log your first ride!"
+
+After completing → open session form as normal.
+
+#### 3. School Newsletter Flyer (PDF)
+Generate a branded A4 flyer to `/mnt/documents/` with:
+- Free Wheeler logo and brand colours
+- "Join the Free Wheeler Bike League!" headline
+- Brief programme description
+- QR code to `https://bit.ly/FreewheelerPermission`
+- URL written out below QR code
+- "Limited to 24 spots per school" urgency callout
+- Brand palette: #2B220D, #84A914, #DBFE66, #D5E7C4
+
+---
+
 ### Technical Summary
 
-| Change | File(s) | Complexity |
-|--------|---------|------------|
+| Change | File(s) | Size |
+|--------|---------|------|
+| Update registration page copy | `src/pages/StudentRegistration.tsx` | Small |
 | NFC onboarding tour component | New: `src/components/NfcOnboardingTour.tsx` | Medium |
 | Wire tour into NFC tap flow | `src/pages/NfcTap.tsx` | Small |
-| Update registration page copy | `src/pages/StudentRegistration.tsx` | Small |
 | Generate newsletter flyer PDF | Script → `/mnt/documents/` | Medium |
+
