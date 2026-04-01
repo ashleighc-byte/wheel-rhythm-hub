@@ -15,7 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchStudents, fetchSessionReflections, callAirtable,
-  hasCompletedFourWeekCheckIn, isValidRecordId
+  hasCompletedFourWeekCheckIn, hasDeferredFourWeekCheckIn,
+  hasLocallyCompletedFourWeekCheckIn, isValidRecordId
 } from "@/lib/airtable";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 import artEliteRider from "@/assets/art-elite-rider.jpeg";
@@ -217,6 +218,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (nfcSession) return;
     if (!user?.email || !user?.created_at || role !== "student") return;
+    if (hasLocallyCompletedFourWeekCheckIn(user.email) || hasDeferredFourWeekCheckIn(user.email)) return;
     const createdAt = new Date(user.created_at);
     const fourWeeksLater = new Date(createdAt.getTime() + 28 * 24 * 60 * 60 * 1000);
     if (new Date() < fourWeeksLater) return;

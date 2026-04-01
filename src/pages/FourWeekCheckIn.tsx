@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchStudents, callAirtable } from "@/lib/airtable";
+import { fetchStudents, callAirtable, deferFourWeekCheckIn, markFourWeekCheckInCompleted } from "@/lib/airtable";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,6 +77,8 @@ const FourWeekCheckIn = () => {
       await callAirtable("Surveys & Student Voice", "POST", {
         body: { records: [{ fields }] },
       });
+
+      markFourWeekCheckInCompleted(user.email);
 
       toast({
         title: "Check-in complete! 🎉",
@@ -189,7 +191,10 @@ const FourWeekCheckIn = () => {
         <div className="flex gap-3">
           <Button
             variant="outline"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => {
+              if (user?.email) deferFourWeekCheckIn(user.email);
+              navigate("/dashboard", { replace: true });
+            }}
             className="flex-1 border-secondary font-display uppercase tracking-wider"
           >
             Skip for now
