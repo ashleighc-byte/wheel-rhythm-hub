@@ -2,13 +2,19 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import {
-  fetchTeacherOrg,
+  fetchTeacherOrgFull,
   fetchStudentsByIds,
   fetchAllSurveysForStudents,
   fetchSessionsByRecordIds,
+  fetchOrgsInRegion,
+  fetchAllStudentsForOrgs,
+  isSuperAdmin,
+  OrgInfo,
+  callAirtable,
 } from "@/lib/airtable";
+import type { AirtableRecord } from "@/lib/airtable";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, XCircle, Users, Clock, Bike, MessageSquare } from "lucide-react";
+import { CheckCircle2, XCircle, Users, Clock, Bike, MessageSquare, Filter, Globe } from "lucide-react";
 import TeacherObservationForm from "@/components/TeacherObservationForm";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,10 +29,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { formatFriendlyDate } from "@/lib/dateFormat";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface StudentRow {
   id: string;
   name: string;
+  school: string;
   sessions: number;
   points: number;
   prePilot: boolean;
@@ -58,12 +72,17 @@ const StatusIcon = ({ done }: { done: boolean }) =>
 const TeacherDashboard = () => {
   const { user } = useAuth();
 
-  const [orgName, setOrgName] = useState<string>("");
+  const [orgInfo, setOrgInfo] = useState<OrgInfo | null>(null);
+  const [superAdmin, setSuperAdmin] = useState(false);
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [observationOpen, setObservationOpen] = useState(false);
+
+  // Super admin school filter
+  const [schoolOptions, setSchoolOptions] = useState<{ id: string; name: string }[]>([]);
+  const [selectedSchool, setSelectedSchool] = useState<string>("all");
 
   // Nudge state
   const [nudges, setNudges] = useState<Map<string, string>>(new Map());
@@ -92,14 +111,47 @@ const TeacherDashboard = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const org = await fetchTeacherOrg(user.email!);
+        const org = await fetchTeacherOrgFull(user.email!);
         if (!org) {
           setError("Could not find your organisation. Make sure your email matches the Organisations table.");
           return;
         }
-        setOrgName(org.name);
+        setOrgInfo(org);
+        const isSA = isSuperAdmin(org);
+        setSuperAdmin(isSA);
 
-        const studentData = await fetchStudentsByIds(org.studentRecordIds);
+        let allStudentIds: string[] = [];
+        let orgMap = new Map<string, string>(); // orgId -> orgName
+
+        if (isSA) {
+          // Fetch all orgs in region
+          const regionOrgs = await fetchOrgsInRegion(org.region);
+          const schools: { id: string; name: string }[] = [];
+          for (const o of regionOrgs.records) {
+            const name = String(o.fields["Organisation Name"] || "");
+            orgMap.set(o.id, name);
+            // Only include orgs that have students
+            const studentIds = Array.isArray(o.fields["Student Registration"]) ? o.fields["Student Registration"] : [];
+            if (studentIds.length > 0) {
+              schools.push({ id: o.id, name });
+            }
+          }
+          setSchoolOptions(schools.sort((a, b) => a.name.localeCompare(b.name)));
+
+          allStudentIds = await fetchAllStudentsForOrgs(regionOrgs.records);
+        } else {
+          allStudentIds = org.studentRecordIds;
+          orgMap.set(org.id, org.name);
+        }
+
+        if (!allStudentIds.length) {
+          setStudents([]);
+          setSessions([]);
+          return;
+        }
+
+        // Fetch all student records
+        const studentData = await fetchStudentsByIds(allStudentIds);
         const studentRecords = studentData.records;
 
         if (!studentRecords.length) {
@@ -108,9 +160,20 @@ const TeacherDashboard = () => {
           return;
         }
 
+        // Also fetch all orgs to map school names for students
+        if (isSA) {
+          // orgMap already populated above
+        } else {
+          // For teachers, fetch org name
+          const allOrgs = await callAirtable("Organisations", "GET");
+          for (const o of allOrgs.records) {
+            orgMap.set(o.id, String(o.fields["Organisation Name"] || ""));
+          }
+        }
+
         const studentIds = studentRecords.map((r) => r.id);
 
-        // Fetch points from Supabase grouped by airtable_student_id
+        // Fetch points from Supabase
         const { data: pointsRows } = await supabase
           .from("student_points")
           .select("airtable_student_id, total_points");
@@ -123,6 +186,7 @@ const TeacherDashboard = () => {
           }
         }
 
+        // Surveys
         const surveyData = await fetchAllSurveysForStudents(studentIds);
         const surveyRecords = surveyData.records;
 
@@ -149,16 +213,22 @@ const TeacherDashboard = () => {
           }
         }
 
-        const rows: StudentRow[] = studentRecords.map((rec) => ({
-          id: rec.id,
-          name: rec.fields["Full Name"] || "—",
-          sessions: rec.fields["Count (Session Reflections)"] || 0,
-          points: pointsMap.get(rec.id) ?? 0,
-          ...surveyMap[rec.id],
-        }));
+        const rows: StudentRow[] = studentRecords.map((rec) => {
+          const schoolIds = rec.fields["School"] as string[] | undefined;
+          const schoolName = schoolIds?.[0] ? orgMap.get(schoolIds[0]) || "" : "";
+          return {
+            id: rec.id,
+            name: rec.fields["Full Name"] || "—",
+            school: schoolName,
+            sessions: rec.fields["Count (Session Reflections)"] || 0,
+            points: pointsMap.get(rec.id) ?? 0,
+            ...surveyMap[rec.id],
+          };
+        });
         rows.sort((a, b) => a.name.localeCompare(b.name));
         setStudents(rows);
 
+        // Sessions
         const allSessionIds: string[] = [];
         const sessionStudentMap: Record<string, string> = {};
         for (const rec of studentRecords) {
@@ -191,7 +261,7 @@ const TeacherDashboard = () => {
           .slice(0, 20);
         setSessions(sessionRows);
       } catch (e: any) {
-        setError(e.message || "Failed to load teacher dashboard data.");
+        setError(e.message || "Failed to load dashboard data.");
       } finally {
         setLoading(false);
       }
@@ -219,6 +289,19 @@ const TeacherDashboard = () => {
     }
   };
 
+  // Filter students by selected school (super admin only)
+  const filteredStudents = superAdmin && selectedSchool !== "all"
+    ? students.filter((s) => s.school === selectedSchool)
+    : students;
+
+  const dashboardTitle = superAdmin
+    ? `Regional Dashboard — ${orgInfo?.region || ""}`
+    : "Teacher Dashboard";
+
+  const subtitle = superAdmin
+    ? `${orgInfo?.name || ""} · ${schoolOptions.length} schools · ${students.length} students`
+    : orgInfo?.name || "";
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -245,12 +328,15 @@ const TeacherDashboard = () => {
       {/* Header */}
       <section className="bg-secondary py-12 md:py-16">
         <div className="container mx-auto px-4">
-          <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-5xl">
-            Teacher Dashboard
-          </h1>
-          {orgName && (
+          <div className="flex items-center gap-3">
+            {superAdmin && <Globe className="h-8 w-8 text-accent" />}
+            <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-5xl">
+              {dashboardTitle}
+            </h1>
+          </div>
+          {subtitle && (
             <p className="mt-2 font-body text-lg text-secondary-foreground/70">
-              {orgName}
+              {subtitle}
             </p>
           )}
         </div>
@@ -295,10 +381,10 @@ const TeacherDashboard = () => {
             {/* Summary chips */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {[
-                { icon: Users, label: "Total Students", value: students.length },
-                { icon: Bike, label: "Total Sessions", value: students.reduce((s, r) => s + r.sessions, 0) },
-                { icon: CheckCircle2, label: "Pre-Pilot Done", value: students.filter((r) => r.prePilot).length },
-                { icon: CheckCircle2, label: "Post-Pilot Done", value: students.filter((r) => r.postPilot).length },
+                { icon: Users, label: "Total Students", value: filteredStudents.length },
+                { icon: Bike, label: "Total Sessions", value: filteredStudents.reduce((s, r) => s + r.sessions, 0) },
+                { icon: CheckCircle2, label: "Pre-Pilot Done", value: filteredStudents.filter((r) => r.prePilot).length },
+                { icon: CheckCircle2, label: "Post-Pilot Done", value: filteredStudents.filter((r) => r.postPilot).length },
               ].map(({ icon: Icon, label, value }) => (
                 <div
                   key={label}
@@ -313,33 +399,60 @@ const TeacherDashboard = () => {
               ))}
             </div>
 
+            {/* School filter for super admins */}
+            {superAdmin && schoolOptions.length > 0 && (
+              <div className="flex items-center gap-3">
+                <Filter className="h-5 w-5 text-muted-foreground" />
+                <span className="font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  Filter by School:
+                </span>
+                <Select value={selectedSchool} onValueChange={setSelectedSchool}>
+                  <SelectTrigger className="w-[280px] border-2 border-secondary font-display text-sm uppercase">
+                    <SelectValue placeholder="All Schools" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Schools</SelectItem>
+                    {schoolOptions.map((s) => (
+                      <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Student table */}
             <div>
               <h2 className="mb-4 font-display text-2xl font-bold uppercase tracking-wider text-foreground">
                 Student Progress
               </h2>
-              {students.length === 0 ? (
-                <p className="font-body text-muted-foreground">No students found for your school.</p>
+              {filteredStudents.length === 0 ? (
+                <p className="font-body text-muted-foreground">No students found.</p>
               ) : (
                 <div className="overflow-x-auto border-[3px] border-secondary shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
                   <table className="w-full font-body text-sm">
                     <thead className="bg-secondary text-secondary-foreground">
                       <tr>
                         <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-wider">Student Name</th>
+                        {superAdmin && (
+                          <th className="px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-wider">School</th>
+                        )}
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Sessions</th>
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Points</th>
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Pre-Pilot</th>
-                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">4 Week Check-In</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">4 Week</th>
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Post-Pilot</th>
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-secondary/40 bg-card">
-                      {students.map((s) => {
+                      {filteredStudents.map((s) => {
                         const nudgedAt = nudges.get(s.id);
                         return (
                           <tr key={s.id} className="hover:bg-secondary/20 transition-colors">
                             <td className="px-4 py-3 font-semibold text-foreground">{s.name}</td>
+                            {superAdmin && (
+                              <td className="px-4 py-3 text-foreground/80 text-xs">{s.school}</td>
+                            )}
                             <td className="px-4 py-3 text-center text-foreground">{s.sessions}</td>
                             <td className="px-4 py-3 text-center font-bold text-primary">{s.points}</td>
                             <td className="px-4 py-3 text-center"><StatusIcon done={s.prePilot} /></td>
@@ -380,7 +493,7 @@ const TeacherDashboard = () => {
                 Recent Session Submissions
               </h2>
               {sessions.length === 0 ? (
-                <p className="font-body text-muted-foreground">No session submissions found for your school.</p>
+                <p className="font-body text-muted-foreground">No session submissions found.</p>
               ) : (
                 <div className="overflow-x-auto border-[3px] border-secondary shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
                   <table className="w-full font-body text-sm">
