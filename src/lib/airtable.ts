@@ -150,7 +150,7 @@ export async function validateStudentApproval(email: string): Promise<{ approved
 
 export async function validateTeacherApproval(email: string): Promise<{ approved: boolean }> {
   const safe = escapeFormulaValue(email);
-  const formula = `AND({Email} = '${safe}', {Status} = 'active')`;
+  const formula = `AND(LOWER({Email}) = LOWER('${safe}'), OR({Status} = 'active', {Status} = 'Active'))`;
   const result = await callAirtable('Organisations', 'GET', {
     filterByFormula: formula,
     maxRecords: 1,
