@@ -177,18 +177,9 @@ const StudentRegistration = () => {
           <ol className="mt-3 list-inside list-decimal space-y-2 font-body text-sm text-secondary-foreground/80">
             <li>Complete the permission form with your caregiver</li>
             <li>Wait for confirmation from your school</li>
-            <li>
-              Once approved, sign up at{" "}
-              <a
-                href="https://freewheeler.lovable.app/auth"
-                className="font-semibold text-accent underline"
-              >
-                freewheeler.lovable.app
-              </a>{" "}
-              with your school email
-            </li>
-            <li>Verify your email and sign in</li>
-            <li>You'll receive an NFC wristband for easy future sign-ins</li>
+            <li>Receive your Free Wheeler bracelet and merch pack from your teacher</li>
+            <li>Tap your bracelet on the school iPad to start riding</li>
+            <li>No passwords, no accounts — just tap and ride!</li>
           </ol>
         </div>
       </main>
