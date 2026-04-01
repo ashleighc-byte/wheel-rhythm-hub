@@ -168,6 +168,19 @@ const NfcTap = () => {
           </motion.div>
         )}
 
+        {phase === "onboarding" && (
+          <NfcOnboardingTour
+            firstName={firstName}
+            onComplete={() => {
+              if (token) {
+                localStorage.setItem(`nfc_onboarding_seen_${token}`, "true");
+              }
+              setPhase("ready");
+              setShowSessionForm(true);
+            }}
+          />
+        )}
+
         {phase === "ready" && !showSessionForm && (
           <motion.div
             key="ready"
