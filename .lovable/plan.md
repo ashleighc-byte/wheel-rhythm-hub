@@ -1,90 +1,68 @@
 
+## What We're Building
 
-# Gamification & Points System — Implementation Plan
+Three things to get Free Wheeler ready for schools:
 
-## How it works
+### 1. Clarify the Registration Flow (No Code Changes Needed)
 
-Your Airtable AI agent extracts distance, duration, speed, and elevation from MyWhoosh screenshots and writes them as a JSON blob into a **"Session Data Table"** field on each Session Reflection record. It also calculates and writes a **"Points Earned"** value. The website's job is to **read and display** this data — not calculate it.
+The flow already works end-to-end:
+1. **School newsletter** includes link to permission form (`https://bit.ly/FreewheelerPermission`)
+2. **Caregiver fills out Airtable form** — selects school, provides consent
+3. **You (admin) review** in Airtable, set Consent Status to "active"
+4. **You create NFC bracelet** — write a unique token, enter it in the student's Airtable record, set NFC Status to "active"
+5. **Student receives bracelet + merch pack** from their teacher
+6. **Student taps bracelet** → `/tap/:token` → validated → session form opens
 
----
+**Students do NOT need email/password signup.** The NFC bracelet bypasses all auth. They never need to visit `/auth`. The existing "What Happens Next?" on the registration page mentions email signup — we'll update that to remove the email signup step and explain they'll receive a bracelet instead.
 
-## What you need to set up in Airtable first
+### 2. NFC First-Tap Onboarding Tour
 
-Before I build anything, these fields must exist:
+When a student taps their bracelet for the **first time**, show a guided walkthrough before opening the session form. This teaches them the full workflow.
 
-**Session Reflections table:**
-- `Session Data Table` — already exists (your agent writes JSON here with `distance_km`, `duration_hh_mm_ss`, plus speed/elevation)
-- `Points Earned` — Number field. Your agent calculates and writes this.
+**Persistence**: Use `localStorage` keyed by the NFC token (since NFC users have no Supabase user ID).
 
-**Student Registration table:**
-- `Total Points` — Rollup field that sums `Points Earned` from linked Session Reflections
-- (Optional) `Level` — Formula field based on Total Points thresholds, or I calculate client-side
+**Tour steps** (5 steps):
+1. **Welcome** — "Hey {name}! Welcome to Free Wheeler Bike League. Let's show you how it works."
+2. **The Ride** — "Hop on the smart bike and select a track in MyWhoosh. Ride for as long as you want — every minute counts!"
+3. **Take a Screenshot** — "When you finish your ride, take a screenshot on the iPad or tablet. On iPad: press the top button + volume up at the same time. On Android: press power + volume down."
+4. **Log Your Session** — "Scan your bracelet, find your screenshot, rate how you felt, and hit submit. Your points update instantly!"
+5. **Check Your Stats** — "Visit the Leaderboards to see how you rank. Check Your Stats for your personal progress. Now let's log your first ride!"
 
----
+After completing or skipping the tour → open the session form as normal.
 
-## What I will build
+**Files to change:**
+- `src/pages/NfcTap.tsx` — add onboarding state, show tour before session form
+- `src/components/NfcOnboardingTour.tsx` — new component, simpler than the existing tooltip-based tour (full-screen card-based slides, no DOM targeting needed since NFC users land on a blank page)
 
-### 1. Make mood ratings optional, screenshot mandatory
-**File:** `src/components/SessionFeedbackForm.tsx`
-- Remove the `preRating === 0 || postRating === 0` validation check
-- Add validation requiring a screenshot upload before submission
-- Update star rating labels to remove the asterisk (*)
+### 3. School Newsletter Flyer
 
-### 2. Parse session data JSON on the dashboard
-**File:** `src/pages/Dashboard.tsx`
-- Read `Session Data Table` field from each Session Reflection record
-- Parse the JSON to extract `distance_km`, `duration_hh_mm_ss`, speed, elevation
-- Read `Points Earned` per session and `Total Points` from Student Registration
-- Add a **Total Points** stat card to the stats grid
-- Add **Speed** and **Elevation** columns to the recent sessions table
-- Show points earned per session in the table
+Generate a downloadable PDF/image flyer for school newsletters containing:
+- Free Wheeler logo and branding
+- Headline: "Join the Free Wheeler Bike League!"
+- Brief description of the programme
+- QR code linking to `https://bit.ly/FreewheelerPermission`
+- The URL written out for non-QR scanning
+- "Limited to 24 spots per school" urgency note
+- Brand colours (#2B220D, #84A914, #DBFE66, #D5E7C4)
 
-### 3. Build a Level Progress component
-**New file:** `src/components/LevelProgress.tsx`
-- Cycling-themed XP bar showing current level and progress to next
-- Levels: Kickstand (0), Pedal Pusher (50), Chain Breaker (150), Hill Climber (300), Sprint King/Queen (500), Tour Legend (800)
-- Displayed on dashboard below the stats grid
+This will be generated as a downloadable artifact to `/mnt/documents/`.
 
-### 4. Add a Points leaderboard tab
-**Files:** `src/pages/Leaderboards.tsx`, `src/components/TopRiders.tsx`
-- Add tabs to toggle between "Time" and "Points" rankings
-- Points tab reads `Total Points` from Student Registration and ranks accordingly
-- Show level badge/name next to each rider
+### 4. Update Student Registration Page
 
-### 5. Enhanced ride success screen
-**File:** `src/components/SessionFeedbackForm.tsx`
-- After successful submission, show a summary card with:
-  - "Points will appear once your screenshot is processed"
-  - Current level progress (reads from Student Registration)
+Update the "What Happens Next?" section on `/studentregistration` to reflect the bracelet flow:
+1. Complete the permission form with your caregiver
+2. Wait for confirmation from your school
+3. Receive your Free Wheeler bracelet and merch pack
+4. Tap your bracelet on the school iPad to start riding
+5. That's it — no passwords, no accounts needed!
 
----
+Remove the mention of signing up at freewheeler.lovable.app with email.
 
-## Points formula for your Airtable agent
+### Technical Summary
 
-Here's what I'd suggest your agent uses to calculate `Points Earned` per session:
-
-```text
-Base log:           10 pts
-Screenshot:          5 pts (always true since mandatory)
-Distance:            1 pt per km
-Duration:            1 pt per 5 mins
-Elevation:           2 pts per 100m
-Speed bonus:         5 pts if avg > 25 km/h, 10 pts if > 30 km/h
-```
-
-You can adjust these however you like — the website just reads the final number.
-
----
-
-## Files changed
-
-```text
-src/components/SessionFeedbackForm.tsx  — Mood optional, screenshot required, success card
-src/pages/Dashboard.tsx                 — Points stat, session data parsing, new columns
-src/components/LevelProgress.tsx        — New: XP progress bar component
-src/pages/Leaderboards.tsx              — Tabs for Time vs Points
-src/components/TopRiders.tsx            — Support points-based ranking mode
-```
-
-No database migrations needed. No edge function changes needed — `Session Data Table` and `Points Earned` are standard Airtable fields read through the existing proxy.
-
+| Change | File(s) | Complexity |
+|--------|---------|------------|
+| NFC onboarding tour component | New: `src/components/NfcOnboardingTour.tsx` | Medium |
+| Wire tour into NFC tap flow | `src/pages/NfcTap.tsx` | Small |
+| Update registration page copy | `src/pages/StudentRegistration.tsx` | Small |
+| Generate newsletter flyer PDF | Script → `/mnt/documents/` | Medium |
