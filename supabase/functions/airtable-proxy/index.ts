@@ -19,12 +19,20 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const url = new URL(req.url);
+  const table = url.searchParams.get('table') || '';
+
   // ─── Authentication ──────────────────────────────────────────────────────────
   const authHeader = req.headers.get('authorization');
   const nfcToken = req.headers.get('x-nfc-token');
   let isNfcAuth = false;
+  let isPublicValidation = false;
 
-  if (nfcToken) {
+  // Allow unauthenticated GET to Organisations and Student Registration for email validation (signup/login approval check)
+  const PUBLIC_VALIDATION_TABLES = ['Organisations', 'Student Registration'];
+  if (!authHeader && !nfcToken && req.method === 'GET' && PUBLIC_VALIDATION_TABLES.includes(table)) {
+    isPublicValidation = true;
+  } else if (nfcToken) {
     isNfcAuth = true;
   } else if (authHeader && authHeader.startsWith('Bearer ')) {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
