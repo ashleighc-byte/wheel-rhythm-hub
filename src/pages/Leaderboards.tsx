@@ -55,10 +55,10 @@ const Leaderboards = () => {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-            <SchoolLeaderboard />
+            <TopRiders mode={mode} />
             <div className="space-y-6">
               <ImpactStats />
-              <TopRiders mode={mode} />
+              <SchoolLeaderboard />
             </div>
           </div>
         </div>
