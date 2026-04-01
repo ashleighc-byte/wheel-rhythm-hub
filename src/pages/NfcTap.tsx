@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { callAirtable, escapeFormulaValue } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
+import NfcOnboardingTour from "@/components/NfcOnboardingTour";
 import logoSrc from "@/assets/fw-logo-new.png";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getLevel } from "@/lib/gamification";
 
-type Phase = "checking" | "invalid" | "ready";
+type Phase = "checking" | "invalid" | "onboarding" | "ready";
 
 const NfcTap = () => {
   const { token } = useParams<{ token: string }>();
