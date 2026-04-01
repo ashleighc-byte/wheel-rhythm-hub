@@ -10,7 +10,6 @@ import { Loader2 } from "lucide-react";
 import brandLogo from "@/assets/fw-logo.png";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +23,7 @@ const Auth = () => {
         await supabase.auth.signOut();
         toast({
           title: "Not registered yet",
-          description: "Your email isn't in our system. If you're a student, please fill out the permission form at https://bit.ly/GameFITPermission. If you're a teacher, complete the school registration at https://bit.ly/Freewheelerschoolreg",
+          description: "Your email isn't in our system. If you're a teacher, complete the school registration at https://bit.ly/Freewheelerschoolreg",
           variant: "destructive",
         });
         return false;
@@ -75,31 +74,9 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        await checkApproval(email);
-      } else {
-        const { approved } = await validateUserApproval(email);
-        if (!approved) {
-          toast({
-            title: "Not registered yet",
-            description: "Your email isn't in our system. Students: fill out the permission form at https://bit.ly/GameFITPermission. Teachers: complete school registration at https://bit.ly/Freewheelerschoolreg",
-            variant: "destructive",
-          });
-          return;
-        }
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        if (error) throw error;
-        toast({
-          title: "Check your email",
-          description: "We've sent you a confirmation link to verify your account.",
-        });
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      await checkApproval(email);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -143,17 +120,12 @@ const Auth = () => {
             className="mx-auto mb-6 h-20 w-auto object-contain"
           />
           <h1 className="font-display text-3xl uppercase tracking-wider text-foreground">
-            {isLogin ? "Sign In" : "Create Account"}
+            Sign In
           </h1>
           <p className="mt-2 font-body text-sm text-muted-foreground">
-            {isLogin ? "Welcome back, rider!" : "Join the Free Wheeler league"}
+            Welcome back, rider!
           </p>
-          </div>
-          {isLogin && (
-            <button type="button" onClick={() => setIsForgotPassword(true)} className="font-body text-xs text-muted-foreground underline hover:text-primary">
-              Forgot your password?
-            </button>
-          )}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="tape-element inline-flex w-full flex-col gap-1 rotate-[-2deg]">
@@ -193,15 +165,21 @@ const Auth = () => {
           >
             {loading ? (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-5 w-5 animate-spin" /> Loading...
+                <Loader2 className="h-5 w-5 animate-spin" /> Signing in...
               </span>
-            ) : isLogin ? (
-              "Sign In"
             ) : (
-              "Sign Up"
+              "Sign In"
             )}
           </Button>
         </form>
+
+        <button
+          type="button"
+          onClick={() => setIsForgotPassword(true)}
+          className="mx-auto block font-body text-xs text-muted-foreground underline hover:text-primary"
+        >
+          Forgot your password?
+        </button>
 
         <div className="flex items-center gap-3">
           <div className="h-px flex-1 bg-border" />
@@ -229,14 +207,8 @@ const Auth = () => {
           Sign in with Google
         </Button>
 
-        <p className="text-center font-body text-sm text-muted-foreground">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="font-display font-bold uppercase text-primary underline"
-          >
-            {isLogin ? "Sign Up" : "Sign In"}
-          </button>
+        <p className="text-center font-body text-xs text-muted-foreground">
+          Teachers: your email must be registered in the system to sign in.
         </p>
       </div>
     </div>

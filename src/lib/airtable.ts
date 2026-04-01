@@ -260,7 +260,21 @@ export async function fetchGlobalDashboard() {
 
 // ---- Teacher-specific helpers ----
 
+export interface OrgInfo {
+  id: string;
+  name: string;
+  orgRole: string;
+  region: string;
+  studentRecordIds: string[];
+}
+
 export async function fetchTeacherOrg(email: string): Promise<{ id: string; name: string; studentRecordIds: string[] } | null> {
+  const full = await fetchTeacherOrgFull(email);
+  if (!full) return null;
+  return { id: full.id, name: full.name, studentRecordIds: full.studentRecordIds };
+}
+
+export async function fetchTeacherOrgFull(email: string): Promise<OrgInfo | null> {
   const formula = `{Email} = '${escapeFormulaValue(email)}'`;
   const result = await callAirtable('Organisations', 'GET', {
     filterByFormula: formula,
@@ -268,15 +282,37 @@ export async function fetchTeacherOrg(email: string): Promise<{ id: string; name
   });
   if (!result.records.length) return null;
   const rec = result.records[0];
-  // The org record already contains linked Student Registration IDs
   const studentRecordIds: string[] = Array.isArray(rec.fields['Student Registration'])
     ? rec.fields['Student Registration']
     : [];
   return {
     id: rec.id,
     name: rec.fields['Organisation Name'] || rec.fields['Name'] || '',
+    orgRole: String(rec.fields['Role'] || ''),
+    region: String(rec.fields['Region'] || ''),
     studentRecordIds,
   };
+}
+
+export function isSuperAdmin(orgInfo: OrgInfo): boolean {
+  return orgInfo.orgRole === 'Regional Sports Trust/Director';
+}
+
+export async function fetchOrgsInRegion(region: string): Promise<AirtableResponse> {
+  if (region.toLowerCase() === 'all') {
+    return callAirtable('Organisations', 'GET');
+  }
+  const formula = `{Region} = '${escapeFormulaValue(region)}'`;
+  return callAirtable('Organisations', 'GET', { filterByFormula: formula });
+}
+
+export async function fetchAllStudentsForOrgs(orgRecords: AirtableRecord[]): Promise<string[]> {
+  const allStudentIds: string[] = [];
+  for (const org of orgRecords) {
+    const ids = Array.isArray(org.fields['Student Registration']) ? org.fields['Student Registration'] : [];
+    allStudentIds.push(...ids);
+  }
+  return [...new Set(allStudentIds)];
 }
 
 export async function fetchStudentsByIds(studentRecordIds: string[]) {

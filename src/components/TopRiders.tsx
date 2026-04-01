@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Bike, Clock, Zap } from "lucide-react";
-import { fetchStudents, callAirtable } from "@/lib/airtable";
+import { fetchStudents, callAirtable, fetchTeacherOrgFull, isSuperAdmin, fetchOrgsInRegion } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { pluraliseUnit } from "@/lib/dateFormat";
@@ -38,7 +38,7 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
   const { user, role, nfcSession } = useAuth();
   const isAdmin = role === 'admin';
   const [riders, setRiders] = useState<Rider[]>([]);
-  const [schoolName, setSchoolName] = useState("");
+  const [titleText, setTitleText] = useState("");
 
   const hasIdentity = !!user?.email || !!nfcSession;
 
@@ -54,13 +54,31 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
         ]);
 
         const orgMap = new Map<string, string>();
+        const orgRegionMap = new Map<string, string>();
         orgsRes.records.forEach((o) => {
           orgMap.set(o.id, String(o.fields["Organisation Name"] ?? ""));
+          orgRegionMap.set(o.id, String(o.fields["Region"] ?? ""));
         });
 
-        let schoolFilterId: string | null = null;
+        let schoolFilterIds: Set<string> | null = null;
+        let regionName = "";
+        let schoolName = "";
 
-        if (!isAdmin) {
+        if (isAdmin && user?.email) {
+          // Check if super admin — filter by region
+          const orgInfo = await fetchTeacherOrgFull(user.email);
+          if (orgInfo && isSuperAdmin(orgInfo)) {
+            regionName = orgInfo.region;
+            if (orgInfo.region.toLowerCase() !== "all") {
+              // Filter to region orgs only
+              const regionOrgs = await fetchOrgsInRegion(orgInfo.region);
+              schoolFilterIds = new Set(regionOrgs.records.map((o) => o.id));
+            }
+            // region=ALL means show everyone — no filter
+          }
+          // Regular teachers see all schools (existing behaviour)
+        } else {
+          // Student — filter to their school
           let currentStudentRec;
           if (user?.email) {
             const currentStudentRes = await fetchStudents(user.email);
@@ -75,16 +93,16 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
           if (!currentStudentRec) return;
           const userSchoolIds = currentStudentRec.fields["School"] as string[] | undefined;
           if (!userSchoolIds?.length) return;
-          schoolFilterId = userSchoolIds[0];
-          const org = orgsRes.records.find((o) => o.id === schoolFilterId);
-          setSchoolName(org ? String(org.fields["Organisation Name"] ?? "") : "");
+          schoolFilterIds = new Set([userSchoolIds[0]]);
+          const org = orgsRes.records.find((o) => o.id === userSchoolIds[0]);
+          schoolName = org ? String(org.fields["Organisation Name"] ?? "") : "";
         }
 
         const mapped = allStudentsRes.records
           .filter((r) => {
-            if (!schoolFilterId) return true;
+            if (!schoolFilterIds) return true;
             const school = r.fields["School"] as string[] | undefined;
-            return school?.[0] === schoolFilterId;
+            return school?.[0] ? schoolFilterIds.has(school[0]) : false;
           })
           .map((r) => {
             const computed = riderPointsMap.get(r.id);
@@ -107,7 +125,7 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
               ? b.totalPoints - a.totalPoints
               : b.totalMinutes - a.totalMinutes
           )
-          .slice(0, isAdmin ? 5 : 10)
+          .slice(0, 10)
           .map((r, i) => ({
             rank: i + 1,
             name: r.name,
@@ -120,6 +138,16 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
           }));
 
         setRiders(mapped);
+
+        // Set title
+        const modeLabel = mode === "points" ? "Top Riders by Points" : "Top Riders";
+        if (!isAdmin && schoolName) {
+          setTitleText(`${modeLabel} – ${schoolName}`);
+        } else if (isAdmin && regionName && regionName.toLowerCase() !== "all") {
+          setTitleText(`${modeLabel} – ${regionName}`);
+        } else {
+          setTitleText(`${modeLabel} – All Schools`);
+        }
       } catch (err) {
         console.error("TopRiders load error:", err);
       }
@@ -128,15 +156,11 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
     load();
   }, [hasIdentity, isAdmin, user?.email, nfcSession?.studentId, mode]);
 
-  const title = mode === "points"
-    ? (isAdmin ? "Top Riders by Points – All Schools" : `Top Riders by Points${schoolName ? ` – ${schoolName}` : ""}`)
-    : (isAdmin ? "Top Riders – All Schools" : `Top Riders${schoolName ? ` – ${schoolName}` : ""}`);
-
   return (
     <div className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
       <div className="leaderboard-header px-6 py-4">
         <h3 className="text-xl tracking-wider md:text-2xl">
-          {title}
+          {titleText}
         </h3>
       </div>
       <div className="divide-y divide-muted">
