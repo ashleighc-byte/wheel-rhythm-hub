@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { callAirtable, escapeFormulaValue } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
+import NfcOnboardingTour from "@/components/NfcOnboardingTour";
 import logoSrc from "@/assets/fw-logo-new.png";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getLevel } from "@/lib/gamification";
 
-type Phase = "checking" | "invalid" | "ready";
+type Phase = "checking" | "invalid" | "onboarding" | "ready";
 
 const NfcTap = () => {
   const { token } = useParams<{ token: string }>();
@@ -98,8 +99,14 @@ const NfcTap = () => {
           // Non-fatal — points will show as 0
         }
 
-        setPhase("ready");
-        setShowSessionForm(true);
+        // Check if first tap — show onboarding
+        const tourKey = `nfc_onboarding_seen_${token}`;
+        if (!localStorage.getItem(tourKey)) {
+          setPhase("onboarding");
+        } else {
+          setPhase("ready");
+          setShowSessionForm(true);
+        }
       } catch (err) {
         console.error("NFC lookup error:", err);
         setPhase("invalid");
@@ -159,6 +166,19 @@ const NfcTap = () => {
               </Link>
             </div>
           </motion.div>
+        )}
+
+        {phase === "onboarding" && (
+          <NfcOnboardingTour
+            firstName={firstName}
+            onComplete={() => {
+              if (token) {
+                localStorage.setItem(`nfc_onboarding_seen_${token}`, "true");
+              }
+              setPhase("ready");
+              setShowSessionForm(true);
+            }}
+          />
         )}
 
         {phase === "ready" && !showSessionForm && (
