@@ -28,13 +28,13 @@ Deno.serve(async (req) => {
     isNfcAuth = true;
   } else if (authHeader && authHeader.startsWith('Bearer ')) {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
     });
     const token = authHeader.replace('Bearer ', '');
-    const { data, error } = await userClient.auth.getClaims(token);
-    if (error || !data?.claims?.sub) {
+    const { data: { user }, error } = await adminClient.auth.getUser(token);
+    if (error || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
