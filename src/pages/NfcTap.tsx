@@ -99,8 +99,14 @@ const NfcTap = () => {
           // Non-fatal — points will show as 0
         }
 
-        setPhase("ready");
-        setShowSessionForm(true);
+        // Check if first tap — show onboarding
+        const tourKey = `nfc_onboarding_seen_${token}`;
+        if (!localStorage.getItem(tourKey)) {
+          setPhase("onboarding");
+        } else {
+          setPhase("ready");
+          setShowSessionForm(true);
+        }
       } catch (err) {
         console.error("NFC lookup error:", err);
         setPhase("invalid");
