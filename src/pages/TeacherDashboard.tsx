@@ -613,6 +613,15 @@ const TeacherDashboard = () => {
           </>
         )}
       </div>
+
+      {/* QR Code Backup Sheet */}
+      {qrOpen && (
+        <StudentQRCodes
+          students={filteredStudents.map((s) => ({ name: s.name, token: s.nfcToken || "" }))}
+          schoolName={orgInfo?.name || "School"}
+          onClose={() => setQrOpen(false)}
+        />
+      )}
     </div>
   );
 };
