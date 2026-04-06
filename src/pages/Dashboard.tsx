@@ -213,18 +213,15 @@ const Dashboard = () => {
 
   const hasIdentity = !!user?.email || !!nfcSession;
 
-  // ── 4-week check-in redirect ──
+  // ── Mid Phase survey prompt ──
+  const [showMidPrompt, setShowMidPrompt] = useState(false);
   useEffect(() => {
     if (nfcSession) return;
     if (!user?.email || !user?.created_at || role !== "student") return;
-    if (hasLocallyCompletedFourWeekCheckIn(user.email) || hasDeferredFourWeekCheckIn(user.email)) return;
-    const createdAt = new Date(user.created_at);
-    const fourWeeksLater = new Date(createdAt.getTime() + 28 * 24 * 60 * 60 * 1000);
-    if (new Date() < fourWeeksLater) return;
-    hasCompletedFourWeekCheckIn(user.email).then((done) => {
-      if (!done) navigate("/four-week-check-in", { replace: true });
-    }).catch(console.error);
-  }, [user?.email, user?.created_at, role, navigate, nfcSession]);
+    if (isSurveyCompleted("Mid Phase", user.email)) return;
+    if (!isMidPhaseDue(user.created_at)) return;
+    setShowMidPrompt(true);
+  }, [user?.email, user?.created_at, role, nfcSession]);
 
   // ── Load data ──
   const loadData = async () => {
