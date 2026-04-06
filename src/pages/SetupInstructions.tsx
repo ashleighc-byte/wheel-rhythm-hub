@@ -18,21 +18,24 @@ import {
   Copy,
   Check,
   FileDown,
+  Smartphone,
 } from "lucide-react";
 
 const PERMISSION_LINK = "https://bit.ly/GameFITPermission";
 
 const messageTemplate = `Tēnā koe,
 
-We're excited to share that your child has been selected to take part in the Free Wheeler Bike League pilot — a new programme running at our school this year.
+We're excited to share a new opportunity for your child — the Free Wheeler Bike League.
 
-Free Wheeler is an indoor cycling programme designed to give rangatahi a fresh way to engage with physical activity. It's self-paced, digital, and built around friendly competition — a great fit for students who love a challenge but maybe don't always feel at home in traditional team sports.
+Free Wheeler is an indoor virtual cycling programme running at our school. It's self-paced, digital, and built around friendly competition — a great fit for students who love a challenge but maybe don't always feel at home in traditional team sports.
 
-Your child has been handpicked because we think they'd really benefit from this experience. The programme runs during school time and is fully supervised.
+There are 24 spots available and participation is free — no cost to join.
 
-To confirm your child's place, we need both you and your child to complete a short permission form. This takes just a few minutes.
+If you'd like your child to take part, please complete the short registration and permission form below. This covers consent and a brief agreement for participation.
 
-Permission form: ${PERMISSION_LINK}
+Registration form: ${PERMISSION_LINK}
+
+Spots are limited, so please register early to secure a place.
 
 If you have any questions, please don't hesitate to get in touch.
 
@@ -98,21 +101,22 @@ const steps = [
   {
     num: "01",
     icon: Users,
-    title: "Set Up the Group",
+    title: "Open Registration",
     colour: "bg-primary",
     textColour: "text-primary-foreground",
     content: (
       <div className="space-y-3 font-body text-sm leading-relaxed text-foreground/85">
         <p>
-          Create a group in your school's management system called{" "}
-          <span className="font-bold text-foreground">"Free Wheeler Pilot"</span> and add the
-          10 identified target students to that group.
+          The Free Wheeler Bike League is an opportunity for up to{" "}
+          <span className="font-bold text-foreground">24 students</span> per school to register
+          and join a virtual indoor cycling league.
         </p>
         <div className="border-l-4 border-primary bg-card px-4 py-3">
-          <p className="font-semibold text-foreground">Why 10 students?</p>
+          <p className="font-semibold text-foreground">Why 24 students?</p>
           <p className="mt-1 text-foreground/70">
-            The pilot is designed for a small, focused cohort — students who would benefit most
-            from a non-traditional pathway into physical activity.
+            Spots are limited to keep the pilot manageable and ensure every student gets a quality
+            experience. This is a student opt-in programme — anyone can register if there's a spot
+            available.
           </p>
         </div>
       </div>
@@ -127,14 +131,13 @@ const steps = [
     content: (
       <div className="space-y-4 font-body text-sm leading-relaxed text-foreground/85">
         <p>
-          Send a message via your school's communications to the caregivers of these students. The
-          message should explain:
+          Send a message via your school's communications to caregivers. The message should explain:
         </p>
         <ul className="space-y-2 pl-1">
           {[
-            "What the Free Wheeler cycling pilot is about",
-            "That their child has been selected to help engage them in school and movement",
-            "That to be involved, they need to fill out the permission form",
+            "What the Free Wheeler Bike League is about",
+            "That their child can register to participate — it's free, no cost to join",
+            "That to participate, they need to complete the registration and permission form",
           ].map((item) => (
             <li key={item} className="flex gap-2">
               <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -219,24 +222,25 @@ const steps = [
   {
     num: "05",
     icon: ClipboardList,
-    title: "Pre-Pilot Survey",
+    title: "Pre Phase Survey",
     colour: "bg-secondary",
     textColour: "text-secondary-foreground",
     content: (
       <div className="space-y-3 font-body text-sm leading-relaxed text-foreground/85">
         <p>
           When a student signs in for the first time, they'll be prompted to complete the{" "}
-          <span className="font-bold text-foreground">Pre-Pilot Survey</span> before accessing the
+          <span className="font-bold text-foreground">Pre Phase Survey</span> before accessing the
           main website.
         </p>
         <p>
-          This survey captures their baseline attitudes towards sport, physical activity, and
-          confidence — which we'll compare with the post-pilot survey at the end of the year.
+          This survey captures their baseline attitudes towards sport, physical activity, confidence,
+          and wellbeing — which we'll compare with the Post Phase survey at the end of the pilot to
+          measure impact.
         </p>
         <div className="border-l-4 border-primary bg-card px-4 py-3">
           <p className="text-foreground/70">
             Once they submit the survey, they'll be taken straight to the home page and can start
-            using the platform.
+            using the platform. The survey questions are managed dynamically from the backend.
           </p>
         </div>
       </div>
@@ -253,52 +257,65 @@ const studentInstructions = [
   {
     icon: Camera,
     title: "Screenshot the Results",
-    body: "At the end of the session, use the iPad to take a screenshot of the results screen on MyWhoosh.",
+    body: (
+      <>
+        At the end of the session, take a screenshot of the results screen on the iPad/tablet.
+        <span className="mt-2 block border-l-4 border-accent bg-card px-3 py-2 text-xs text-foreground/70">
+          <Smartphone className="mr-1 inline h-3 w-3" />
+          <strong>How to screenshot on iPad:</strong> Press the <strong>Top Button</strong> and{" "}
+          <strong>Volume Up</strong> button at the same time. The screenshot will be saved to your Photos.
+        </span>
+      </>
+    ),
   },
   {
     icon: ClipboardList,
     title: "Log the Ride on the Website",
     body: (
       <>
-        Students sign in to{" "}
-        <a
-          href="https://wheel-rhythm-hub.lovable.app/auth"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold text-primary underline underline-offset-2 hover:opacity-80"
-        >
-          wheel-rhythm-hub.lovable.app
-        </a>{" "}
-        on the iPad and tap <span className="font-bold">"Log a Ride"</span> in the navigation. They
-        upload their screenshot and submit their session data — this ties the data to their name.
+        Students scan their <strong>NFC bracelet</strong> on the iPad to open the session form
+        automatically — no sign-in required. They upload their screenshot, fill in the form, and
+        submit. The data is tied to their name.
+        <span className="mt-2 block text-xs text-foreground/60">
+          If they've forgotten their bracelet, they can sign in at{" "}
+          <a
+            href="https://freewheeler.lovable.app/auth"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-primary underline underline-offset-2 hover:opacity-80"
+          >
+            freewheeler.lovable.app
+          </a>{" "}
+          or scan a backup QR code from the teacher dashboard.
+        </span>
       </>
     ),
   },
   {
     icon: LogOut,
     title: "Sign Out When Done",
-    body: "Once logged, students must sign out so the next student doesn't accidentally submit data against their name.",
+    body: "Once logged, students must sign out (if they used email login) so the next student doesn't accidentally submit data against their name. NFC bracelet sessions end automatically.",
   },
 ];
 
 const ongoingItems = [
   {
     icon: ClipboardList,
-    label: "4 Week Check-In",
+    label: "Mid Phase Survey",
     description:
-      "After 4 weeks students will be prompted with a mid-pilot check-in survey. If it's been longer than 4 weeks and they haven't done it, redirect them to their Info page — it has a checklist of tasks including the 4-week survey.",
+      "After 4 weeks the Mid Phase Survey will automatically pop up for students. It only needs to be submitted once — after that it's marked as completed on their checklist. If it hasn't appeared yet, students can find it on their Info page checklist.",
   },
   {
     icon: BarChart3,
-    label: "End of Pilot Survey",
+    label: "Post Phase Survey",
     description:
-      "At the end of the year (or whenever the pilot concludes), students complete the Post-Pilot Survey. This is how we measure the impact of the programme.",
+      "At the end of the pilot, students complete the Post Phase Survey. This is available from their student checklist on the Info page. It's how we measure the impact of the programme.",
   },
   {
     icon: MessageSquare,
     label: "Teacher Observations",
     description:
-      "As a teacher, use the Teacher Observation Form on your dashboard to jot down any changes you notice in students as they progress — attitude, confidence, engagement, behaviour.",
+      "Use the Teacher Observation Form on your dashboard to record any changes you notice in students — engagement, confidence, attitude towards physical activity.",
   },
   {
     icon: AlertTriangle,

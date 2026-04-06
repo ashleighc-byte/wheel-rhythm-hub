@@ -207,20 +207,14 @@ const TeacherDashboard = () => {
           surveyMap[id] = { prePilot: false, fourWeek: false, postPilot: false };
         }
 
-        for (const rec of studentRecords) {
-          const linked = rec.fields["Surveys & Student Voice"];
-          if (Array.isArray(linked) && linked.length > 0) {
-            surveyMap[rec.id].prePilot = true;
-          }
-        }
-
         for (const survey of surveyRecords) {
-          const type: string = survey.fields["Survey Type"] || "";
-          const linkedStudents: string[] = survey.fields["Student Name"] || [];
+          const phase: string = survey.fields["Phase"] || "";
+          const linkedStudents: string[] = Array.isArray(survey.fields["Student"]) ? survey.fields["Student"] : [];
           for (const sid of linkedStudents) {
             if (surveyMap[sid]) {
-              if (type === "4 Week Check In") surveyMap[sid].fourWeek = true;
-              if (type === "Post-Pilot") surveyMap[sid].postPilot = true;
+              if (phase === "Pre Phase") surveyMap[sid].prePilot = true;
+              if (phase === "Mid Phase") surveyMap[sid].fourWeek = true;
+              if (phase === "Post Phase") surveyMap[sid].postPilot = true;
             }
           }
         }
@@ -456,8 +450,8 @@ const TeacherDashboard = () => {
               {[
                 { icon: Users, label: "Total Students", value: filteredStudents.length },
                 { icon: Bike, label: "Total Sessions", value: filteredStudents.reduce((s, r) => s + r.sessions, 0) },
-                { icon: CheckCircle2, label: "Pre-Pilot Done", value: filteredStudents.filter((r) => r.prePilot).length },
-                { icon: CheckCircle2, label: "Post-Pilot Done", value: filteredStudents.filter((r) => r.postPilot).length },
+                { icon: CheckCircle2, label: "Pre Phase Done", value: filteredStudents.filter((r) => r.prePilot).length },
+                { icon: CheckCircle2, label: "Post Phase Done", value: filteredStudents.filter((r) => r.postPilot).length },
               ].map(({ icon: Icon, label, value }) => (
                 <div
                   key={label}
@@ -511,9 +505,9 @@ const TeacherDashboard = () => {
                         )}
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Sessions</th>
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Points</th>
-                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Pre-Pilot</th>
-                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">4 Week</th>
-                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Post-Pilot</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Pre Phase</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Mid Phase</th>
+                        <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Post Phase</th>
                         <th className="px-4 py-3 text-center font-display text-xs font-bold uppercase tracking-wider">Action</th>
                       </tr>
                     </thead>

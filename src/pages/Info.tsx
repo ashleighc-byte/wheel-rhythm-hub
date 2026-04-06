@@ -36,7 +36,6 @@ const timelinePhases = [
     items: [
       "Survey analysis",
       "Student voice feedback review",
-      "Teacher feedback collected",
       "Data summary report created",
     ],
   },
@@ -45,7 +44,7 @@ const timelinePhases = [
     title: "Future Planning",
     items: [
       "Refinements based on evidence",
-      "Decision on scale-up",
+      "Decision on scale-up to connect leaderboards between schools",
     ],
   },
 ];
@@ -74,21 +73,21 @@ const StudentInfo = () => {
   const checklist = [
     {
       status: "done" as const,
-      label: "Pre-Pilot Survey",
+      label: "Pre Phase Survey",
       description: "Completed on sign-up — you're good!",
       action: null,
     },
     {
       status: "empty" as const,
-      label: "4 Week Check-In",
-      description: "A quick mid-pilot check-in — due around week 4.",
-      action: { type: "link" as const, to: "/four-week-check-in", text: "Start Check-In" },
+      label: "Mid Phase Survey",
+      description: "A mid-pilot check-in — pops up after 4 weeks. Only needs to be submitted once.",
+      action: { type: "link" as const, to: "/survey?phase=Mid Phase", text: "Start Check-In" },
     },
     {
       status: "empty" as const,
-      label: "Post-Pilot Survey",
-      description: "Coming Term 4 2026 — we'll remind you when it's time.",
-      action: { type: "disabled-link" as const, text: "Start Survey" },
+      label: "Post Phase Survey",
+      description: "Available at the end of the pilot — we'll remind you when it's time.",
+      action: { type: "link" as const, to: "/survey?phase=Post Phase", text: "Start Survey" },
     },
     {
       status: rideStatus,
@@ -323,21 +322,6 @@ const StudentInfo = () => {
                             >
                               {item.action.text}
                             </Link>
-                          ) : item.action.type === "disabled-link" ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span
-                                    className="inline-block cursor-not-allowed border-[2px] border-muted bg-muted px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground opacity-60"
-                                  >
-                                    {item.action.text}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Opens Term 4 2026 — we'll let you know when it's time</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
                           ) : (
                             <button
                               onClick={item.action.onClick}

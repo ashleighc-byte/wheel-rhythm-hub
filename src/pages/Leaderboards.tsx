@@ -1,18 +1,13 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, Zap } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import StatsBar from "@/components/StatsBar";
 import SchoolLeaderboard from "@/components/SchoolLeaderboard";
 import TopRiders from "@/components/TopRiders";
 import ImpactStats from "@/components/ImpactStats";
 import CTASection from "@/components/CTASection";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import artRideCompleteNew from "@/assets/art-ride-complete-new.png";
 
 const Leaderboards = () => {
-  const [mode, setMode] = useState<"time" | "points">("points");
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -39,28 +34,18 @@ const Leaderboards = () => {
       </section>
 
       <section className="bg-background pb-20 pt-8">
-        <div className="container mx-auto px-4">
-          {/* Tab toggle */}
-          <div className="mb-6 flex justify-center">
-            <Tabs value={mode} onValueChange={(v) => setMode(v as "time" | "points")}>
-              <TabsList className="border-[2px] border-secondary bg-muted">
-                <TabsTrigger value="time" className="font-display uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Clock className="mr-1.5 h-4 w-4" /> Time
-                </TabsTrigger>
-                <TabsTrigger value="points" className="font-display uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  <Zap className="mr-1.5 h-4 w-4" /> Points
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-
+        <div className="container mx-auto px-4 space-y-10">
+          {/* Top Riders by Points */}
           <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-            <TopRiders mode={mode} />
+            <TopRiders mode="points" />
             <div className="space-y-6">
               <ImpactStats />
               <SchoolLeaderboard />
             </div>
           </div>
+
+          {/* Top Riders by Time */}
+          <TopRiders mode="time" />
         </div>
       </section>
 
