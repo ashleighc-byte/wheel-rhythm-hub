@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bike, Clock, MapPin, TrendingUp, Trophy, Plus, Zap,
   Frown, Meh, Smile, Laugh, Flame, Target, Award, Star,
   ChevronRight, Timer, Calendar, Sparkles, Mountain, Repeat,
-  Gauge
+  Gauge, ClipboardCheck, AlertTriangle, CheckCircle2, X
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
