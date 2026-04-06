@@ -7,6 +7,16 @@ import {
   ChevronRight, Timer, Calendar, Sparkles, Mountain, Repeat,
   Gauge, ClipboardCheck, AlertTriangle, CheckCircle2, X
 } from "lucide-react";
+import ChallengesDashboard from "@/components/ChallengesDashboard";
+import {
+  CHALLENGE_DEFINITIONS,
+  calculateAllChallengeProgress,
+  calculateTeamRankings,
+  parseSessionsForChallenges,
+  type ChallengeProgress as InterSchoolChallengeProgress,
+  type TeamRanking,
+  type SessionData,
+} from "@/lib/challenges";
 import Navbar from "@/components/Navbar";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import LevelProgress from "@/components/LevelProgress";
