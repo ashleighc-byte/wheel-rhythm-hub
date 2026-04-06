@@ -14,7 +14,8 @@ import {
 } from "@/lib/airtable";
 import type { AirtableRecord } from "@/lib/airtable";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, XCircle, Users, Clock, Bike, MessageSquare, Filter, Globe } from "lucide-react";
+import { CheckCircle2, XCircle, Users, Clock, Bike, MessageSquare, Filter, Globe, QrCode } from "lucide-react";
+import StudentQRCodes from "@/components/StudentQRCodes";
 import TeacherObservationForm from "@/components/TeacherObservationForm";
 import AdminChallengesView from "@/components/AdminChallengesView";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ interface StudentRow {
   prePilot: boolean;
   fourWeek: boolean;
   postPilot: boolean;
+  nfcToken?: string;
 }
 
 interface SessionRow {
@@ -228,6 +230,7 @@ const TeacherDashboard = () => {
             school: schoolName,
             sessions: rec.fields["Count (Session Reflections)"] || 0,
             points: pointsMap.get(rec.id) ?? 0,
+            nfcToken: String(rec.fields["NFC Bracelet Token"] ?? ""),
             ...surveyMap[rec.id],
           };
         });
