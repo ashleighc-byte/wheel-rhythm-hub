@@ -2,9 +2,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-const FOUR_WEEK_DONE_PREFIX = "four_week_check_in_completed:";
-const FOUR_WEEK_SKIP_PREFIX = "four_week_check_in_skipped:";
-
 // ─── NFC token persistence ────────────────────────────────────────────────────
 const NFC_TOKEN_KEY = 'active_nfc_token';
 
@@ -20,25 +17,20 @@ export function getActiveNfcToken(): string | null {
   return sessionStorage.getItem(NFC_TOKEN_KEY);
 }
 
-function getFourWeekKey(prefix: string, email: string) {
-  return `${prefix}${email.trim().toLowerCase()}`;
+// ─── Survey completion helpers ────────────────────────────────────────────────
+
+export function isSurveyCompleted(phase: string, email: string): boolean {
+  return localStorage.getItem(`survey_completed_${phase}_${email}`) === 'true';
 }
 
-export function hasLocallyCompletedFourWeekCheckIn(email: string): boolean {
-  return localStorage.getItem(getFourWeekKey(FOUR_WEEK_DONE_PREFIX, email)) === 'true';
+export function markSurveyCompleted(phase: string, email: string) {
+  localStorage.setItem(`survey_completed_${phase}_${email}`, 'true');
 }
 
-export function markFourWeekCheckInCompleted(email: string) {
-  localStorage.setItem(getFourWeekKey(FOUR_WEEK_DONE_PREFIX, email), 'true');
-  sessionStorage.removeItem(getFourWeekKey(FOUR_WEEK_SKIP_PREFIX, email));
-}
-
-export function hasDeferredFourWeekCheckIn(email: string): boolean {
-  return sessionStorage.getItem(getFourWeekKey(FOUR_WEEK_SKIP_PREFIX, email)) === 'true';
-}
-
-export function deferFourWeekCheckIn(email: string) {
-  sessionStorage.setItem(getFourWeekKey(FOUR_WEEK_SKIP_PREFIX, email), 'true');
+export function isMidPhaseDue(createdTime: string): boolean {
+  const created = new Date(createdTime);
+  const fourWeeksLater = new Date(created.getTime() + 28 * 24 * 60 * 60 * 1000);
+  return new Date() >= fourWeeksLater;
 }
 
 // ─── Injection-safe helpers ────────────────────────────────────────────────────
@@ -222,28 +214,57 @@ export async function fetchSurveys(studentRecordId?: string) {
   return callAirtable('Surveys & Student Voice', 'GET', options);
 }
 
-export async function hasCompletedPrePilotSurvey(email: string): Promise<boolean> {
-  const students = await fetchStudents(email);
-  if (!students.records.length) return false;
-  const f = students.records[0].fields;
-  const linkedSurveys = f["Surveys & Student Voice"];
-  return Array.isArray(linkedSurveys) && linkedSurveys.length > 0;
+// ─── Dynamic survey helpers ───────────────────────────────────────────────────
+
+import type { SurveyQuestion } from "@/components/DynamicSurvey";
+
+export async function fetchSurveyQuestions(phase: string): Promise<SurveyQuestion[]> {
+  const safe = escapeFormulaValue(phase);
+  const result = await callAirtable('Survey Questions', 'GET', {
+    filterByFormula: `{Phase} = '${safe}'`,
+  });
+  return result.records.map((r) => ({
+    id: r.id,
+    questionText: String(r.fields['Question Text'] ?? ''),
+    fieldType: String(r.fields['Field Type'] ?? 'text') as SurveyQuestion['fieldType'],
+    answerOptions: typeof r.fields['Answer Options'] === 'string'
+      ? r.fields['Answer Options'].split(',').map((s: string) => s.trim()).filter(Boolean)
+      : Array.isArray(r.fields['Answer Options']) ? r.fields['Answer Options'] : [],
+    order: Number(r.fields['Order'] ?? 0),
+    phase: String(r.fields['Phase'] ?? phase),
+  }));
 }
 
-export async function hasCompletedFourWeekCheckIn(email: string): Promise<boolean> {
-  if (hasLocallyCompletedFourWeekCheckIn(email)) return true;
-  const students = await fetchStudents(email);
-  if (!students.records.length) return false;
-  const studentRecordId = students.records[0].id;
+export async function submitSurveyResponse(params: {
+  studentRecordId: string;
+  phase: string;
+  questionText: string;
+  response: string;
+  questionRecordId: string;
+}) {
+  return callAirtable('Survey Responses', 'POST', {
+    body: {
+      records: [{
+        fields: {
+          'Student': [params.studentRecordId],
+          'Phase': params.phase,
+          'Question': params.questionText,
+          'Response': params.response,
+        },
+      }],
+    },
+  });
+}
+
+export async function checkSurveyCompletionRemote(studentRecordId: string, phase: string): Promise<boolean> {
   if (!isValidRecordId(studentRecordId)) return false;
-  const formula = `AND(FIND("${studentRecordId}", ARRAYJOIN({Student Name})), {Survey Type} = "4 Week Check In")`;
-  const result = await callAirtable("Surveys & Student Voice", "GET", {
+  const safe = escapeFormulaValue(phase);
+  const formula = `AND(FIND("${studentRecordId}", ARRAYJOIN({Student})), {Phase} = '${safe}')`;
+  const result = await callAirtable('Survey Responses', 'GET', {
     filterByFormula: formula,
     maxRecords: 1,
   });
-  const completed = result.records.length > 0;
-  if (completed) markFourWeekCheckInCompleted(email);
-  return completed;
+  return result.records.length > 0;
 }
 
 export async function fetchSchoolStats() {

@@ -12,6 +12,8 @@ const NFC_ALLOWED_TABLES: Record<string, string[]> = {
   'Organisations': ['GET'],
   'Global Dashboard': ['GET'],
   'Support Tickets (Bug/Issue Form)': ['POST'],
+  'Survey Questions': ['GET'],
+  'Survey Responses': ['GET', 'POST'],
 };
 
 Deno.serve(async (req) => {
@@ -29,7 +31,7 @@ Deno.serve(async (req) => {
   let isPublicValidation = false;
 
   // Allow unauthenticated GET to Organisations and Student Registration for email validation (signup/login approval check)
-  const PUBLIC_VALIDATION_TABLES = ['Organisations', 'Student Registration'];
+  const PUBLIC_VALIDATION_TABLES = ['Organisations', 'Student Registration', 'Survey Questions'];
   if (!authHeader && !nfcToken && req.method === 'GET' && PUBLIC_VALIDATION_TABLES.includes(table)) {
     isPublicValidation = true;
   } else if (nfcToken) {

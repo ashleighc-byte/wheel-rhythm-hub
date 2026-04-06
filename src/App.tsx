@@ -5,16 +5,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { hasCompletedPrePilotSurvey } from "@/lib/airtable";
+import { isSurveyCompleted } from "@/lib/airtable";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
-import PrePilotSurvey from "./pages/PrePilotSurvey";
-import FourWeekCheckIn from "./pages/FourWeekCheckIn";
+import SurveyPage from "./pages/SurveyPage";
 import NotFound from "./pages/NotFound";
 import Leaderboards from "./pages/Leaderboards";
 import Info from "./pages/Info";
-import PostPilotSurvey from "./pages/PostPilotSurvey";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import OgImageDownload from "./pages/OgImageDownload";
 import SetupInstructions from "./pages/SetupInstructions";
@@ -41,27 +39,22 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // Wait until role is resolved (not null AND not still loading)
+    // Wait until role is resolved
     if (loading) return;
     if (!user?.email) return;
-    // role is null while loading — only proceed once we have a definitive role
     if (role === null) return;
 
-    // Admins (teachers) skip the survey entirely
+    // Admins skip the survey
     if (role === 'admin') {
       setSurveyDone(true);
       setSurveyChecked(true);
       return;
     }
-    hasCompletedPrePilotSurvey(user.email)
-      .then((done) => {
-        setSurveyDone(done);
-        setSurveyChecked(true);
-      })
-      .catch(() => {
-        setSurveyDone(true);
-        setSurveyChecked(true);
-      });
+
+    // Check if Pre Phase survey is completed (localStorage cache)
+    const done = isSurveyCompleted("Pre Phase", user.email);
+    setSurveyDone(done);
+    setSurveyChecked(true);
   }, [user?.email, role, loading, nfcSession]);
 
   // NFC-authenticated students get through
@@ -84,7 +77,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!surveyDone) {
-    return <Navigate to="/survey" replace />;
+    return <Navigate to="/survey?phase=Pre Phase" replace />;
   }
 
   return <>{children}</>;
@@ -109,7 +102,6 @@ const SurveyRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (loading) return null;
   if (!session) return <Navigate to="/auth" replace />;
-  // Admins should never see the survey — send them home
   if (role === 'admin') return <Navigate to="/" replace />;
 
   return <>{children}</>;
@@ -133,13 +125,11 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
-            <Route path="/survey" element={<SurveyRoute><PrePilotSurvey /></SurveyRoute>} />
+            <Route path="/survey" element={<SurveyRoute><SurveyPage /></SurveyRoute>} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/leaderboards" element={<ProtectedRoute><Leaderboards /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/info" element={<ProtectedRoute><Info /></ProtectedRoute>} />
-             <Route path="/post-pilot-survey" element={<ProtectedRoute><PostPilotSurvey /></ProtectedRoute>} />
-             <Route path="/four-week-check-in" element={<SurveyRoute><FourWeekCheckIn /></SurveyRoute>} />
              <Route path="/teacher-dashboard" element={<AdminRoute><TeacherDashboard /></AdminRoute>} />
              <Route path="/setup-instructions" element={<AdminRoute><SetupInstructions /></AdminRoute>} />
              <Route path="/setup-instructions/print" element={<SetupInstructionsPrint />} />
