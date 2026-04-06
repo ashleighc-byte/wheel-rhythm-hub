@@ -358,10 +358,10 @@ export async function fetchAllSurveysForStudents(studentRecordIds: string[]) {
   const validIds = studentRecordIds.filter(isValidRecordId);
   if (!validIds.length) return { records: [] };
   const orClauses = validIds
-    .map(id => `FIND("${id}", ARRAYJOIN({Student Name}))`)
+    .map(id => `FIND("${id}", ARRAYJOIN({Student}))`)
     .join(',');
   const formula = `OR(${orClauses})`;
-  return callAirtable('Surveys & Student Voice', 'GET', {
+  return callAirtable('Survey Responses', 'GET', {
     filterByFormula: formula,
   });
 }
