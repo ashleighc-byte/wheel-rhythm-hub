@@ -1,57 +1,73 @@
-## Plan: Dynamic Airtable-Driven Survey System
+## Inter-School Challenges System — Term 2, 2026
 
-### 1. Remove Old Surveys
-- Delete `src/pages/PrePilotSurvey.tsx`, `src/pages/PostPilotSurvey.tsx`, `src/pages/FourWeekCheckIn.tsx`
-- Remove their routes from `App.tsx`
-- Remove survey gate logic from `ProtectedRoute` in `App.tsx`
-- Remove `hasCompletedPrePilotSurvey`, `hasCompletedFourWeekCheckIn`, `hasDeferredFourWeekCheckIn`, `deferFourWeekCheckIn`, `markFourWeekCheckInCompleted` helpers from `src/lib/airtable.ts`
+### Architecture
 
-### 2. Create Airtable Helpers
-- Add `fetchSurveyQuestions(phase: string)` — fetches from "Survey Questions" table filtered by Phase
-- Add `submitSurveyResponses(studentId, phase, responses)` — POSTs to "Survey Responses" table
-- Add `fetchSurveyCompletions(studentRecordId)` — checks which phases are completed
-- Update edge function proxy to allow these new tables
+**New files:**
+- `src/lib/challenges.ts` — Challenge engine: definitions, progress calculation, date-window filtering
+- `src/components/ChallengesDashboard.tsx` — Student-facing challenges UI (cards, progress bars, rewards)
+- `src/components/AdminChallengesView.tsx` — Teacher/admin challenge monitoring view
 
-### 3. New Dynamic Survey Component
-- Create `src/components/DynamicSurvey.tsx` — renders questions dynamically based on field type:
-  - Single select → radio buttons
-  - Multi select → checkbox group
-  - Rating → star/slider
-  - Text → textarea
-  - Number → number input
-- Progress indicator ("Question 3 of 10")
-- Mobile-first, smooth transitions
-- On submit: save to "Survey Responses" table
+**Modified files:**
+- `src/pages/Dashboard.tsx` — Add Challenges section below surveys
+- `src/pages/TeacherDashboard.tsx` — Add admin challenges tab/section
+- `src/lib/airtable.ts` — Add helper to fetch all sessions (not just by student)
 
-### 4. Survey Triggers & Pages
-- Create `src/pages/SurveyPage.tsx` — wrapper that loads questions for a given phase and renders DynamicSurvey
-- **Pre Phase**: Show as full-screen blocker on first login (replaces old pre-pilot gate in App.tsx ProtectedRoute)
-- **Mid Phase**: Check if 4 weeks since student Start Date; show modal/banner on dashboard
-- **Post Phase**: Shown as checklist item on dashboard, opens survey on click
+### Challenge Engine (`src/lib/challenges.ts`)
 
-### 5. Dashboard Integration
-- Add "Surveys" section to Dashboard showing all 3 phases with completion status
-- Post Phase appears as checklist item
-- Mid Phase shows banner prompt when due
+A config-driven, reusable engine:
 
-### 6. Completion Tracking
-- Store completion in Airtable "Survey Responses" table (query by student + phase)
-- Cache locally to avoid repeated API calls
+```typescript
+interface ChallengeDefinition {
+  id: string;
+  name: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string;
+  metricType: 'ride_count' | 'distance' | 'duration' | 'elevation' | 'team_time';
+  target: number;
+  mode: 'individual' | 'team';
+  teamSize?: number;
+  courseFilter?: string;
+  reward: string;
+  displayOrder: number;
+  active: boolean;
+  dependsOn?: string[]; // challenge IDs that must be completed for reward
+}
+```
 
-### Technical Notes
-- No hardcoded questions — everything driven by Airtable "Survey Questions" table
-- Edge function proxy needs "Survey Questions" (GET) and "Survey Responses" (GET/POST) added to allowed tables
-- Airtable table structure assumed:
-  - **Survey Questions**: Phase, Question Text, Field Type, Answer Options, Order
-  - **Survey Responses**: Student (linked), Phase, Question (linked or text), Response
+**Term 2 challenges defined as config array** — future challenges added by pushing to this array.
+
+**Progress calculation:**
+- Filters sessions by date window + student
+- Parses `Session Data Table` JSON for distance/duration/elevation
+- Sums the relevant metric
+- For team challenges: aggregates across school's riders
+- Duration internally in seconds, displayed as hh:mm:ss
+
+### Student Dashboard Section
+
+- Shows current/upcoming/completed challenges
+- Each card: name, dates, goal, live progress bar, reward icon, completion badge
+- Challenge 4 reward shows dependency note ("Complete both Challenge 3 & 4")
+- Challenge 5 shows team leaderboard
+
+### Admin/Teacher View
+
+- Participation rates per challenge
+- Completion counts by school
+- Challenge 5 team rankings table
+- Winner highlight
+
+### Data Source
+
+All from existing `Session Reflections` table via Airtable proxy — no new Airtable tables needed. Progress is computed client-side from session data within each challenge's date window.
 
 ### Files Changed
-| Action | File |
-|--------|------|
-| Delete | `src/pages/PrePilotSurvey.tsx`, `src/pages/PostPilotSurvey.tsx`, `src/pages/FourWeekCheckIn.tsx` |
-| Edit | `src/App.tsx` (remove old routes, add new survey route, update gate) |
-| Edit | `src/lib/airtable.ts` (remove old helpers, add new survey helpers) |
-| Edit | `supabase/functions/airtable-proxy/index.ts` (allow new tables) |
-| Create | `src/components/DynamicSurvey.tsx` |
-| Create | `src/pages/SurveyPage.tsx` |
-| Edit | `src/pages/Dashboard.tsx` (add surveys section, mid-phase prompt) |
+
+| Change | File | Size |
+|--------|------|------|
+| Challenge engine + definitions | `src/lib/challenges.ts` | New, medium |
+| Student challenges UI | `src/components/ChallengesDashboard.tsx` | New, medium |
+| Admin challenges view | `src/components/AdminChallengesView.tsx` | New, medium |
+| Wire into student dashboard | `src/pages/Dashboard.tsx` | Small edit |
+| Wire into teacher dashboard | `src/pages/TeacherDashboard.tsx` | Small edit |
+| Fetch all sessions helper | `src/lib/airtable.ts` | Small edit |

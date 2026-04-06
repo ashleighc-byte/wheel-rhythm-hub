@@ -7,6 +7,16 @@ import {
   ChevronRight, Timer, Calendar, Sparkles, Mountain, Repeat,
   Gauge, ClipboardCheck, AlertTriangle, CheckCircle2, X
 } from "lucide-react";
+import ChallengesDashboard from "@/components/ChallengesDashboard";
+import {
+  CHALLENGE_DEFINITIONS,
+  calculateAllChallengeProgress,
+  calculateTeamRankings,
+  parseSessionsForChallenges,
+  type ChallengeProgress as InterSchoolChallengeProgress,
+  type TeamRanking,
+  type SessionData,
+} from "@/lib/challenges";
 import Navbar from "@/components/Navbar";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import LevelProgress from "@/components/LevelProgress";
@@ -210,6 +220,9 @@ const Dashboard = () => {
   const [logOpen, setLogOpen] = useState(false);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [schoolRiders, setSchoolRiders] = useState<SchoolmateRider[]>([]);
+  const [interSchoolProgress, setInterSchoolProgress] = useState<InterSchoolChallengeProgress[]>([]);
+  const [teamRankings, setTeamRankings] = useState<TeamRanking[]>([]);
+  const [mySchoolId, setMySchoolId] = useState("");
 
   const hasIdentity = !!user?.email || !!nfcSession;
 
@@ -251,13 +264,14 @@ const Dashboard = () => {
       ]);
 
       // Resolve school name
-      let mySchoolId = "";
+      let localSchoolId = "";
       let mySchoolName = "";
       if (schoolIds?.length) {
         const org = orgsRes.records.find((o) => o.id === schoolIds[0]);
-        mySchoolId = schoolIds[0];
+        localSchoolId = schoolIds[0];
         mySchoolName = org ? String(org.fields["Organisation Name"] ?? "") : "";
         setSchoolName(mySchoolName);
+        setMySchoolId(localSchoolId);
       }
 
       const riderName = String(f["Full Name"] ?? nfcSession?.fullName ?? "Rider");
@@ -284,7 +298,7 @@ const Dashboard = () => {
             id: s.id,
             riderId: rec.id,
             riderName,
-            schoolId: mySchoolId,
+            schoolId: localSchoolId,
             schoolName: mySchoolName,
             date: String(s.fields["Auto date"] ?? s.createdTime).slice(0, 10),
             distance_km,
@@ -303,7 +317,7 @@ const Dashboard = () => {
       setRideSessions(mappedSessions);
 
       // Compute rider totals using gamification engine
-      const totals = computeRiderTotals(rec.id, riderName, mySchoolId, mySchoolName, mappedSessions);
+      const totals = computeRiderTotals(rec.id, riderName, localSchoolId, mySchoolName, mappedSessions);
 
       // Compute challenges & achievements
       const ch = computeChallenges(totals, mappedSessions);
@@ -370,6 +384,38 @@ const Dashboard = () => {
       if (withMood.length > 0) {
         const avgChange = withMood.reduce((sum, s) => sum + (s.feelingAfter - s.feelingBefore), 0) / withMood.length;
         setMoodImprovement(avgChange >= 0 ? `+${avgChange.toFixed(1)}` : avgChange.toFixed(1));
+      }
+
+      // ── Inter-School Challenges ──
+      try {
+        // Build student → school mapping from all students
+        const studentSchoolMap = new Map<string, string>();
+        const schoolNameMap = new Map<string, string>();
+        for (const s of allStudentsRes.records) {
+          const sSchool = s.fields["School"] as string[] | undefined;
+          if (sSchool?.[0]) studentSchoolMap.set(s.id, sSchool[0]);
+        }
+        for (const o of orgsRes.records) {
+          schoolNameMap.set(o.id, String(o.fields["Organisation Name"] ?? ""));
+        }
+
+        // Fetch ALL session reflections for challenge calculation
+        const allSessionsRes = await callAirtable("Session Reflections", "GET");
+        const challengeSessions = parseSessionsForChallenges(allSessionsRes.records, studentSchoolMap);
+
+        // Individual progress for current student
+        const mySessions = challengeSessions.filter(s => s.studentId === rec.id);
+        const progress = calculateAllChallengeProgress(mySessions);
+        setInterSchoolProgress(progress);
+
+        // Team rankings
+        const teamDef = CHALLENGE_DEFINITIONS.find(d => d.mode === 'team');
+        if (teamDef) {
+          const rankings = calculateTeamRankings(teamDef, challengeSessions, schoolNameMap);
+          setTeamRankings(rankings);
+        }
+      } catch (err) {
+        console.error("Challenge calculation error:", err);
       }
     } catch (err) {
       console.error("Dashboard load error:", err);
@@ -619,6 +665,17 @@ const Dashboard = () => {
               })}
             </div>
           </motion.div>
+        )}
+
+        {/* ═══ INTER-SCHOOL CHALLENGES ═══ */}
+        {interSchoolProgress.length > 0 && (
+          <div className="mb-6">
+            <ChallengesDashboard
+              challengeProgress={interSchoolProgress}
+              teamRankings={teamRankings}
+              studentSchoolId={mySchoolId}
+            />
+          </div>
         )}
 
         {/* ═══ TWO-COLUMN: Recent Rides + Top Riders ═══ */}
