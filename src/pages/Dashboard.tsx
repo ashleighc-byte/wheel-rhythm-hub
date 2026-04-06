@@ -385,6 +385,38 @@ const Dashboard = () => {
         const avgChange = withMood.reduce((sum, s) => sum + (s.feelingAfter - s.feelingBefore), 0) / withMood.length;
         setMoodImprovement(avgChange >= 0 ? `+${avgChange.toFixed(1)}` : avgChange.toFixed(1));
       }
+
+      // ── Inter-School Challenges ──
+      try {
+        // Build student → school mapping from all students
+        const studentSchoolMap = new Map<string, string>();
+        const schoolNameMap = new Map<string, string>();
+        for (const s of allStudentsRes.records) {
+          const sSchool = s.fields["School"] as string[] | undefined;
+          if (sSchool?.[0]) studentSchoolMap.set(s.id, sSchool[0]);
+        }
+        for (const o of orgsRes.records) {
+          schoolNameMap.set(o.id, String(o.fields["Organisation Name"] ?? ""));
+        }
+
+        // Fetch ALL session reflections for challenge calculation
+        const allSessionsRes = await callAirtable("Session Reflections", "GET");
+        const challengeSessions = parseSessionsForChallenges(allSessionsRes.records, studentSchoolMap);
+
+        // Individual progress for current student
+        const mySessions = challengeSessions.filter(s => s.studentId === rec.id);
+        const progress = calculateAllChallengeProgress(mySessions);
+        setInterSchoolProgress(progress);
+
+        // Team rankings
+        const teamDef = CHALLENGE_DEFINITIONS.find(d => d.mode === 'team');
+        if (teamDef) {
+          const rankings = calculateTeamRankings(teamDef, challengeSessions, schoolNameMap);
+          setTeamRankings(rankings);
+        }
+      } catch (err) {
+        console.error("Challenge calculation error:", err);
+      }
     } catch (err) {
       console.error("Dashboard load error:", err);
     } finally {
