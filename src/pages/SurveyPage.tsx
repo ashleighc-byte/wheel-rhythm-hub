@@ -65,8 +65,9 @@ const SurveyPage = () => {
       });
     }
 
-    // Mark completion in localStorage
+    // Mark completion in localStorage and clear any dismiss flag
     localStorage.setItem(`survey_completed_${phase}_${user.email}`, "true");
+    localStorage.removeItem(`survey_dismissed_${phase}_${user.email}`);
 
     setSubmitted(true);
     toast({ title: "Survey Complete!", description: `${phase} survey submitted successfully.` });
