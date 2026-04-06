@@ -596,6 +596,14 @@ const TeacherDashboard = () => {
                 </div>
               )}
             </div>
+
+            {/* Inter-School Challenges */}
+            {challengeSchoolStats.length > 0 && (
+              <AdminChallengesView
+                schoolStats={challengeSchoolStats}
+                teamRankings={challengeTeamRankings}
+              />
+            )}
           </>
         )}
       </div>
