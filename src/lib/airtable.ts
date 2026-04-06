@@ -2,9 +2,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-const FOUR_WEEK_DONE_PREFIX = "four_week_check_in_completed:";
-const FOUR_WEEK_SKIP_PREFIX = "four_week_check_in_skipped:";
-
 // ─── NFC token persistence ────────────────────────────────────────────────────
 const NFC_TOKEN_KEY = 'active_nfc_token';
 
@@ -20,25 +17,20 @@ export function getActiveNfcToken(): string | null {
   return sessionStorage.getItem(NFC_TOKEN_KEY);
 }
 
-function getFourWeekKey(prefix: string, email: string) {
-  return `${prefix}${email.trim().toLowerCase()}`;
+// ─── Survey completion helpers ────────────────────────────────────────────────
+
+export function isSurveyCompleted(phase: string, email: string): boolean {
+  return localStorage.getItem(`survey_completed_${phase}_${email}`) === 'true';
 }
 
-export function hasLocallyCompletedFourWeekCheckIn(email: string): boolean {
-  return localStorage.getItem(getFourWeekKey(FOUR_WEEK_DONE_PREFIX, email)) === 'true';
+export function markSurveyCompleted(phase: string, email: string) {
+  localStorage.setItem(`survey_completed_${phase}_${email}`, 'true');
 }
 
-export function markFourWeekCheckInCompleted(email: string) {
-  localStorage.setItem(getFourWeekKey(FOUR_WEEK_DONE_PREFIX, email), 'true');
-  sessionStorage.removeItem(getFourWeekKey(FOUR_WEEK_SKIP_PREFIX, email));
-}
-
-export function hasDeferredFourWeekCheckIn(email: string): boolean {
-  return sessionStorage.getItem(getFourWeekKey(FOUR_WEEK_SKIP_PREFIX, email)) === 'true';
-}
-
-export function deferFourWeekCheckIn(email: string) {
-  sessionStorage.setItem(getFourWeekKey(FOUR_WEEK_SKIP_PREFIX, email), 'true');
+export function isMidPhaseDue(createdTime: string): boolean {
+  const created = new Date(createdTime);
+  const fourWeeksLater = new Date(created.getTime() + 28 * 24 * 60 * 60 * 1000);
+  return new Date() >= fourWeeksLater;
 }
 
 // ─── Injection-safe helpers ────────────────────────────────────────────────────
