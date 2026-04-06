@@ -330,8 +330,6 @@ const StudentInfo = () => {
                               {item.action.text}
                             </button>
                           )}
-                            </button>
-                          )}
                         </div>
                       )}
                     </div>
