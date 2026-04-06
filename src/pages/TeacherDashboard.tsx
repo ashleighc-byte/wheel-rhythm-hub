@@ -16,6 +16,18 @@ import type { AirtableRecord } from "@/lib/airtable";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, XCircle, Users, Clock, Bike, MessageSquare, Filter, Globe } from "lucide-react";
 import TeacherObservationForm from "@/components/TeacherObservationForm";
+import AdminChallengesView from "@/components/AdminChallengesView";
+import { Button } from "@/components/ui/button";
+import {
+  CHALLENGE_DEFINITIONS,
+  calculateAllChallengeProgress,
+  calculateTeamRankings,
+  parseSessionsForChallenges,
+  type TeamRanking,
+} from "@/lib/challenges";
+import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle2, XCircle, Users, Clock, Bike, MessageSquare, Filter, Globe } from "lucide-react";
+import TeacherObservationForm from "@/components/TeacherObservationForm";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
