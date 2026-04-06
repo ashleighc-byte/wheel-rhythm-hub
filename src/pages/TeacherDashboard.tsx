@@ -272,6 +272,67 @@ const TeacherDashboard = () => {
           .sort((a: any, b: any) => new Date(b._dateRaw).getTime() - new Date(a._dateRaw).getTime())
           .slice(0, 20);
         setSessions(sessionRows);
+
+        // ── Inter-School Challenge Stats ──
+        try {
+          const studentSchoolMap = new Map<string, string>();
+          const schoolNameMap = new Map<string, string>();
+          for (const s of studentRecords) {
+            const sSchool = s.fields["School"] as string[] | undefined;
+            if (sSchool?.[0]) studentSchoolMap.set(s.id, sSchool[0]);
+          }
+          for (const [id, name] of orgMap) {
+            schoolNameMap.set(id, name);
+          }
+
+          const allSessionsRes = await callAirtable("Session Reflections", "GET");
+          const challengeSessions = parseSessionsForChallenges(allSessionsRes.records, studentSchoolMap);
+
+          // Per-school completion stats
+          const individualDefs = CHALLENGE_DEFINITIONS.filter(d => d.mode !== 'team');
+          const schoolStatsMap = new Map<string, { schoolId: string; schoolName: string; totalStudents: number; completionsByChallenge: Record<string, number> }>();
+
+          // Group students by school
+          const studentsBySchool = new Map<string, string[]>();
+          for (const s of studentRecords) {
+            const sSchool = (s.fields["School"] as string[] | undefined)?.[0];
+            if (sSchool) {
+              if (!studentsBySchool.has(sSchool)) studentsBySchool.set(sSchool, []);
+              studentsBySchool.get(sSchool)!.push(s.id);
+            }
+          }
+
+          for (const [schoolId, studentIds] of studentsBySchool) {
+            const completions: Record<string, number> = {};
+            for (const def of individualDefs) {
+              let count = 0;
+              for (const sid of studentIds) {
+                const studentSessions = challengeSessions.filter(s => s.studentId === sid);
+                const progress = calculateAllChallengeProgress(studentSessions);
+                const p = progress.find(pp => pp.definition.id === def.id);
+                if (p?.completed) count++;
+              }
+              completions[def.id] = count;
+            }
+            schoolStatsMap.set(schoolId, {
+              schoolId,
+              schoolName: schoolNameMap.get(schoolId) ?? 'Unknown',
+              totalStudents: studentIds.length,
+              completionsByChallenge: completions,
+            });
+          }
+
+          setChallengeSchoolStats([...schoolStatsMap.values()]);
+
+          // Team rankings
+          const teamDef = CHALLENGE_DEFINITIONS.find(d => d.mode === 'team');
+          if (teamDef) {
+            const rankings = calculateTeamRankings(teamDef, challengeSessions, schoolNameMap);
+            setChallengeTeamRankings(rankings);
+          }
+        } catch (err) {
+          console.error("Challenge stats error:", err);
+        }
       } catch (e: any) {
         setError(e.message || "Failed to load dashboard data.");
       } finally {
