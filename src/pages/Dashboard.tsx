@@ -232,6 +232,7 @@ const Dashboard = () => {
     if (nfcSession) return;
     if (!user?.email || !user?.created_at || role !== "student") return;
     if (isSurveyCompleted("Mid Phase", user.email)) return;
+    if (localStorage.getItem(`survey_dismissed_Mid Phase_${user.email}`) === "true") return;
     if (!isMidPhaseDue(user.created_at)) return;
     setShowMidPrompt(true);
   }, [user?.email, user?.created_at, role, nfcSession]);
@@ -607,7 +608,10 @@ const Dashboard = () => {
                 Start
               </Button>
             </Link>
-            <button onClick={() => setShowMidPrompt(false)}>
+            <button onClick={() => {
+              setShowMidPrompt(false);
+              if (user?.email) localStorage.setItem(`survey_dismissed_Mid Phase_${user.email}`, "true");
+            }}>
               <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
             </button>
           </motion.div>
