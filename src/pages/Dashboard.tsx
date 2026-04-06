@@ -15,8 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchStudents, fetchSessionReflections, callAirtable,
-  hasCompletedFourWeekCheckIn, hasDeferredFourWeekCheckIn,
-  hasLocallyCompletedFourWeekCheckIn, isValidRecordId
+  isSurveyCompleted, isMidPhaseDue, isValidRecordId
 } from "@/lib/airtable";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 import artEliteRider from "@/assets/art-elite-rider.jpeg";
