@@ -128,8 +128,19 @@ const SurveyPage = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="max-w-md border-[3px] border-secondary bg-card p-8 text-center shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
-          <p className="font-display text-lg text-foreground">No questions found for this survey phase.</p>
-          <Button onClick={() => navigate("/dashboard")} className="mt-4">
+          <p className="font-display text-lg text-foreground">
+            The {phase} survey isn't available yet.
+          </p>
+          <p className="mt-2 font-body text-sm text-muted-foreground">
+            Questions haven't been added for this phase. You'll be prompted again when it's ready.
+          </p>
+          <Button onClick={() => {
+            // Dismiss so they don't get stuck in a loop
+            if (user?.email) {
+              localStorage.setItem(`survey_dismissed_${phase}_${user.email}`, "true");
+            }
+            navigate("/dashboard");
+          }} className="mt-4">
             Back to Dashboard
           </Button>
         </div>
