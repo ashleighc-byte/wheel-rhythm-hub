@@ -264,13 +264,14 @@ const Dashboard = () => {
       ]);
 
       // Resolve school name
-      let mySchoolId = "";
+      let localSchoolId = "";
       let mySchoolName = "";
       if (schoolIds?.length) {
         const org = orgsRes.records.find((o) => o.id === schoolIds[0]);
-        mySchoolId = schoolIds[0];
+        localSchoolId = schoolIds[0];
         mySchoolName = org ? String(org.fields["Organisation Name"] ?? "") : "";
         setSchoolName(mySchoolName);
+        setMySchoolId(localSchoolId);
       }
 
       const riderName = String(f["Full Name"] ?? nfcSession?.fullName ?? "Rider");
