@@ -14,7 +14,8 @@ import {
 } from "@/lib/airtable";
 import type { AirtableRecord } from "@/lib/airtable";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, XCircle, Users, Clock, Bike, MessageSquare, Filter, Globe } from "lucide-react";
+import { CheckCircle2, XCircle, Users, Clock, Bike, MessageSquare, Filter, Globe, QrCode } from "lucide-react";
+import StudentQRCodes from "@/components/StudentQRCodes";
 import TeacherObservationForm from "@/components/TeacherObservationForm";
 import AdminChallengesView from "@/components/AdminChallengesView";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ interface StudentRow {
   prePilot: boolean;
   fourWeek: boolean;
   postPilot: boolean;
+  nfcToken?: string;
 }
 
 interface SessionRow {
@@ -87,6 +89,7 @@ const TeacherDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [observationOpen, setObservationOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
 
   // Super admin school filter
   const [schoolOptions, setSchoolOptions] = useState<{ id: string; name: string }[]>([]);
@@ -228,6 +231,7 @@ const TeacherDashboard = () => {
             school: schoolName,
             sessions: rec.fields["Count (Session Reflections)"] || 0,
             points: pointsMap.get(rec.id) ?? 0,
+            nfcToken: String(rec.fields["NFC Bracelet Token"] ?? ""),
             ...surveyMap[rec.id],
           };
         });
@@ -426,22 +430,30 @@ const TeacherDashboard = () => {
 
         {!loading && !error && (
           <>
-            {/* Teacher Observation Form */}
-            <div>
-              <div className="mb-3 flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center bg-primary">
-                  <MessageSquare className="h-4 w-4 text-primary-foreground" />
-                </div>
-                <h2 className="font-display text-2xl font-bold uppercase tracking-wider text-foreground">
-                  Teacher Observation Form
-                </h2>
-              </div>
+            {/* Quick Actions */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Teacher Observation Form */}
               <button
                 onClick={() => setObservationOpen(true)}
                 className="block w-full border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1 text-left"
               >
-                <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">Complete Observation Form</h3>
-                <p className="mt-1 font-body text-sm text-primary">Click here to open the form →</p>
+                <div className="flex items-center gap-3 mb-1">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">Teacher Observation Form</h3>
+                </div>
+                <p className="font-body text-sm text-muted-foreground">Record student observations →</p>
+              </button>
+
+              {/* QR Code Backup Sheet */}
+              <button
+                onClick={() => setQrOpen(true)}
+                className="block w-full border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] transition-transform hover:translate-x-1 hover:-translate-y-1 text-left"
+              >
+                <div className="flex items-center gap-3 mb-1">
+                  <QrCode className="h-5 w-5 text-primary" />
+                  <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">Student QR Codes</h3>
+                </div>
+                <p className="font-body text-sm text-muted-foreground">Print backup QR codes for bracelet-less login →</p>
               </button>
             </div>
 
@@ -601,6 +613,15 @@ const TeacherDashboard = () => {
           </>
         )}
       </div>
+
+      {/* QR Code Backup Sheet */}
+      {qrOpen && (
+        <StudentQRCodes
+          students={filteredStudents.map((s) => ({ name: s.name, token: s.nfcToken || "" }))}
+          schoolName={orgInfo?.name || "School"}
+          onClose={() => setQrOpen(false)}
+        />
+      )}
     </div>
   );
 };
