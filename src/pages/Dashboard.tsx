@@ -220,6 +220,9 @@ const Dashboard = () => {
   const [logOpen, setLogOpen] = useState(false);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [schoolRiders, setSchoolRiders] = useState<SchoolmateRider[]>([]);
+  const [interSchoolProgress, setInterSchoolProgress] = useState<InterSchoolChallengeProgress[]>([]);
+  const [teamRankings, setTeamRankings] = useState<TeamRanking[]>([]);
+  const [mySchoolId, setMySchoolId] = useState("");
 
   const hasIdentity = !!user?.email || !!nfcSession;
 
