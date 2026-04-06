@@ -540,6 +540,87 @@ const Dashboard = () => {
           <LevelProgress totalPoints={grandTotal} />
         </div>
 
+        {/* ═══ MID PHASE SURVEY BANNER ═══ */}
+        {showMidPrompt && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 flex items-center gap-4 border-[3px] border-accent bg-accent/10 p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
+          >
+            <AlertTriangle className="h-6 w-6 shrink-0 text-accent" />
+            <div className="flex-1">
+              <p className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
+                Mid Phase Check-in Ready
+              </p>
+              <p className="font-body text-xs text-muted-foreground">
+                It's been 4 weeks — time for a quick check-in survey!
+              </p>
+            </div>
+            <Link to="/survey?phase=Mid Phase">
+              <Button size="sm" className="tape-element font-display text-xs uppercase tracking-wider">
+                Start
+              </Button>
+            </Link>
+            <button onClick={() => setShowMidPrompt(false)}>
+              <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            </button>
+          </motion.div>
+        )}
+
+        {/* ═══ SURVEYS CHECKLIST ═══ */}
+        {role === "student" && user?.email && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="mb-6 border-[3px] border-secondary bg-card p-5 shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
+          >
+            <div className="mb-4 flex items-center gap-2">
+              <ClipboardCheck className="h-5 w-5 text-primary" />
+              <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
+                Surveys
+              </h3>
+            </div>
+            <div className="grid gap-2">
+              {[
+                { phase: "Pre Phase", label: "Pre Phase Survey", always: true },
+                { phase: "Mid Phase", label: "Mid Phase Survey (4 weeks)", always: true },
+                { phase: "Post Phase", label: "Post Phase Survey", always: true },
+              ].map(({ phase, label }) => {
+                const done = isSurveyCompleted(phase, user.email!);
+                return (
+                  <div
+                    key={phase}
+                    className={`flex items-center gap-3 border-[2px] p-3 transition-all ${
+                      done ? "border-primary/30 bg-primary/5" : "border-secondary bg-card"
+                    }`}
+                  >
+                    {done ? (
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+                    ) : (
+                      <div className="h-5 w-5 shrink-0 border-[2px] border-muted" />
+                    )}
+                    <span className="flex-1 font-display text-sm font-bold uppercase tracking-wider text-foreground">
+                      {label}
+                    </span>
+                    {done ? (
+                      <span className="font-display text-[10px] uppercase tracking-wider text-primary">
+                        ✅ Completed
+                      </span>
+                    ) : (
+                      <Link to={`/survey?phase=${encodeURIComponent(phase)}`}>
+                        <Button size="sm" variant="outline" className="font-display text-xs uppercase tracking-wider">
+                          Start
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
         {/* ═══ TWO-COLUMN: Recent Rides + Top Riders ═══ */}
         <div className="mb-6 grid gap-6 lg:grid-cols-2">
 
