@@ -92,6 +92,10 @@ const TeacherDashboard = () => {
   const [schoolOptions, setSchoolOptions] = useState<{ id: string; name: string }[]>([]);
   const [selectedSchool, setSelectedSchool] = useState<string>("all");
 
+  // Challenge state
+  const [challengeSchoolStats, setChallengeSchoolStats] = useState<any[]>([]);
+  const [challengeTeamRankings, setChallengeTeamRankings] = useState<TeamRanking[]>([]);
+
   // Nudge state
   const [nudges, setNudges] = useState<Map<string, string>>(new Map());
   const [nudgeTarget, setNudgeTarget] = useState<StudentRow | null>(null);
