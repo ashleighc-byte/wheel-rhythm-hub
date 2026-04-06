@@ -322,27 +322,14 @@ const StudentInfo = () => {
                             >
                               {item.action.text}
                             </Link>
-                          ) : item.action.type === "disabled-link" ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span
-                                    className="inline-block cursor-not-allowed border-[2px] border-muted bg-muted px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground opacity-60"
-                                  >
-                                    {item.action.text}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Opens Term 4 2026 — we'll let you know when it's time</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
                           ) : (
                             <button
                               onClick={item.action.onClick}
                               className="inline-block border-[2px] border-primary bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-transform hover:-translate-y-0.5"
                             >
                               {item.action.text}
+                            </button>
+                          )}
                             </button>
                           )}
                         </div>
