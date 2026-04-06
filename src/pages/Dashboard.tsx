@@ -298,7 +298,7 @@ const Dashboard = () => {
             id: s.id,
             riderId: rec.id,
             riderName,
-            schoolId: mySchoolId,
+            schoolId: localSchoolId,
             schoolName: mySchoolName,
             date: String(s.fields["Auto date"] ?? s.createdTime).slice(0, 10),
             distance_km,
@@ -317,7 +317,7 @@ const Dashboard = () => {
       setRideSessions(mappedSessions);
 
       // Compute rider totals using gamification engine
-      const totals = computeRiderTotals(rec.id, riderName, mySchoolId, mySchoolName, mappedSessions);
+      const totals = computeRiderTotals(rec.id, riderName, localSchoolId, mySchoolName, mappedSessions);
 
       // Compute challenges & achievements
       const ch = computeChallenges(totals, mappedSessions);
