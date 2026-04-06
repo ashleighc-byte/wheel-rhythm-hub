@@ -667,6 +667,17 @@ const Dashboard = () => {
           </motion.div>
         )}
 
+        {/* ═══ INTER-SCHOOL CHALLENGES ═══ */}
+        {interSchoolProgress.length > 0 && (
+          <div className="mb-6">
+            <ChallengesDashboard
+              challengeProgress={interSchoolProgress}
+              teamRankings={teamRankings}
+              studentSchoolId={mySchoolId}
+            />
+          </div>
+        )}
+
         {/* ═══ TWO-COLUMN: Recent Rides + Top Riders ═══ */}
         <div className="mb-6 grid gap-6 lg:grid-cols-2">
 
