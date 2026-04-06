@@ -1,71 +1,57 @@
+## Plan: Dynamic Airtable-Driven Survey System
 
+### 1. Remove Old Surveys
+- Delete `src/pages/PrePilotSurvey.tsx`, `src/pages/PostPilotSurvey.tsx`, `src/pages/FourWeekCheckIn.tsx`
+- Remove their routes from `App.tsx`
+- Remove survey gate logic from `ProtectedRoute` in `App.tsx`
+- Remove `hasCompletedPrePilotSurvey`, `hasCompletedFourWeekCheckIn`, `hasDeferredFourWeekCheckIn`, `deferFourWeekCheckIn`, `markFourWeekCheckInCompleted` helpers from `src/lib/airtable.ts`
 
-## Plan: Student Registration Flow, NFC Onboarding Tour & Newsletter Flyer
+### 2. Create Airtable Helpers
+- Add `fetchSurveyQuestions(phase: string)` — fetches from "Survey Questions" table filtered by Phase
+- Add `submitSurveyResponses(studentId, phase, responses)` — POSTs to "Survey Responses" table
+- Add `fetchSurveyCompletions(studentRecordId)` — checks which phases are completed
+- Update edge function proxy to allow these new tables
 
-### How the Flow Works (No Major Code Changes Needed)
+### 3. New Dynamic Survey Component
+- Create `src/components/DynamicSurvey.tsx` — renders questions dynamically based on field type:
+  - Single select → radio buttons
+  - Multi select → checkbox group
+  - Rating → star/slider
+  - Text → textarea
+  - Number → number input
+- Progress indicator ("Question 3 of 10")
+- Mobile-first, smooth transitions
+- On submit: save to "Survey Responses" table
 
-Your existing system already supports the full bracelet-only flow:
+### 4. Survey Triggers & Pages
+- Create `src/pages/SurveyPage.tsx` — wrapper that loads questions for a given phase and renders DynamicSurvey
+- **Pre Phase**: Show as full-screen blocker on first login (replaces old pre-pilot gate in App.tsx ProtectedRoute)
+- **Mid Phase**: Check if 4 weeks since student Start Date; show modal/banner on dashboard
+- **Post Phase**: Shown as checklist item on dashboard, opens survey on click
 
-1. **Newsletter flyer** goes to schools with link to permission form
-2. **Caregiver fills out Airtable form** — selects school, signs MoU
-3. **You review in Airtable** — set Consent Status to "active"
-4. **You create NFC bracelet** — write unique token, add to student's Airtable record, set NFC Status to "active"
-5. **Hand out bracelet packs** to schools
-6. **Student taps bracelet** → `/tap/:token` → validated → ready to ride
+### 5. Dashboard Integration
+- Add "Surveys" section to Dashboard showing all 3 phases with completion status
+- Post Phase appears as checklist item
+- Mid Phase shows banner prompt when due
 
-**Students do NOT need email/password signup.** The NFC bracelet bypasses all authentication. They never visit `/auth`. The registration page currently tells them to sign up with email — we'll fix that.
+### 6. Completion Tracking
+- Store completion in Airtable "Survey Responses" table (query by student + phase)
+- Cache locally to avoid repeated API calls
 
-After the Airtable permission form, show a confirmation message like: *"You're registered! Your teacher will give you your Free Wheeler bracelet and merch pack. Tap your bracelet on the school iPad to start riding — no account or password needed."*
+### Technical Notes
+- No hardcoded questions — everything driven by Airtable "Survey Questions" table
+- Edge function proxy needs "Survey Questions" (GET) and "Survey Responses" (GET/POST) added to allowed tables
+- Airtable table structure assumed:
+  - **Survey Questions**: Phase, Question Text, Field Type, Answer Options, Order
+  - **Survey Responses**: Student (linked), Phase, Question (linked or text), Response
 
----
-
-### What We'll Build
-
-#### 1. Update Student Registration Page Copy
-**File:** `src/pages/StudentRegistration.tsx`
-
-Change the "What Happens Next?" section to reflect the bracelet flow:
-1. Complete the permission form with your caregiver
-2. Wait for confirmation from your school
-3. Receive your Free Wheeler bracelet and merch pack from your teacher
-4. Tap your bracelet on the school iPad to start riding
-5. No passwords, no accounts — just tap and ride!
-
-Remove the mention of signing up at freewheeler.lovable.app with email.
-
-#### 2. NFC First-Tap Onboarding Tour
-**New file:** `src/components/NfcOnboardingTour.tsx`
-**Modified file:** `src/pages/NfcTap.tsx`
-
-When a student taps their bracelet for the **first time**, show a full-screen card-based walkthrough (not tooltip-based — there's nothing to point at on the NFC page). Persisted via `localStorage` keyed by NFC token.
-
-**5 slides:**
-1. **Welcome** — "Hey {name}! Welcome to Free Wheeler Bike League."
-2. **The Ride** — "Hop on the smart bike, select a track in MyWhoosh, and ride for as long as you want."
-3. **Screenshot** — "When you finish, take a screenshot. iPad: top button + volume up. Android: power + volume down."
-4. **Log Your Session** — "Scan your bracelet, find your screenshot, rate how you felt, and submit. Points update instantly!"
-5. **Explore** — "Check the Leaderboards to see how you rank. Visit Your Stats for personal progress. Let's log your first ride!"
-
-After completing → open session form as normal.
-
-#### 3. School Newsletter Flyer (PDF)
-Generate a branded A4 flyer to `/mnt/documents/` with:
-- Free Wheeler logo and brand colours
-- "Join the Free Wheeler Bike League!" headline
-- Brief programme description
-- QR code to `https://bit.ly/FreewheelerPermission`
-- URL written out below QR code
-- "Limited to 24 spots per school" urgency callout
-- Brand palette: #2B220D, #84A914, #DBFE66, #D5E7C4
-
----
-
-### Technical Summary
-
-| Change | File(s) | Size |
-|--------|---------|------|
-| Update registration page copy | `src/pages/StudentRegistration.tsx` | Small |
-| NFC onboarding tour component | New: `src/components/NfcOnboardingTour.tsx` | Medium |
-| Wire tour into NFC tap flow | `src/pages/NfcTap.tsx` | Small |
-| Generate newsletter flyer PDF | Script → `/mnt/documents/` | Medium |
-
+### Files Changed
+| Action | File |
+|--------|------|
+| Delete | `src/pages/PrePilotSurvey.tsx`, `src/pages/PostPilotSurvey.tsx`, `src/pages/FourWeekCheckIn.tsx` |
+| Edit | `src/App.tsx` (remove old routes, add new survey route, update gate) |
+| Edit | `src/lib/airtable.ts` (remove old helpers, add new survey helpers) |
+| Edit | `supabase/functions/airtable-proxy/index.ts` (allow new tables) |
+| Create | `src/components/DynamicSurvey.tsx` |
+| Create | `src/pages/SurveyPage.tsx` |
+| Edit | `src/pages/Dashboard.tsx` (add surveys section, mid-phase prompt) |
