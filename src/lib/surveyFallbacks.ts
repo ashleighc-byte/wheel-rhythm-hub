@@ -148,5 +148,88 @@ export function getFallbackSurveyQuestions(phase: string): SurveyQuestion[] {
     return PRE_PHASE_FALLBACK_QUESTIONS;
   }
 
+  if (phase === "Mid Phase") {
+    return MID_PHASE_FALLBACK_QUESTIONS;
+  }
+
   return [];
 }
+const MID_PHASE_FALLBACK_QUESTIONS: SurveyQuestion[] = [
+  {
+    id: "mid-q1-enjoyment",
+    questionText: "Mid Q1: How much are you enjoying the virtual bike sessions so far?",
+    fieldType: "single select",
+    answerOptions: [
+      "1 \u2013 Not really",
+      "2",
+      "3 \u2013 It\u2019s okay",
+      "4",
+      "5 \u2013 Really enjoying it",
+    ],
+    order: 1,
+    phase: "Mid Phase",
+  },
+  {
+    id: "mid-q2-virtual-vs-real",
+    questionText: "Mid Q2: After a few sessions, where are you sitting on virtual vs real cycling?",
+    fieldType: "single select",
+    answerOptions: [
+      "I\u2019d rather do this than ride outside",
+      "I\u2019d rather be riding outside",
+      "I enjoy both equally",
+      "I still don\u2019t love either",
+    ],
+    order: 2,
+    phase: "Mid Phase",
+  },
+  {
+    id: "mid-q3-reasons",
+    questionText: "Mid Q3: What\u2019s been the main reason you\u2019ve come back to ride? Tick all that apply.",
+    fieldType: "multi select",
+    answerOptions: [
+      "The points and levelling up",
+      "Competing with others",
+      "I like the virtual routes",
+      "Friends are doing it",
+      "Fits my schedule",
+      "Want to beat my own score",
+    ],
+    order: 3,
+    phase: "Mid Phase",
+  },
+  {
+    id: "mid-q4-leaderboard",
+    questionText: "Mid Q4: Does competing against other riders on the leaderboard motivate you to ride more?",
+    fieldType: "single select",
+    answerOptions: [
+      "1 \u2013 Not at all",
+      "2",
+      "3 \u2013 Somewhat",
+      "4",
+      "5 \u2013 Definitely yes",
+    ],
+    order: 4,
+    phase: "Mid Phase",
+  },
+  {
+    id: "mid-q5-head-to-head",
+    questionText: "Mid Q5: If you could race head-to-head in real time against riders at other schools \u2014 like a multiplayer game \u2014 would that make you ride more?",
+    fieldType: "single select",
+    answerOptions: [
+      "Yes \u2014 that would be way more fun",
+      "Maybe",
+      "Probably not",
+      "Doesn\u2019t matter to me",
+    ],
+    order: 5,
+    phase: "Mid Phase",
+  },
+  {
+    id: "mid-q6-one-thing",
+    questionText: "Mid Q6: What ONE thing would make this experience more fun or make you ride more?",
+    fieldType: "text",
+    answerOptions: [],
+    order: 6,
+    phase: "Mid Phase",
+  },
+];
