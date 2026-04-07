@@ -38,13 +38,13 @@ export const PRE_PHASE_FALLBACK_QUESTIONS: SurveyQuestion[] = [
   {
     id: "pre-q3-virtual-league-reaction",
     questionText:
-      "Q3: Before trying it — the idea of competing in a virtual cycling league (like a video game on a real bike), sounded...",
+      "Q3: Before trying it \u2014 the idea of competing in a virtual cycling league (like a video game on a real bike) sounds...",
     fieldType: "single select",
     answerOptions: [
-      "Really cool — I'm into it",
-      "Interesting, but I'm not sure yet",
-      "Weird — I'd rather just ride outside",
-      "I'd only do it if my friends were",
+      "Really cool \u2014 I\u2019m into it",
+      "Interesting, but I\u2019m not sure yet",
+      "Weird \u2014 I\u2019d rather just ride outside",
+      "I\u2019d only do it if my friends were",
       "Not my thing at all",
     ],
     order: 3,
@@ -300,7 +300,7 @@ const MID_PHASE_FALLBACK_QUESTIONS: SurveyQuestion[] = [
   },
   {
     id: "mid-q3-reasons",
-    questionText: "Mid Q3: What\u2019s been the main reason you\u2019ve come back to ride? Tick all that apply.",
+    questionText: "Mid Q3: What's been the main reason you've come back to ride? Tick all that apply.",
     fieldType: "multi select",
     answerOptions: [
       "The points and levelling up",
