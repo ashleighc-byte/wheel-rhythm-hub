@@ -239,24 +239,22 @@ export async function fetchSurveyQuestions(phase: string): Promise<SurveyQuestio
   return questions.length > 0 ? questions : getFallbackSurveyQuestions(phase);
 }
 
-export async function submitSurveyResponse(params: {
-  studentRecordId: string;
+export async function submitSurveyResponses(params: {
+  studentName: string;
   phase: string;
-  questionText: string;
-  response: string;
-  questionRecordId: string;
+  responses: Record<string, any>; // questionText -> answer value
 }) {
+  const fields: Record<string, any> = {
+    'Student Name': params.studentName,
+    'Phase': params.phase,
+  };
+
+  for (const [questionText, answer] of Object.entries(params.responses)) {
+    fields[questionText] = Array.isArray(answer) ? answer.join(", ") : String(answer);
+  }
+
   return callAirtable('Survey Questions', 'POST', {
-    body: {
-      records: [{
-        fields: {
-          'Student': [params.studentRecordId],
-          'Phase': params.phase,
-          'Question': params.questionText,
-          'Response': params.response,
-        },
-      }],
-    },
+    body: { records: [{ fields }] },
   });
 }
 
