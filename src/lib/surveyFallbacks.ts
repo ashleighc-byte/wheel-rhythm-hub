@@ -300,7 +300,7 @@ const MID_PHASE_FALLBACK_QUESTIONS: SurveyQuestion[] = [
   },
   {
     id: "mid-q3-reasons",
-    questionText: "Mid Q3: What\u2019s been the main reason you\u2019ve come back to ride? Tick all that apply.",
+    questionText: "Mid Q3: What's been the main reason you've come back to ride? Tick all that apply.",
     fieldType: "multi select",
     answerOptions: [
       "The points and levelling up",
