@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import DynamicSurvey, { type SurveyQuestion } from "@/components/DynamicSurvey";
-import { fetchSurveyQuestions, submitSurveyResponse, fetchStudents } from "@/lib/airtable";
+import { fetchSurveyQuestions, submitSurveyResponse, fetchStudents, markSurveyCompleted } from "@/lib/airtable";
 import logoSrc from "@/assets/fw-logo-new.png";
 
 const SurveyPage = () => {
@@ -39,38 +39,43 @@ const SurveyPage = () => {
   const handleSubmit = async (responses: Record<string, any>) => {
     if (!user?.email) return;
 
-    // Get student record ID
-    const students = await fetchStudents(user.email);
-    if (!students.records.length) {
-      toast({ title: "Error", description: "Student record not found.", variant: "destructive" });
-      return;
-    }
-    const studentRecordId = students.records[0].id;
+    try {
+      const students = await fetchStudents(user.email);
+      if (!students.records.length) {
+        toast({ title: "Error", description: "Student record not found.", variant: "destructive" });
+        return;
+      }
+      const studentRecordId = students.records[0].id;
 
-    // Submit each response
-    const questionMap = new Map(questions.map((q) => [q.id, q]));
-    for (const [questionId, answer] of Object.entries(responses)) {
-      const q = questionMap.get(questionId);
-      if (!q) continue;
+      const questionMap = new Map(questions.map((q) => [q.id, q]));
+      for (const [questionId, answer] of Object.entries(responses)) {
+        const q = questionMap.get(questionId);
+        if (!q) continue;
 
-      const responseValue =
-        Array.isArray(answer) ? answer.join(", ") : String(answer);
+        const responseValue = Array.isArray(answer) ? answer.join(", ") : String(answer);
 
-      await submitSurveyResponse({
-        studentRecordId,
-        phase,
-        questionText: q.questionText,
-        response: responseValue,
-        questionRecordId: questionId,
+        await submitSurveyResponse({
+          studentRecordId,
+          phase,
+          questionText: q.questionText,
+          response: responseValue,
+          questionRecordId: questionId,
+        });
+      }
+
+      markSurveyCompleted(phase, user.email);
+      localStorage.removeItem(`survey_dismissed_${phase}_${user.email}`);
+
+      setSubmitted(true);
+      toast({ title: "Survey Complete!", description: `${phase} survey submitted successfully.` });
+    } catch (err) {
+      console.error("Failed to submit survey:", err);
+      toast({
+        title: "Submission failed",
+        description: "We couldn't save your survey yet. Please try again.",
+        variant: "destructive",
       });
     }
-
-    // Mark completion in localStorage and clear any dismiss flag
-    localStorage.setItem(`survey_completed_${phase}_${user.email}`, "true");
-    localStorage.removeItem(`survey_dismissed_${phase}_${user.email}`);
-
-    setSubmitted(true);
-    toast({ title: "Survey Complete!", description: `${phase} survey submitted successfully.` });
   };
 
   if (loading) {
@@ -115,10 +120,10 @@ const SurveyPage = () => {
             Thanks for completing the {phase} survey. Your responses have been saved.
           </p>
           <Button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate(phase === "Pre Phase" ? "/" : "/dashboard")}
             className="tape-element-green w-full font-display uppercase tracking-wider"
           >
-            Back to Dashboard
+            Continue
           </Button>
         </motion.div>
       </div>
