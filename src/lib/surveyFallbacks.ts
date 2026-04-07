@@ -152,8 +152,124 @@ export function getFallbackSurveyQuestions(phase: string): SurveyQuestion[] {
     return MID_PHASE_FALLBACK_QUESTIONS;
   }
 
+  if (phase === "Post Phase") {
+    return POST_PHASE_FALLBACK_QUESTIONS;
+  }
+
   return [];
 }
+const POST_PHASE_FALLBACK_QUESTIONS: SurveyQuestion[] = [
+  {
+    id: "post-q1-active-now",
+    questionText: "Post Q1: When it comes to being active, which sounds most like you now?",
+    fieldType: "single select",
+    answerOptions: [
+      "I prefer sport and outdoor activity",
+      "I prefer screen-based or gaming activities",
+      "I enjoy both equally",
+      "I don\u2019t really do either much",
+    ],
+    order: 1,
+    phase: "Post Phase",
+  },
+  {
+    id: "post-q2-free-time",
+    questionText: "Post Q2: If you had free time right now, which would you choose?",
+    fieldType: "single select",
+    answerOptions: [
+      "Go for a real ride outside",
+      "Play a competitive game or esport",
+      "Jump on a smart bike / virtual race",
+      "Something else active",
+      "Something completely inactive",
+    ],
+    order: 2,
+    phase: "Post Phase",
+  },
+  {
+    id: "post-q3-changed-thinking",
+    questionText: "Post Q3: Has this pilot changed how you think about cycling at all?",
+    fieldType: "single select",
+    answerOptions: [
+      "Yes \u2014 I\u2019d now consider real-life cycling too",
+      "Yes \u2014 I\u2019m more into virtual cycling specifically",
+      "No change \u2014 I still prefer real-life activity",
+      "No change \u2014 cycling still isn\u2019t my thing",
+    ],
+    order: 3,
+    phase: "Post Phase",
+  },
+  {
+    id: "post-q4-virtual-vs-expected",
+    questionText: "Post Q4: How did riding in a virtual world (MyWhoosh) compare to what you expected?",
+    fieldType: "single select",
+    answerOptions: [
+      "Better than I expected",
+      "About what I expected",
+      "Less fun than I expected",
+      "I wanted it to feel more like a video game",
+    ],
+    order: 4,
+    phase: "Post Phase",
+  },
+  {
+    id: "post-q5-mario-kart",
+    questionText: "Post Q5: Would you prefer a more game-like experience \u2014 like a Mario Kart-style race where bikes compete with power-ups and obstacles \u2014 over the current setup?",
+    fieldType: "single select",
+    answerOptions: [
+      "Yes \u2014 that would be way more fun",
+      "The current style works fine for me",
+      "I\u2019d want both options",
+      "Doesn\u2019t matter either way",
+    ],
+    order: 5,
+    phase: "Post Phase",
+  },
+  {
+    id: "post-q6-gamification",
+    questionText: "Post Q6: Did the gamification elements (points, levels, achievements, leaderboard) motivate you to ride more than you would have otherwise?",
+    fieldType: "single select",
+    answerOptions: [
+      "1 \u2013 Made no difference",
+      "2",
+      "3 \u2013 Somewhat",
+      "4",
+      "5 \u2013 Definitely \u2014 they kept me going",
+    ],
+    order: 6,
+    phase: "Post Phase",
+  },
+  {
+    id: "post-q7-biggest-thing",
+    questionText: "Post Q7: What was the single biggest thing that motivated you to ride during this pilot?",
+    fieldType: "text",
+    answerOptions: [],
+    order: 7,
+    phase: "Post Phase",
+  },
+  {
+    id: "post-q8-next-term",
+    questionText: "Post Q8: If Free Wheeler ran again next term, would you join?",
+    fieldType: "single select",
+    answerOptions: [
+      "Definitely yes",
+      "Probably yes",
+      "Unsure",
+      "Probably not",
+      "Definitely not",
+    ],
+    order: 8,
+    phase: "Post Phase",
+  },
+  {
+    id: "post-q9-nps",
+    questionText: "Post Q9: How likely are you to recommend Free Wheeler to a friend? (0 = never, 10 = absolutely)",
+    fieldType: "number",
+    answerOptions: [],
+    order: 9,
+    phase: "Post Phase",
+  },
+];
 const MID_PHASE_FALLBACK_QUESTIONS: SurveyQuestion[] = [
   {
     id: "mid-q1-enjoyment",
