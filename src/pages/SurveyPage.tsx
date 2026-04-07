@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import DynamicSurvey, { type SurveyQuestion } from "@/components/DynamicSurvey";
-import { fetchSurveyQuestions, submitSurveyResponse, fetchStudents, markSurveyCompleted } from "@/lib/airtable";
+import { fetchSurveyQuestions, submitSurveyResponses, fetchStudents, markSurveyCompleted } from "@/lib/airtable";
 import logoSrc from "@/assets/fw-logo-new.png";
 
 const SurveyPage = () => {
@@ -45,23 +45,22 @@ const SurveyPage = () => {
         toast({ title: "Error", description: "Student record not found.", variant: "destructive" });
         return;
       }
-      const studentRecordId = students.records[0].id;
+      const studentName = students.records[0].fields['Full Name'] || user.email;
 
+      // Map question IDs to their questionText (Airtable column names)
       const questionMap = new Map(questions.map((q) => [q.id, q]));
+      const mappedResponses: Record<string, any> = {};
       for (const [questionId, answer] of Object.entries(responses)) {
         const q = questionMap.get(questionId);
         if (!q) continue;
-
-        const responseValue = Array.isArray(answer) ? answer.join(", ") : String(answer);
-
-        await submitSurveyResponse({
-          studentRecordId,
-          phase,
-          questionText: q.questionText,
-          response: responseValue,
-          questionRecordId: questionId,
-        });
+        mappedResponses[q.questionText] = answer;
       }
+
+      await submitSurveyResponses({
+        studentName,
+        phase,
+        responses: mappedResponses,
+      });
 
       markSurveyCompleted(phase, user.email);
       localStorage.removeItem(`survey_dismissed_${phase}_${user.email}`);
