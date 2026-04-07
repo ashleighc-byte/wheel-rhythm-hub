@@ -240,12 +240,16 @@ export async function fetchSurveyQuestions(phase: string): Promise<SurveyQuestio
 }
 
 export async function submitSurveyResponses(params: {
-  studentName: string;
+  studentRecordId: string;
   phase: string;
   responses: Record<string, any>; // questionText -> answer value
 }) {
+  if (!isValidRecordId(params.studentRecordId)) {
+    throw new Error('Invalid student record ID');
+  }
+
   const fields: Record<string, any> = {
-    'Student Name': params.studentName,
+    'Student Name': [params.studentRecordId],
     'Phase': params.phase,
   };
 
@@ -258,11 +262,10 @@ export async function submitSurveyResponses(params: {
   });
 }
 
-export async function checkSurveyCompletionRemote(studentName: string, phase: string): Promise<boolean> {
-  if (!studentName) return false;
-  const safeName = escapeFormulaValue(studentName);
+export async function checkSurveyCompletionRemote(studentRecordId: string, phase: string): Promise<boolean> {
+  if (!isValidRecordId(studentRecordId)) return false;
   const safePhase = escapeFormulaValue(phase);
-  const formula = `AND({Student Name} = '${safeName}', {Phase} = '${safePhase}')`;
+  const formula = `AND(FIND("${studentRecordId}", ARRAYJOIN({Student Name})), {Phase} = '${safePhase}')`;
   const result = await callAirtable('Survey Questions', 'GET', {
     filterByFormula: formula,
     maxRecords: 1,
@@ -357,10 +360,11 @@ export async function fetchStudentsBySchool(orgRecordId: string) {
   });
 }
 
-export async function fetchAllSurveysForStudents(studentNames: string[]) {
-  if (!studentNames.length) return { records: [] };
-  const orClauses = studentNames
-    .map(name => `{Student Name} = '${escapeFormulaValue(name)}'`)
+export async function fetchAllSurveysForStudents(studentRecordIds: string[]) {
+  const validIds = studentRecordIds.filter(isValidRecordId);
+  if (!validIds.length) return { records: [] };
+  const orClauses = validIds
+    .map(id => `FIND("${id}", ARRAYJOIN({Student Name}))`)
     .join(',');
   const formula = `OR(${orClauses})`;
   return callAirtable('Survey Questions', 'GET', {
