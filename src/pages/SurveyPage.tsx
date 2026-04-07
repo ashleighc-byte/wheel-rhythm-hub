@@ -45,9 +45,8 @@ const SurveyPage = () => {
         toast({ title: "Error", description: "Student record not found.", variant: "destructive" });
         return;
       }
-      const studentName = students.records[0].fields['Full Name'] || user.email;
+      const studentRecordId = students.records[0].id;
 
-      // Map question IDs to their questionText (Airtable column names)
       const questionMap = new Map(questions.map((q) => [q.id, q]));
       const mappedResponses: Record<string, any> = {};
       for (const [questionId, answer] of Object.entries(responses)) {
@@ -57,7 +56,7 @@ const SurveyPage = () => {
       }
 
       await submitSurveyResponses({
-        studentName,
+        studentRecordId,
         phase,
         responses: mappedResponses,
       });

@@ -201,14 +201,8 @@ const TeacherDashboard = () => {
           }
         }
 
-        // Surveys — match by student name since Survey Questions uses "Student Name" text field
-        const studentNameToId = new Map<string, string>();
-        for (const rec of studentRecords) {
-          const name = String(rec.fields["Full Name"] || "");
-          if (name) studentNameToId.set(name, rec.id);
-        }
-        const studentNames = [...studentNameToId.keys()];
-        const surveyData = await fetchAllSurveysForStudents(studentNames);
+        // Surveys
+        const surveyData = await fetchAllSurveysForStudents(studentIds);
         const surveyRecords = surveyData.records;
 
         const surveyMap: Record<string, { prePilot: boolean; fourWeek: boolean; postPilot: boolean }> = {};
@@ -218,12 +212,15 @@ const TeacherDashboard = () => {
 
         for (const survey of surveyRecords) {
           const phase: string = survey.fields["Phase"] || "";
-          const sName = String(survey.fields["Student Name"] || "");
-          const sid = studentNameToId.get(sName);
-          if (sid && surveyMap[sid]) {
-            if (phase === "Pre Phase") surveyMap[sid].prePilot = true;
-            if (phase === "Mid Phase") surveyMap[sid].fourWeek = true;
-            if (phase === "Post Phase") surveyMap[sid].postPilot = true;
+          const linkedStudents: string[] = Array.isArray(survey.fields["Student Name"])
+            ? survey.fields["Student Name"]
+            : [];
+          for (const sid of linkedStudents) {
+            if (surveyMap[sid]) {
+              if (phase === "Pre Phase") surveyMap[sid].prePilot = true;
+              if (phase === "Mid Phase") surveyMap[sid].fourWeek = true;
+              if (phase === "Post Phase") surveyMap[sid].postPilot = true;
+            }
           }
         }
 
