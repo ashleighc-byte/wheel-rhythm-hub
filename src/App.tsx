@@ -30,6 +30,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, user, role, loading, nfcSession } = useAuth();
   const [surveyChecked, setSurveyChecked] = useState(false);
   const [surveyDone, setSurveyDone] = useState(false);
+  const email = user?.email?.toLowerCase();
 
   useEffect(() => {
     // NFC sessions skip the survey gate entirely
@@ -41,8 +42,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
     // Wait until role is resolved
     if (loading) return;
-    if (!user?.email) return;
-    if (role === null) return;
+    if (!email) return;
 
     // Admins skip the survey
     if (role === 'admin') {
@@ -51,11 +51,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    if (role !== 'student') {
+      setSurveyDone(false);
+      setSurveyChecked(true);
+      return;
+    }
+
     // Check if Pre Phase survey is completed (localStorage cache)
-    const done = isSurveyCompleted("Pre Phase", user.email);
+    const done = isSurveyCompleted("Pre Phase", email);
     setSurveyDone(done);
     setSurveyChecked(true);
-  }, [user?.email, role, loading, nfcSession]);
+  }, [email, role, loading, nfcSession]);
 
   // NFC-authenticated students get through
   if (nfcSession) {
