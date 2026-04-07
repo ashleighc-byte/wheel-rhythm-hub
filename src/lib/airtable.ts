@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getFallbackSurveyQuestions } from "@/lib/surveyFallbacks";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -122,7 +123,8 @@ async function callAirtable(
 export async function fetchStudents(email?: string) {
   const options: any = {};
   if (email) {
-    options.filterByFormula = `{School Email} = '${escapeFormulaValue(email)}'`;
+    const safe = escapeFormulaValue(email);
+    options.filterByFormula = `LOWER({School Email}) = LOWER('${safe}')`;
   }
   return callAirtable('Student Registration', 'GET', options);
 }
@@ -223,7 +225,7 @@ export async function fetchSurveyQuestions(phase: string): Promise<SurveyQuestio
   const result = await callAirtable('Survey Questions', 'GET', {
     filterByFormula: `{Phase} = '${safe}'`,
   });
-  return result.records.map((r) => ({
+  const questions = result.records.map((r) => ({
     id: r.id,
     questionText: String(r.fields['Question Text'] ?? ''),
     fieldType: String(r.fields['Field Type'] ?? 'text') as SurveyQuestion['fieldType'],
@@ -233,6 +235,8 @@ export async function fetchSurveyQuestions(phase: string): Promise<SurveyQuestio
     order: Number(r.fields['Order'] ?? 0),
     phase: String(r.fields['Phase'] ?? phase),
   }));
+
+  return questions.length > 0 ? questions : getFallbackSurveyQuestions(phase);
 }
 
 export async function submitSurveyResponse(params: {
