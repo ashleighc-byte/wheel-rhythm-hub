@@ -12,8 +12,7 @@ const NFC_ALLOWED_TABLES: Record<string, string[]> = {
   'Organisations': ['GET'],
   'Global Dashboard': ['GET'],
   'Support Tickets (Bug/Issue Form)': ['POST'],
-  'Survey Questions': ['GET'],
-  'Survey Responses': ['GET', 'POST'],
+  'Survey Questions': ['GET', 'POST'],
 };
 
 Deno.serve(async (req) => {
