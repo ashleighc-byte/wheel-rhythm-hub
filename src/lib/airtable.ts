@@ -246,7 +246,7 @@ export async function submitSurveyResponse(params: {
   response: string;
   questionRecordId: string;
 }) {
-  return callAirtable('Survey Responses', 'POST', {
+  return callAirtable('Survey Questions', 'POST', {
     body: {
       records: [{
         fields: {
@@ -264,7 +264,7 @@ export async function checkSurveyCompletionRemote(studentRecordId: string, phase
   if (!isValidRecordId(studentRecordId)) return false;
   const safe = escapeFormulaValue(phase);
   const formula = `AND(FIND("${studentRecordId}", ARRAYJOIN({Student})), {Phase} = '${safe}')`;
-  const result = await callAirtable('Survey Responses', 'GET', {
+  const result = await callAirtable('Survey Questions', 'GET', {
     filterByFormula: formula,
     maxRecords: 1,
   });
@@ -365,7 +365,7 @@ export async function fetchAllSurveysForStudents(studentRecordIds: string[]) {
     .map(id => `FIND("${id}", ARRAYJOIN({Student}))`)
     .join(',');
   const formula = `OR(${orClauses})`;
-  return callAirtable('Survey Responses', 'GET', {
+  return callAirtable('Survey Questions', 'GET', {
     filterByFormula: formula,
   });
 }
