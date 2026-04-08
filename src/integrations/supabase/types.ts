@@ -35,6 +35,33 @@ export type Database = {
         }
         Relationships: []
       }
+      role_change_log: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          id: string
+          new_role: string
+          old_role: string
+          target_user_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          id?: string
+          new_role: string
+          old_role: string
+          target_user_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          id?: string
+          new_role?: string
+          old_role?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       student_nudges: {
         Row: {
           id: string
