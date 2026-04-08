@@ -939,7 +939,7 @@ const Dashboard = () => {
           </motion.div>
         </div>
 
-        {/* ═══ CHALLENGES (full width, below leaderboard + rides) ═══ */}
+        {/* ═══ CHALLENGES ═══ */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -958,8 +958,83 @@ const Dashboard = () => {
 
           {/* Daily */}
           <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-            <Calendar className="h-3 w-3" /> Daily
+            <Calendar className="h-3 w-3" /> Today
           </p>
+          <div className="grid gap-2 sm:grid-cols-2 mb-4">
+            {dailyChallenges.map((c, i) => (
+              <ChallengeCard key={c.id} challenge={c} index={i} />
+            ))}
+          </div>
+
+          {/* Weekly */}
+          <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+            <Timer className="h-3 w-3" /> This Week
+          </p>
+          <div className="grid gap-2 sm:grid-cols-3 mb-4">
+            {weeklyChallenges.map((c, i) => (
+              <ChallengeCard key={c.id} challenge={c} index={i + 2} />
+            ))}
+          </div>
+
+          {/* Milestones */}
+          <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+            <Award className="h-3 w-3" /> Milestones
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {milestoneChallenges.map((c, i) => (
+              <ChallengeCard key={c.id} challenge={c} index={i + 5} />
+            ))}
+          </div>
+        </motion.div>
+
+        {/* ═══ ACHIEVEMENTS (only unlocked — surprise reveals) ═══ */}
+        {achievements.filter(a => a.unlocked).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mb-6 border-[3px] border-secondary bg-card p-5 shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
+          >
+            <div className="mb-4 flex items-center gap-2">
+              <Award className="h-5 w-5 text-primary" />
+              <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
+                Achievements Unlocked 🎉
+              </h3>
+            </div>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-8">
+              {achievements.filter(a => a.unlocked).map((a, i) => (
+                <AchievementBadge key={a.id} achievement={a} index={i} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ═══ HOW POINTS WORK (collapsible) ═══ */}
+        <details className="group mb-6 border-[3px] border-secondary bg-card shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+          <summary className="flex cursor-pointer items-center gap-2 p-4 font-display text-sm font-bold uppercase tracking-wider text-foreground select-none list-none [&::-webkit-details-marker]:hidden">
+            <Zap className="h-5 w-5 text-primary" />
+            How Points Work
+            <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
+          </summary>
+          <div className="border-t-[2px] border-secondary p-4">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {[
+                { icon: Bike, label: "Every Ride", value: "10 pts" },
+                { icon: Calendar, label: "3 Rides in a Week", value: "+5 bonus" },
+                { icon: Star, label: "5 Rides in a Week", value: "+10 bonus" },
+                { icon: Target, label: "Challenge Rewards", value: "+5 to +30 pts" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-3 border-[2px] border-secondary bg-muted p-3">
+                  <item.icon className="h-4 w-4 shrink-0 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display text-xs font-bold uppercase tracking-wider text-foreground">{item.label}</p>
+                  </div>
+                  <span className="font-display text-xs font-bold text-foreground whitespace-nowrap">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </details>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 mb-4">
             {dailyChallenges.map((c, i) => (
               <ChallengeCard key={c.id} challenge={c} index={i} />
