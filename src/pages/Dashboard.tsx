@@ -667,7 +667,22 @@ const Dashboard = () => {
           </motion.div>
         )}
 
-        {role === "student" && user?.email && (
+        {/* ═══ DETAILED STATS (collapsible) ═══ */}
+        <details className="group mb-6 border-[3px] border-secondary bg-card shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+          <summary className="flex cursor-pointer items-center gap-2 p-4 font-display text-sm font-bold uppercase tracking-wider text-foreground select-none list-none [&::-webkit-details-marker]:hidden">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            Detailed Stats
+            <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
+          </summary>
+          <div className="grid grid-cols-2 gap-3 border-t-[2px] border-secondary p-4 sm:grid-cols-3 md:grid-cols-5">
+            <StatCard icon={Clock} value={riderTotals ? `${riderTotals.totalHours}h` : "0h"} label="Total Time" isFormatted index={0} />
+            <StatCard icon={MapPin} value={riderTotals ? `${riderTotals.totalDistance}` : "0"} label="Distance (km)" isFormatted index={1} />
+            <StatCard icon={Mountain} value={riderTotals?.totalElevation ?? 0} label="Elevation (m)" index={2} />
+            <StatCard icon={Gauge} value={riderTotals ? `${riderTotals.avgSpeed}` : "0"} label="Avg Speed" isFormatted index={3} />
+            <StatCard icon={TrendingUp} value={moodImprovement ?? "—"} label="Mood Change" isFormatted index={4} />
+          </div>
+        </details>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
