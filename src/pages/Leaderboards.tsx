@@ -35,17 +35,13 @@ const Leaderboards = () => {
 
       <section className="bg-background pb-20 pt-8">
         <div className="container mx-auto px-4 space-y-10">
-          {/* Top Riders by Points */}
           <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-            <TopRiders mode="points" />
+            <TopRiders />
             <div className="space-y-6">
               <ImpactStats />
               <SchoolLeaderboard />
             </div>
           </div>
-
-          {/* Top Riders by Time */}
-          <TopRiders mode="time" />
         </div>
       </section>
 
