@@ -240,6 +240,9 @@ const Dashboard = () => {
     });
   }, [user?.email, user?.id, user?.created_at, role, nfcSession]);
 
+  // ── Post Phase survey prompt ──
+  const [showPostPrompt, setShowPostPrompt] = useState(false);
+
   // ── Load data ──
   const loadData = async () => {
     if (!hasIdentity) { setLoading(false); return; }
