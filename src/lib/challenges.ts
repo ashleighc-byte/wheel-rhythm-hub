@@ -7,7 +7,7 @@ import { parseDurationToMinutes, isValidSession } from "./gamification";
 
 // ── Types ─────────────────────────────────────────────────
 
-export type MetricType = 'ride_count' | 'distance' | 'duration' | 'elevation' | 'team_time';
+export type MetricType = 'ride_count' | 'distance' | 'duration' | 'elevation' | 'team_time' | 'avg_speed';
 export type ChallengeMode = 'individual' | 'team';
 export type ChallengeStatus = 'upcoming' | 'active' | 'completed' | 'ended';
 
@@ -65,18 +65,18 @@ export interface SessionData {
 
 export const CHALLENGE_DEFINITIONS: ChallengeDefinition[] = [
   {
-    id: 'ch1-starter',
-    name: '6 Ride Starter Challenge',
+    id: 'ch1-sprint',
+    name: 'Sprint Challenge',
     startDate: '2026-04-20',
     endDate: '2026-05-03',
-    metricType: 'ride_count',
-    target: 6,
-    unit: 'rides',
+    metricType: 'avg_speed',
+    target: 25,
+    unit: 'km/h',
     mode: 'individual',
     reward: 'Bracelet',
     displayOrder: 1,
     active: true,
-    description: 'Complete 6 MyWhoosh rides to earn your FreeWheeler bracelet!',
+    description: 'Achieve an average speed of 25 km/h or higher across 3 qualifying rides to earn your FreeWheeler bracelet!',
   },
   {
     id: 'ch2-distance',
@@ -130,12 +130,11 @@ export const CHALLENGE_DEFINITIONS: ChallengeDefinition[] = [
     target: 0,
     unit: 'hours',
     mode: 'team',
-    teamSize: 10,
     courseFilter: undefined,
     reward: 'FreeWheeler Trophy',
     displayOrder: 5,
     active: true,
-    description: 'School vs School — final 3-day sprint! Your school\'s top 10 riders compete for the fastest combined time. The winning school takes home the FreeWheeler Trophy!',
+    description: 'School vs School — final 3-day sprint! Every rider in your school contributes their time to the team total. The school with the most combined riding hours takes home the FreeWheeler Trophy!',
   },
 ];
 
@@ -196,6 +195,18 @@ export function calculateIndividualProgress(
     case 'elevation':
       current = Math.round(windowSessions.reduce((sum, s) => sum + s.elevation_m, 0));
       break;
+    case 'avg_speed': {
+      // Sprint: average speed across qualifying rides (rides with speed > 0)
+      const qualifyingRides = windowSessions.filter(s => s.avg_speed_kmh > 0);
+      const MIN_QUALIFYING_RIDES = 3;
+      if (qualifyingRides.length >= MIN_QUALIFYING_RIDES) {
+        const avgSpeed = qualifyingRides.reduce((sum, s) => sum + s.avg_speed_kmh, 0) / qualifyingRides.length;
+        current = Math.round(avgSpeed * 10) / 10;
+      } else {
+        current = 0; // Not enough qualifying rides yet
+      }
+      break;
+    }
     default:
       current = 0;
   }
@@ -338,6 +349,7 @@ export function formatProgressValue(current: number, def: ChallengeDefinition): 
     case 'duration': return formatDurationHHMM(current);
     case 'elevation': return `${current} m`;
     case 'team_time': return formatDurationHHMM(current);
+    case 'avg_speed': return `${current} km/h`;
     default: return `${current}`;
   }
 }
@@ -348,7 +360,8 @@ export function formatTargetValue(def: ChallengeDefinition): string {
     case 'distance': return `${def.target} km`;
     case 'duration': return `${def.target} hours`;
     case 'elevation': return `${def.target} m`;
-    case 'team_time': return 'Fastest combined time';
+    case 'team_time': return 'Most combined time';
+    case 'avg_speed': return `${def.target} km/h avg (min 3 rides)`;
     default: return `${def.target} ${def.unit}`;
   }
 }
