@@ -69,6 +69,8 @@ const StudentInfo = () => {
       .catch(console.error);
   }, [user?.email]);
 
+  const rideStatus: "done" | "in-progress" | "empty" = sessionCount >= 10 ? "done" : sessionCount >= 1 ? "in-progress" : "empty";
+
   const checklist = [
     {
       status: rideStatus,
