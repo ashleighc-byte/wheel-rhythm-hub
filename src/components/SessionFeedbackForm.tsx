@@ -147,10 +147,14 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
       }
 
       const fields: Record<string, any> = {
-        "How did you feel before you jumped on the bike?": preRating,
-        "How did you feel after your bike session today?": postRating,
         "What did you enjoy or not enjoy about today's session?": reflection.trim(),
       };
+      if (preRating > 0) {
+        fields["How did you feel before you jumped on the bike?"] = preRating;
+      }
+      if (postRating > 0) {
+        fields["How did you feel after your bike session today?"] = postRating;
+      }
 
       if (studentRecordId) {
         fields["Student Registration"] = [studentRecordId];
