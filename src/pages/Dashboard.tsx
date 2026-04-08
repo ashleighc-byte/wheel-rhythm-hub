@@ -5,7 +5,7 @@ import {
   Bike, Clock, MapPin, TrendingUp, Trophy, Plus, Zap,
   Frown, Meh, Smile, Laugh, Flame, Target, Award, Star,
   ChevronRight, Timer, Calendar, Sparkles, Mountain, Repeat,
-  Gauge, ClipboardCheck, AlertTriangle, CheckCircle2, X
+  Gauge, ClipboardCheck, AlertTriangle, CheckCircle2, X, BarChart3
 } from "lucide-react";
 import ChallengesDashboard from "@/components/ChallengesDashboard";
 import {
