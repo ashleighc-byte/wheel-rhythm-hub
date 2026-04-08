@@ -31,8 +31,13 @@ export interface RiderPointsSummary {
   level: string;
 }
 
-export async function computeAllRiderPoints(): Promise<Map<string, RiderPointsSummary>> {
-  const sessionsRes = await callAirtable("Session Reflections", "GET");
+export async function computeAllRiderPoints(studentIds?: string[]): Promise<Map<string, RiderPointsSummary>> {
+  const options: { filterByFormula?: string } = {};
+  if (studentIds?.length) {
+    const clauses = studentIds.map(id => `FIND("${id}", ARRAYJOIN({Student Registration}))`).join(',');
+    options.filterByFormula = `OR(${clauses})`;
+  }
+  const sessionsRes = await callAirtable("Session Reflections", "GET", options);
 
   // Group sessions by student airtable ID
   const studentSessions = new Map<string, any[]>();

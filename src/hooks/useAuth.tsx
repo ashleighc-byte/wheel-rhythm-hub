@@ -75,7 +75,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (_event, session) => {
         setSession(session);
         if (_event === 'SIGNED_IN') {
-          setTimeout(() => checkApprovalAndAssignRole(session), 0);
+          setLoading(true);
+          checkApprovalAndAssignRole(session).finally(() => setLoading(false));
         }
         if (_event === 'SIGNED_OUT') {
           setRole(null);

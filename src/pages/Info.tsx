@@ -5,7 +5,7 @@ import { CheckCircle2, Circle, Bike, ClipboardList, Heart, AlertTriangle, Target
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { useState, useEffect } from "react";
 import ReportIssueForm from "@/components/ReportIssueForm";
-import { fetchStudents } from "@/lib/airtable";
+import { fetchStudents, isSurveyCompleted } from "@/lib/airtable";
 import { LEVELS } from "@/lib/gamification";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import artSmartBike from "@/assets/art-smart-bike.jpeg";
@@ -70,25 +70,28 @@ const StudentInfo = () => {
   }, [user?.email]);
 
   const rideStatus: "done" | "in-progress" | "empty" = sessionCount >= 10 ? "done" : sessionCount >= 1 ? "in-progress" : "empty";
+  const prePhoneDone = user?.email ? isSurveyCompleted("Pre Phase", user.email) : false;
+  const midPhaseDone = user?.email ? isSurveyCompleted("Mid Phase", user.email) : false;
+  const postPhaseDone = user?.email ? isSurveyCompleted("Post Phase", user.email) : false;
 
   const checklist = [
     {
-      status: "done" as const,
+      status: (prePhoneDone ? "done" : "empty") as "done" | "in-progress" | "empty",
       label: "Pre Phase Survey",
-      description: "Completed on sign-up — you're good!",
-      action: null,
+      description: prePhoneDone ? "Completed — you're good!" : "Complete this short survey before your first ride.",
+      action: prePhoneDone ? null : { type: "link" as const, to: "/survey?phase=Pre Phase", text: "Start Survey" },
     },
     {
-      status: "empty" as const,
+      status: (midPhaseDone ? "done" : "empty") as "done" | "in-progress" | "empty",
       label: "Mid Phase Survey",
-      description: "A mid-pilot check-in — pops up after 4 weeks. Only needs to be submitted once.",
-      action: { type: "link" as const, to: "/survey?phase=Mid Phase", text: "Start Check-In" },
+      description: midPhaseDone ? "Completed — thanks!" : "A mid-pilot check-in — pops up after 4 weeks. Only needs to be submitted once.",
+      action: midPhaseDone ? null : { type: "link" as const, to: "/survey?phase=Mid Phase", text: "Start Check-In" },
     },
     {
-      status: "empty" as const,
+      status: (postPhaseDone ? "done" : "empty") as "done" | "in-progress" | "empty",
       label: "Post Phase Survey",
-      description: "Available at the end of the pilot — we'll remind you when it's time.",
-      action: { type: "link" as const, to: "/survey?phase=Post Phase", text: "Start Survey" },
+      description: postPhaseDone ? "Completed — thanks!" : "Available at the end of the pilot — we'll remind you when it's time.",
+      action: postPhaseDone ? null : { type: "link" as const, to: "/survey?phase=Post Phase", text: "Start Survey" },
     },
     {
       status: rideStatus,

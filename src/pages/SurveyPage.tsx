@@ -119,7 +119,7 @@ const SurveyPage = () => {
             Thanks for completing the {phase} survey. Your responses have been saved.
           </p>
           <Button
-            onClick={() => navigate(phase === "Pre Phase" ? "/" : "/dashboard")}
+            onClick={() => navigate("/dashboard")}
             className="tape-element-green w-full font-display uppercase tracking-wider"
           >
             Continue
@@ -162,7 +162,7 @@ const SurveyPage = () => {
           questions={questions}
           phase={phase}
           onSubmit={handleSubmit}
-          onCancel={() => navigate("/dashboard")}
+          onCancel={phase !== "Pre Phase" ? () => navigate("/dashboard") : undefined}
         />
       </div>
     </div>

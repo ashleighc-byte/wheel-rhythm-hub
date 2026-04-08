@@ -51,8 +51,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    // Role not yet resolved — wait rather than treating null as "not a student"
+    if (role === null) return;
+
     if (role !== 'student') {
-      setSurveyDone(false);
+      setSurveyDone(true);
       setSurveyChecked(true);
       return;
     }

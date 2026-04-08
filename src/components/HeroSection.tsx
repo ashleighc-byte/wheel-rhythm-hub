@@ -34,9 +34,11 @@ const HeroSection = () => {
             transition={{ duration: 0.6, type: "spring" }}
             className="text-5xl leading-[0.95] text-secondary-foreground md:text-7xl lg:text-8xl"
           >
-            NO PRESSURE.
-            <br />
-            NO SCHEDULE.
+            {isAdmin ? (
+              <>TRACK YOUR<br />RIDERS.</>
+            ) : (
+              <>NO PRESSURE.<br />NO SCHEDULE.</>
+            )}
           </motion.h1>
 
           <motion.div

@@ -225,6 +225,26 @@ const Dashboard = () => {
   const [interSchoolProgress, setInterSchoolProgress] = useState<InterSchoolChallengeProgress[]>([]);
   const [teamRankings, setTeamRankings] = useState<TeamRanking[]>([]);
   const [mySchoolId, setMySchoolId] = useState("");
+  // Server-synced survey completion (localStorage fast-path + Airtable fallback)
+  const [surveyStatus, setSurveyStatus] = useState<Record<string, boolean>>(() => {
+    if (!user?.email) return {};
+    const email = user.email;
+    return {
+      "Pre Phase": isSurveyCompleted("Pre Phase", email),
+      "Mid Phase": isSurveyCompleted("Mid Phase", email),
+      "Post Phase": isSurveyCompleted("Post Phase", email),
+    };
+  });
+
+  useEffect(() => {
+    if (!user?.email || role !== "student" || nfcSession) return;
+    const email = user.email;
+    ["Pre Phase", "Mid Phase", "Post Phase"].forEach((phase) => {
+      checkSurveyCompletedFull(phase, email).then((done) => {
+        setSurveyStatus((prev) => ({ ...prev, [phase]: done }));
+      });
+    });
+  }, [user?.email, role, nfcSession]);
 
   const hasIdentity = !!user?.email || !!nfcSession;
 
@@ -282,19 +302,26 @@ const Dashboard = () => {
       const schoolIds = f["School"] as string[] | undefined;
       const sessionIds = f["Session Reflections"] as string[] | undefined;
 
-      const [orgsRes, allStudentsRes, sessionsRes] = await Promise.all([
-        callAirtable("Organisations", "GET"),
-        callAirtable("Student Registration", "GET"),
+      // Fetch only this student's school org + their own sessions in parallel
+      const schoolOrgFilter = schoolIds?.length
+        ? { filterByFormula: `RECORD_ID()='${schoolIds[0]}'`, maxRecords: 1 }
+        : undefined;
+      const [orgsRes, sessionsRes] = await Promise.all([
+        callAirtable("Organisations", "GET", schoolOrgFilter),
         fetchSessionReflections(sessionIds),
       ]);
 
-      // Resolve school name
+      // Resolve school name and school student IDs
       let localSchoolId = "";
       let mySchoolName = "";
+      let schoolStudentIds: string[] = [];
       if (schoolIds?.length) {
         const org = orgsRes.records.find((o) => o.id === schoolIds[0]);
         localSchoolId = schoolIds[0];
         mySchoolName = org ? String(org.fields["Organisation Name"] ?? "") : "";
+        schoolStudentIds = Array.isArray(org?.fields["Student Registration"])
+          ? (org!.fields["Student Registration"] as string[])
+          : [];
         setSchoolName(mySchoolName);
         setMySchoolId(localSchoolId);
       }
@@ -361,16 +388,13 @@ const Dashboard = () => {
       setChallenges(ch);
       setGrandTotal(grand);
 
-      // School leaderboard preview (compute all riders' points via gamification engine)
-      if (schoolIds?.length) {
-        const schoolmates = allStudentsRes.records
-          .filter((s) => {
-            const sSchool = s.fields["School"] as string[] | undefined;
-            return sSchool?.[0] === schoolIds[0];
-          });
-
-        // Fetch computed points for ALL riders using the gamification engine
-        const riderPointsMap = await computeAllRiderPoints();
+      // School leaderboard preview — only fetch school students and their sessions
+      if (schoolIds?.length && schoolStudentIds.length) {
+        const [schoolStudentsRes, riderPointsMap] = await Promise.all([
+          fetchStudentsByIds(schoolStudentIds),
+          computeAllRiderPoints(schoolStudentIds),
+        ]);
+        const schoolmates = schoolStudentsRes.records;
 
         const ranked = schoolmates
           .map((s) => {
@@ -411,21 +435,22 @@ const Dashboard = () => {
         setMoodImprovement(avgChange >= 0 ? `+${avgChange.toFixed(1)}` : avgChange.toFixed(1));
       }
 
-      // ── Inter-School Challenges ──
+      // ── Inter-School Challenges (loads after main content) ──
       try {
-        // Build student → school mapping from all students
+        const [allStudentsForChallenges, allOrgsForChallenges, allSessionsRes] = await Promise.all([
+          callAirtable("Student Registration", "GET"),
+          callAirtable("Organisations", "GET"),
+          callAirtable("Session Reflections", "GET"),
+        ]);
         const studentSchoolMap = new Map<string, string>();
         const schoolNameMap = new Map<string, string>();
-        for (const s of allStudentsRes.records) {
+        for (const s of allStudentsForChallenges.records) {
           const sSchool = s.fields["School"] as string[] | undefined;
           if (sSchool?.[0]) studentSchoolMap.set(s.id, sSchool[0]);
         }
-        for (const o of orgsRes.records) {
+        for (const o of allOrgsForChallenges.records) {
           schoolNameMap.set(o.id, String(o.fields["Organisation Name"] ?? ""));
         }
-
-        // Fetch ALL session reflections for challenge calculation
-        const allSessionsRes = await callAirtable("Session Reflections", "GET");
         const challengeSessions = parseSessionsForChallenges(allSessionsRes.records, studentSchoolMap);
 
         // Individual progress for current student
@@ -618,6 +643,30 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
+        {/* ═══ FIRST RIDE WELCOME BANNER ═══ */}
+        {rideSessions.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mb-6 border-[3px] border-primary bg-card p-6 text-center shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
+          >
+            <Bike className="mx-auto mb-3 h-12 w-12 text-primary" />
+            <h2 className="font-display text-xl font-bold uppercase tracking-wider text-foreground">
+              Ready to Ride?
+            </h2>
+            <p className="mx-auto mt-2 max-w-sm font-body text-sm text-muted-foreground">
+              Jump on a Wattbike, complete a session in MyWhoosh, then come back and log your ride here to earn your first 10 points.
+            </p>
+            <button
+              onClick={() => setLogOpen(true)}
+              className="tape-element-green mt-5 inline-flex items-center gap-2 text-base"
+            >
+              <Bike className="h-5 w-5" /> LOG YOUR FIRST RIDE
+            </button>
+          </motion.div>
+        )}
+
         {/* ═══ MID PHASE SURVEY BANNER ═══ */}
         {showMidPrompt && (
           <motion.div
@@ -706,7 +755,7 @@ const Dashboard = () => {
                 { phase: "Mid Phase", label: "Mid Phase Survey (4 weeks)", always: true },
                 { phase: "Post Phase", label: "Post Phase Survey", always: true },
               ].map(({ phase, label }) => {
-                const done = isSurveyCompleted(phase, user.email!);
+                const done = surveyStatus[phase] ?? false;
                 return (
                   <div
                     key={phase}

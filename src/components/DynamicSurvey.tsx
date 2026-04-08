@@ -205,14 +205,19 @@ export default function DynamicSurvey({ questions, phase, onSubmit, onCancel }: 
 
       {/* Navigation */}
       <div className="mt-8 flex items-center justify-between gap-3">
-        <Button
-          variant="outline"
-          onClick={() => (current > 0 ? setCurrent(current - 1) : onCancel?.())}
-          className="gap-2 font-display uppercase tracking-wider"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          {current > 0 ? "Back" : "Cancel"}
-        </Button>
+        {/* On first question, only show Back/Cancel if a cancel handler exists */}
+        {(current > 0 || onCancel) ? (
+          <Button
+            variant="outline"
+            onClick={() => (current > 0 ? setCurrent(current - 1) : onCancel?.())}
+            className="gap-2 font-display uppercase tracking-wider"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            {current > 0 ? "Back" : "Cancel"}
+          </Button>
+        ) : (
+          <div />
+        )}
 
         {isLast ? (
           <Button

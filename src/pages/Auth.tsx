@@ -18,20 +18,26 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [cachedName] = useState<string | null>(() => localStorage.getItem("fw_display_name"));
 
   const checkApproval = async (userEmail: string): Promise<boolean> => {
     try {
-      const { approved } = await validateUserApproval(userEmail);
+      const { approved, studentName } = await validateUserApproval(userEmail);
       if (!approved) {
         await supabase.auth.signOut();
         toast({
           title: "Not registered yet",
           description:
-            "Your email isn't in our system. If you're a teacher, complete the school registration at https://bit.ly/Freewheelerschoolreg",
+            "Your email isn't registered. Students need teacher approval first. Teachers: ask your Sport Waikato contact to add your school.",
           variant: "destructive",
         });
         return false;
       }
+      // Cache first name so the welcome message is personalised on return visits
+      const rawName = studentName ?? userEmail.split("@")[0].replace(/[._]/g, " ");
+      const firstName = rawName.split(" ")[0];
+      const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+      localStorage.setItem("fw_display_name", displayName);
       return true;
     } catch {
       console.error("Approval check failed, allowing access");
@@ -101,7 +107,7 @@ const Auth = () => {
         toast({
           title: "Not registered yet",
           description:
-            "Your email isn't in our system. If you're a teacher, complete the school registration at https://bit.ly/Freewheelerschoolreg",
+            "Your email isn't registered. Students need teacher approval first. Teachers: ask your Sport Waikato contact to add your school.",
           variant: "destructive",
         });
         setLoading(false);
@@ -168,7 +174,7 @@ const Auth = () => {
     return (
       <PageWrapper>
         <h1 className="font-display text-3xl uppercase tracking-wider text-foreground">Sign Up</h1>
-        <p className="mt-2 font-body text-sm text-muted-foreground">Create your teacher account</p>
+        <p className="mt-2 font-body text-sm text-muted-foreground">Create your Free Wheeler account</p>
         <form onSubmit={handleSignUp} className="space-y-6 text-left">
           <div className="tape-element inline-flex w-full flex-col gap-1 rotate-[-2deg]">
             <Label htmlFor="email" className="font-display text-xs uppercase tracking-wider text-accent-foreground">School Email</Label>
@@ -201,7 +207,9 @@ const Auth = () => {
   return (
     <PageWrapper>
       <h1 className="font-display text-3xl uppercase tracking-wider text-foreground">Sign In</h1>
-      <p className="mt-2 font-body text-sm text-muted-foreground">Welcome back, rider!</p>
+      <p className="mt-2 font-body text-sm text-muted-foreground">
+        {cachedName ? `Welcome back, ${cachedName}!` : "Welcome back!"}
+      </p>
 
       <form onSubmit={handleSignIn} className="space-y-6 text-left">
         <div className="tape-element inline-flex w-full flex-col gap-1 rotate-[-2deg]">

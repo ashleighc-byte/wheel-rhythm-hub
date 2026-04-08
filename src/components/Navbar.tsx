@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Menu, X, LogOut, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import brandLogo from "@/assets/fw-logo-new.png";
@@ -9,7 +9,7 @@ const studentNavLinks = [
   { label: "HOME", path: "/", tourId: "home" },
   { label: "ABOUT THE PILOT", path: "/info", tourId: "about" },
   { label: "LEADERBOARDS", path: "/leaderboards", tourId: "leaderboards" },
-  { label: "YOUR STATS", path: "/dashboard", tourId: "stats" },
+  { label: "MY DASHBOARD", path: "/dashboard", tourId: "dashboard" },
 ];
 
 const teacherNavLinks = [
@@ -37,6 +37,8 @@ type NavLink = {
 const DropdownNavItem = ({ link }: { link: NavLink }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const isActive = location.pathname === link.path || link.dropdown?.some(d => d.path === location.pathname);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -53,7 +55,9 @@ const DropdownNavItem = ({ link }: { link: NavLink }) => {
       <Link
         to={link.path}
         data-tour={link.tourId}
-        className="px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
+        className={`px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider transition-colors hover:text-primary-foreground ${
+          isActive ? "text-primary-foreground underline underline-offset-4" : "text-accent"
+        }`}
       >
         {link.label}
       </Link>
@@ -65,7 +69,9 @@ const DropdownNavItem = ({ link }: { link: NavLink }) => {
       <button
         onClick={() => setOpen((o) => !o)}
         data-tour={link.tourId}
-        className="flex items-center gap-1 px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
+        className={`flex items-center gap-1 px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider transition-colors hover:text-primary-foreground ${
+          isActive ? "text-primary-foreground underline underline-offset-4" : "text-accent"
+        }`}
       >
         {link.label}
         <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -148,23 +154,26 @@ const Navbar = () => {
           <div className="border-t-2 border-secondary/30 bg-primary px-4 pb-4 md:hidden">
             {navLinks.map((link) => (
               <div key={link.label}>
-                <Link
-                  to={link.path}
-                  onClick={() => setOpen(false)}
-                  className="block py-3 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
-                >
-                  {link.label}
-                </Link>
-                {link.dropdown?.map((sub) => (
+                {link.dropdown ? (
+                  link.dropdown.map((sub) => (
+                    <Link
+                      key={sub.path}
+                      to={sub.path}
+                      onClick={() => setOpen(false)}
+                      className="block py-3 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
+                    >
+                      {sub.label}
+                    </Link>
+                  ))
+                ) : (
                   <Link
-                    key={sub.path}
-                    to={sub.path}
+                    to={link.path}
                     onClick={() => setOpen(false)}
-                    className="block py-2 pl-4 font-display text-xs font-semibold uppercase tracking-wider text-accent/70 transition-colors hover:text-primary-foreground"
+                    className="block py-3 font-display text-sm font-semibold uppercase tracking-wider text-accent transition-colors hover:text-primary-foreground"
                   >
-                    → {sub.label}
+                    {link.label}
                   </Link>
-                ))}
+                )}
               </div>
             ))}
             {!isAdmin && (

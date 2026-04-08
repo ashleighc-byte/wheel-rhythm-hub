@@ -125,11 +125,6 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
       toast({ title: "Please wait for your profile to load", variant: "destructive" });
       return;
     }
-    if (!file) {
-      toast({ title: "Please upload a screenshot of your session", variant: "destructive" });
-      return;
-    }
-
     setSubmitting(true);
     try {
       let attachmentUrl: string | undefined;
@@ -289,10 +284,10 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
               {/* Screenshot upload */}
               <div>
                 <Label className="mb-2 block font-display text-sm uppercase tracking-wider text-foreground">
-                  Session Screenshot
+                  Session Screenshot <span className="font-body text-xs normal-case tracking-normal text-muted-foreground">(optional)</span>
                 </Label>
                 <p className="mb-2 font-body text-xs text-muted-foreground">
-                  Use the iPad to take a screenshot of your session time and upload it here.
+                  Take a screenshot of your session time on the iPad and upload it here if you have one.
                 </p>
                 <input
                   ref={fileRef}
