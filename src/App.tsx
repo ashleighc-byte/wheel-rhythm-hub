@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { isSurveyCompleted } from "@/lib/airtable";
+import { checkSurveyCompletedFull } from "@/lib/airtable";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -57,10 +57,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // Check if Pre Phase survey is completed (localStorage cache)
-    const done = isSurveyCompleted("Pre Phase", email);
-    setSurveyDone(done);
-    setSurveyChecked(true);
+    // Check if Pre Phase survey is completed (localStorage + Airtable fallback)
+    checkSurveyCompletedFull("Pre Phase", email).then((done) => {
+      setSurveyDone(done);
+      setSurveyChecked(true);
+    });
   }, [email, role, loading, nfcSession]);
 
   // NFC-authenticated students get through

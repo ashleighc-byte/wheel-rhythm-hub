@@ -20,8 +20,42 @@ export function getActiveNfcToken(): string | null {
 
 // ─── Survey completion helpers ────────────────────────────────────────────────
 
-export function isSurveyCompleted(phase: string, email: string): boolean {
+/** Synchronous localStorage-only check (for fast UI gating). */
+export function isSurveyCompletedLocal(phase: string, email: string): boolean {
   return localStorage.getItem(`survey_completed_${phase}_${email}`) === 'true';
+}
+
+/** Alias kept for backward compatibility — prefer isSurveyCompletedLocal for sync checks. */
+export const isSurveyCompleted = isSurveyCompletedLocal;
+
+/**
+ * Async check: localStorage first, then Airtable server-side.
+ * If found on server, caches to localStorage for future fast checks.
+ */
+export async function checkSurveyCompletedFull(phase: string, email: string): Promise<boolean> {
+  // Fast local check
+  if (isSurveyCompletedLocal(phase, email)) return true;
+
+  // Server-side check via Airtable
+  try {
+    const safe = escapeFormulaValue(email);
+    const students = await callAirtable('Student Registration', 'GET', {
+      filterByFormula: `LOWER({School Email}) = LOWER('${safe}')`,
+      maxRecords: 1,
+    });
+    if (students.records.length > 0) {
+      const studentRecordId = students.records[0].id;
+      const completed = await checkSurveyCompletionRemote(studentRecordId, phase);
+      if (completed) {
+        // Sync to localStorage so we don't hit Airtable again
+        markSurveyCompleted(phase, email);
+        return true;
+      }
+    }
+  } catch (err) {
+    console.error(`Failed to check survey completion remotely for ${phase}:`, err);
+  }
+  return false;
 }
 
 export function markSurveyCompleted(phase: string, email: string) {
