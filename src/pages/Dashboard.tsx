@@ -240,6 +240,23 @@ const Dashboard = () => {
     });
   }, [user?.email, user?.id, user?.created_at, role, nfcSession]);
 
+  // ── Post Phase survey prompt ──
+  const [showPostPrompt, setShowPostPrompt] = useState(false);
+  useEffect(() => {
+    if (nfcSession) return;
+    if (!user?.email || role !== "student") return;
+    if (isSurveyCompleted("Post Phase", user.email)) return;
+
+    const POST_PHASE_DATE = "2026-12-07";
+    const today = new Date().toISOString().slice(0, 10);
+    const isAfterTerm = today > POST_PHASE_DATE;
+    const hasHitMilestone = (riderTotals?.totalSessions ?? 0) >= 200;
+
+    if (isAfterTerm || hasHitMilestone) {
+      setShowPostPrompt(true);
+    }
+  }, [user?.email, role, nfcSession, riderTotals?.totalSessions]);
+
   // ── Load data ──
   const loadData = async () => {
     if (!hasIdentity) { setLoading(false); return; }
@@ -620,7 +637,29 @@ const Dashboard = () => {
           </motion.div>
         )}
 
-        {/* ═══ SURVEYS CHECKLIST ═══ */}
+        {showPostPrompt && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 flex items-center gap-4 border-[3px] border-primary bg-primary/10 p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
+          >
+            <ClipboardCheck className="h-6 w-6 shrink-0 text-primary" />
+            <div className="flex-1">
+              <p className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
+                End-of-Programme Survey
+              </p>
+              <p className="font-body text-xs text-muted-foreground">
+                Complete your end-of-programme survey to help us improve FreeWheeler for Sport NZ.
+              </p>
+            </div>
+            <Link to="/survey?phase=Post Phase">
+              <Button size="sm" className="tape-element-green font-display text-xs uppercase tracking-wider">
+                Start Survey
+              </Button>
+            </Link>
+          </motion.div>
+        )}
+
         {role === "student" && user?.email && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
