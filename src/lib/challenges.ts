@@ -67,8 +67,8 @@ export const CHALLENGE_DEFINITIONS: ChallengeDefinition[] = [
   {
     id: 'ch1-starter',
     name: '6 Ride Starter Challenge',
-    startDate: '2026-05-04',
-    endDate: '2026-05-17',
+    startDate: '2026-04-20',
+    endDate: '2026-05-03',
     metricType: 'ride_count',
     target: 6,
     unit: 'rides',
@@ -81,8 +81,8 @@ export const CHALLENGE_DEFINITIONS: ChallengeDefinition[] = [
   {
     id: 'ch2-distance',
     name: '210KM Distance Challenge',
-    startDate: '2026-05-18',
-    endDate: '2026-05-31',
+    startDate: '2026-05-04',
+    endDate: '2026-05-17',
     metricType: 'distance',
     target: 210,
     unit: 'km',
@@ -95,10 +95,10 @@ export const CHALLENGE_DEFINITIONS: ChallengeDefinition[] = [
   {
     id: 'ch3-endurance',
     name: '14 Hour Endurance Challenge',
-    startDate: '2026-06-01',
-    endDate: '2026-06-14',
+    startDate: '2026-05-18',
+    endDate: '2026-05-24',
     metricType: 'duration',
-    target: 14, // hours
+    target: 14,
     unit: 'hours',
     mode: 'individual',
     reward: 'None (Part of T-Shirt combo)',
@@ -109,8 +109,8 @@ export const CHALLENGE_DEFINITIONS: ChallengeDefinition[] = [
   {
     id: 'ch4-climbing',
     name: '2000VM Climbing Challenge',
-    startDate: '2026-06-15',
-    endDate: '2026-06-28',
+    startDate: '2026-05-25',
+    endDate: '2026-05-31',
     metricType: 'elevation',
     target: 2000,
     unit: 'm',
@@ -123,19 +123,19 @@ export const CHALLENGE_DEFINITIONS: ChallengeDefinition[] = [
   },
   {
     id: 'ch5-team',
-    name: 'Inter-School Team Time Challenge',
-    startDate: '2026-06-29',
-    endDate: '2026-07-03',
+    name: 'Inter-School Team Sprint',
+    startDate: '2026-06-01',
+    endDate: '2026-06-03',
     metricType: 'team_time',
-    target: 0, // no fixed target — ranking based
+    target: 0,
     unit: 'hours',
     mode: 'team',
     teamSize: 10,
-    courseFilter: undefined, // Set to specific MyWhoosh course name when confirmed
+    courseFilter: undefined,
     reward: 'FreeWheeler Trophy',
     displayOrder: 5,
     active: true,
-    description: 'School vs School! Your school\'s top 10 riders compete for the fastest combined time. The winning school takes home the FreeWheeler Trophy!',
+    description: 'School vs School — final 3-day sprint! Your school\'s top 10 riders compete for the fastest combined time. The winning school takes home the FreeWheeler Trophy!',
   },
 ];
 
