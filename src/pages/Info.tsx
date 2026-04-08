@@ -255,6 +255,7 @@ const StudentInfo = () => {
                             {item.action.text}
                           </button>
                         </div>
+                      )}
                     </div>
                   </div>
                 </div>
