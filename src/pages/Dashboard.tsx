@@ -25,7 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchStudents, fetchSessionReflections, callAirtable,
-  isSurveyCompleted, isMidPhaseDue, isValidRecordId
+  isSurveyCompleted, isMidPhaseDue, isValidRecordId,
+  checkSurveyCompletedFull
 } from "@/lib/airtable";
 import { isSurveyDismissed, dismissSurvey } from "@/lib/surveyDismissals";
 import { formatFriendlyDate } from "@/lib/dateFormat";
