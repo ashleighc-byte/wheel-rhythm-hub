@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import DynamicSurvey, { type SurveyQuestion } from "@/components/DynamicSurvey";
 import { fetchSurveyQuestions, submitSurveyResponses, fetchStudents, markSurveyCompleted } from "@/lib/airtable";
+import { clearSurveyDismissal, dismissSurvey } from "@/lib/surveyDismissals";
 import logoSrc from "@/assets/fw-logo-new.png";
 
 const SurveyPage = () => {
@@ -62,7 +63,7 @@ const SurveyPage = () => {
       });
 
       markSurveyCompleted(phase, user.email);
-      localStorage.removeItem(`survey_dismissed_${phase}_${user.email}`);
+      if (user.id) clearSurveyDismissal(phase, user.id, user.email);
 
       setSubmitted(true);
       toast({ title: "Survey Complete!", description: `${phase} survey submitted successfully.` });
@@ -139,9 +140,8 @@ const SurveyPage = () => {
             Questions haven't been added for this phase. You'll be prompted again when it's ready.
           </p>
           <Button onClick={() => {
-            // Dismiss so they don't get stuck in a loop
-            if (user?.email) {
-              localStorage.setItem(`survey_dismissed_${phase}_${user.email}`, "true");
+            if (user?.id && user?.email) {
+              dismissSurvey(phase, user.id, user.email);
             }
             navigate("/dashboard");
           }} className="mt-4">
