@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Bike, Clock, Zap } from "lucide-react";
-import { fetchStudents, callAirtable, fetchTeacherOrgFull, isSuperAdmin, fetchOrgsInRegion } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { pluraliseUnit } from "@/lib/dateFormat";
-import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
+import { getCachedTopRiders, type CachedRider } from "@/lib/leaderboardCache";
+import { fetchTeacherOrgFull, isSuperAdmin, fetchOrgsInRegion, fetchStudents, callAirtable } from "@/lib/airtable";
 
 /** Format "h:mm" string with correct pluralisation */
 function formatTime(timeStr: string): string {
@@ -47,36 +47,22 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
 
     const load = async () => {
       try {
-        const [allStudentsRes, orgsRes, riderPointsMap] = await Promise.all([
-          fetchStudents(),
-          callAirtable("Organisations", "GET"),
-          computeAllRiderPoints(),
-        ]);
-
-        const orgMap = new Map<string, string>();
-        const orgRegionMap = new Map<string, string>();
-        orgsRes.records.forEach((o) => {
-          orgMap.set(o.id, String(o.fields["Organisation Name"] ?? ""));
-          orgRegionMap.set(o.id, String(o.fields["Region"] ?? ""));
-        });
+        // Read from Supabase cache instead of Airtable
+        const allRiders = await getCachedTopRiders();
 
         let schoolFilterIds: Set<string> | null = null;
         let regionName = "";
         let schoolName = "";
 
         if (isAdmin && user?.email) {
-          // Check if super admin — filter by region
           const orgInfo = await fetchTeacherOrgFull(user.email);
           if (orgInfo && isSuperAdmin(orgInfo)) {
             regionName = orgInfo.region;
             if (orgInfo.region.toLowerCase() !== "all") {
-              // Filter to region orgs only
               const regionOrgs = await fetchOrgsInRegion(orgInfo.region);
               schoolFilterIds = new Set(regionOrgs.records.map((o) => o.id));
             }
-            // region=ALL means show everyone — no filter
           }
-          // Regular teachers see all schools (existing behaviour)
         } else {
           // Student — filter to their school
           let currentStudentRec;
@@ -94,32 +80,16 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
           const userSchoolIds = currentStudentRec.fields["School"] as string[] | undefined;
           if (!userSchoolIds?.length) return;
           schoolFilterIds = new Set([userSchoolIds[0]]);
-          const org = orgsRes.records.find((o) => o.id === userSchoolIds[0]);
-          schoolName = org ? String(org.fields["Organisation Name"] ?? "") : "";
+          // Find school name from cached data
+          const matchingRider = allRiders.find(r => r.schoolId === userSchoolIds[0]);
+          schoolName = matchingRider?.school ?? "";
         }
 
-        const mapped = allStudentsRes.records
+        const mapped = allRiders
           .filter((r) => {
             if (!schoolFilterIds) return true;
-            const school = r.fields["School"] as string[] | undefined;
-            return school?.[0] ? schoolFilterIds.has(school[0]) : false;
+            return r.schoolId ? schoolFilterIds.has(r.schoolId) : false;
           })
-          .map((r) => {
-            const computed = riderPointsMap.get(r.id);
-            const totalPoints = computed?.totalPoints ?? 0;
-            const totalMinutes = computed?.totalMinutes ?? 0;
-            const sessions = computed?.sessions ?? 0;
-            return {
-              name: String(r.fields["Full Name"] ?? ""),
-              school: orgMap.get((r.fields["School"] as string[])?.[0] ?? "") ?? "",
-              sessions,
-              totalTime: String(r.fields["Total Time (h:mm)"] ?? "0:00"),
-              totalMinutes,
-              totalPoints,
-              level: computed?.level ?? "Pedal Pusher",
-            };
-          })
-          .filter((r) => r.sessions > 0)
           .sort((a, b) =>
             mode === "points"
               ? b.totalPoints - a.totalPoints
@@ -139,7 +109,6 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
 
         setRiders(mapped);
 
-        // Set title
         const modeLabel = mode === "points" ? "Top Riders by Points" : "Top Riders";
         if (!isAdmin && schoolName) {
           setTitleText(`${modeLabel} – ${schoolName}`);
