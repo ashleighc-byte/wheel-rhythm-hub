@@ -6,6 +6,7 @@ import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { useState, useEffect } from "react";
 import ReportIssueForm from "@/components/ReportIssueForm";
 import { fetchStudents } from "@/lib/airtable";
+import { LEVELS } from "@/lib/gamification";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import artSmartBike from "@/assets/art-smart-bike.jpeg";
 import artEcycling from "@/assets/art-ecycling.jpeg";
@@ -208,18 +209,10 @@ const StudentInfo = () => {
               <div className="border-[3px] border-secondary bg-card p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
                 <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-primary">Level Up</p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {[
-                    { name: "Pedal Pusher", pts: "0" },
-                    { name: "Gear Shifter", pts: "50" },
-                    { name: "Hill Climber", pts: "150" },
-                    { name: "Breakaway Rider", pts: "300" },
-                    { name: "Pace Setter", pts: "500" },
-                    { name: "Sprint Leader", pts: "800" },
-                    { name: "FW Legend", pts: "1200" },
-                  ].map((lvl) => (
+                  {LEVELS.map((lvl) => (
                     <div key={lvl.name} className="bg-muted px-2 py-2 text-center hover-bounce">
                       <div className="font-display text-[10px] font-bold uppercase tracking-wider text-foreground">{lvl.name}</div>
-                      <div className="font-body text-xs text-primary font-semibold">{lvl.pts} pts</div>
+                      <div className="font-body text-xs text-primary font-semibold">{lvl.min} pts</div>
                     </div>
                   ))}
                 </div>
