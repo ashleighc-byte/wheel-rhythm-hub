@@ -237,27 +237,31 @@ export function calculateTeamRankings(
     ? windowSessions.filter(s => s.courseName?.toLowerCase().includes(def.courseFilter!.toLowerCase()))
     : windowSessions;
 
-  // Group by school
-  const schoolSessions = new Map<string, Map<string, number>>(); // schoolId -> (studentId -> totalMinutes)
+  // Group by school — every rider contributes
+  const schoolTotals = new Map<string, { totalMinutes: number; riderCount: number }>();
   for (const s of filtered) {
     if (!s.schoolId) continue;
-    if (!schoolSessions.has(s.schoolId)) schoolSessions.set(s.schoolId, new Map());
-    const studentMap = schoolSessions.get(s.schoolId)!;
-    studentMap.set(s.studentId, (studentMap.get(s.studentId) ?? 0) + s.duration_minutes);
+    const entry = schoolTotals.get(s.schoolId) ?? { totalMinutes: 0, riderCount: 0 };
+    entry.totalMinutes += s.duration_minutes;
+    schoolTotals.set(s.schoolId, entry);
+  }
+
+  // Count unique riders per school
+  const schoolRiders = new Map<string, Set<string>>();
+  for (const s of filtered) {
+    if (!s.schoolId) continue;
+    if (!schoolRiders.has(s.schoolId)) schoolRiders.set(s.schoolId, new Set());
+    schoolRiders.get(s.schoolId)!.add(s.studentId);
   }
 
   const rankings: TeamRanking[] = [];
-  for (const [schoolId, studentMap] of schoolSessions) {
-    // Take top N riders by time
-    const topN = def.teamSize ?? 10;
-    const riderTimes = [...studentMap.values()].sort((a, b) => b - a).slice(0, topN);
-    const totalMinutes = riderTimes.reduce((a, b) => a + b, 0);
-
+  for (const [schoolId, data] of schoolTotals) {
+    const riders = schoolRiders.get(schoolId)?.size ?? 0;
     rankings.push({
       schoolId,
       schoolName: schoolMap.get(schoolId) ?? 'Unknown School',
-      totalValue: Math.round((totalMinutes / 60) * 10) / 10, // hours
-      riderCount: Math.min(studentMap.size, topN),
+      totalValue: Math.round((data.totalMinutes / 60) * 10) / 10,
+      riderCount: riders,
       rank: 0,
     });
   }
