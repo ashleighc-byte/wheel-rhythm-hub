@@ -72,6 +72,32 @@ function calculateWeeklyBonus(dates: string[]): number {
   return bonus;
 }
 
+/** Count consecutive riding days ending today or yesterday */
+function calculateStreak(dates: string[]): number {
+  if (!dates.length) return 0;
+  const unique = [...new Set(dates)].sort().reverse();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const latest = new Date(unique[0]);
+  latest.setHours(0, 0, 0, 0);
+  if (latest < yesterday) return 0;
+
+  let streak = 1;
+  for (let i = 1; i < unique.length; i++) {
+    const curr = new Date(unique[i]);
+    const prev = new Date(unique[i - 1]);
+    curr.setHours(0, 0, 0, 0);
+    prev.setHours(0, 0, 0, 0);
+    const diffDays = (prev.getTime() - curr.getTime()) / 86400000;
+    if (diffDays === 1) streak++;
+    else break;
+  }
+  return streak;
+}
+
 const LEVELS = [
   { name: "Pedal Pusher", min: 0 },
   { name: "Gear Shifter", min: 50 },
@@ -90,6 +116,8 @@ function getLevelName(pts: number): string {
   return name;
 }
 
+const STREAK_MILESTONES = [3, 5, 7, 10, 14, 21, 30];
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
@@ -99,6 +127,20 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const adminClient = createClient(supabaseUrl, serviceKey);
+
+    // ── Load previous cache for diff detection ──
+    const { data: prevCache } = await adminClient
+      .from('leaderboard_cache')
+      .select('cache_key, data')
+      .in('cache_key', ['top_riders', 'school_rankings']);
+
+    const prevRidersArr = (prevCache?.find(c => c.cache_key === 'top_riders')?.data ?? []) as any[];
+    const prevSchoolArr = (prevCache?.find(c => c.cache_key === 'school_rankings')?.data ?? []) as any[];
+
+    const prevRiderMap = new Map<string, any>();
+    for (const r of prevRidersArr) prevRiderMap.set(r.airtableId ?? r.name, r);
+    const prevSchoolMap = new Map<string, number>();
+    for (const s of prevSchoolArr) prevSchoolMap.set(s.name, s.rank);
 
     // Fetch all data from Airtable in parallel
     const [orgs, students, sessions, globalDash] = await Promise.all([
@@ -118,7 +160,7 @@ Deno.serve(async (req) => {
       studentSessions.get(sid)!.push(rec);
     }
 
-    const riderPoints = new Map<string, { totalPoints: number; totalMinutes: number; totalDistance: number; totalElevation: number; sessions: number; level: string }>();
+    const riderPoints = new Map<string, { totalPoints: number; totalMinutes: number; totalDistance: number; totalElevation: number; sessions: number; level: string; streak: number }>();
 
     for (const [studentId, sess] of studentSessions) {
       let totalMin = 0, totalDist = 0, totalElev = 0, valid = 0;
@@ -144,7 +186,8 @@ Deno.serve(async (req) => {
       }
 
       const pts = valid * 10 + calculateWeeklyBonus(dates);
-      riderPoints.set(studentId, { totalPoints: pts, totalMinutes: totalMin, totalDistance: totalDist, totalElevation: totalElev, sessions: valid, level: getLevelName(pts) });
+      const streak = calculateStreak(dates);
+      riderPoints.set(studentId, { totalPoints: pts, totalMinutes: totalMin, totalDistance: totalDist, totalElevation: totalElev, sessions: valid, level: getLevelName(pts), streak });
     }
 
     // ── Build org map ──
@@ -161,7 +204,6 @@ Deno.serve(async (req) => {
       const computed = riderPoints.get(s.id);
       schoolData.set(sid, { riders: prev.riders + 1, points: prev.points + (computed?.totalPoints ?? 0) });
     }
-    // Ensure all orgs appear
     for (const [id] of orgMap) {
       if (!schoolData.has(id)) schoolData.set(id, { riders: 0, points: 0 });
     }
@@ -186,11 +228,66 @@ Deno.serve(async (req) => {
           totalDistance: computed?.totalDistance ?? 0,
           totalElevation: computed?.totalElevation ?? 0,
           level: computed?.level ?? 'Pedal Pusher',
+          streak: computed?.streak ?? 0,
           totalTime: String(s.fields['Total Time (h:mm)'] ?? '0:00'),
           airtableId: s.id,
         };
       })
       .filter((r: any) => r.sessions > 0);
+
+    // ── Generate activity feed events (diffs) ──
+    const feedEvents: { event_type: string; rider_name: string; school_name: string; message: string }[] = [];
+
+    for (const rider of topRiders) {
+      const prev = prevRiderMap.get(rider.airtableId ?? rider.name);
+
+      // Level-up detection
+      if (prev && prev.level && rider.level !== prev.level && rider.level !== 'Pedal Pusher') {
+        feedEvents.push({
+          event_type: 'level_up',
+          rider_name: rider.name.split(' ')[0],
+          school_name: rider.school,
+          message: `leveled up to ${rider.level}`,
+        });
+      }
+
+      // Streak milestone detection
+      if (rider.streak > 0) {
+        const prevStreak = prev?.streak ?? 0;
+        for (const milestone of STREAK_MILESTONES) {
+          if (rider.streak >= milestone && prevStreak < milestone) {
+            feedEvents.push({
+              event_type: 'streak',
+              rider_name: rider.name.split(' ')[0],
+              school_name: rider.school,
+              message: `hit a ${milestone}-day streak`,
+            });
+            break; // only emit highest new milestone
+          }
+        }
+      }
+    }
+
+    // School rank change detection
+    for (const school of schoolRankings) {
+      const prevRank = prevSchoolMap.get(school.name);
+      if (prevRank && school.rank < prevRank) {
+        feedEvents.push({
+          event_type: 'rank_change',
+          rider_name: school.name,
+          school_name: '',
+          message: `moved up to #${school.rank}`,
+        });
+      }
+    }
+
+    // Insert feed events (limit to 10 per sync to avoid spam)
+    if (feedEvents.length > 0) {
+      const batch = feedEvents.slice(0, 10);
+      const { error: feedErr } = await adminClient.from('activity_feed').insert(batch);
+      if (feedErr) console.error('Feed insert error:', feedErr);
+      else console.log(`Inserted ${batch.length} activity events`);
+    }
 
     // ── Global stats ──
     const gf = globalDash[0]?.fields ?? {};
@@ -216,7 +313,7 @@ Deno.serve(async (req) => {
       if (error) console.error(`Upsert ${row.cache_key} error:`, error);
     }
 
-    return new Response(JSON.stringify({ success: true, updated: rows.map(r => r.cache_key) }), {
+    return new Response(JSON.stringify({ success: true, updated: rows.map(r => r.cache_key), feedEventsInserted: feedEvents.length }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
