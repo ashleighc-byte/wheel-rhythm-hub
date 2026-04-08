@@ -25,10 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchStudents, fetchSessionReflections, callAirtable,
-  isSurveyCompleted, isMidPhaseDue, isValidRecordId,
-  checkSurveyCompletedFull
+  isValidRecordId, fetchStudentsByIds
 } from "@/lib/airtable";
-import { isSurveyDismissed, dismissSurvey } from "@/lib/surveyDismissals";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 import artEliteRider from "@/assets/art-elite-rider.jpeg";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
@@ -225,61 +223,8 @@ const Dashboard = () => {
   const [interSchoolProgress, setInterSchoolProgress] = useState<InterSchoolChallengeProgress[]>([]);
   const [teamRankings, setTeamRankings] = useState<TeamRanking[]>([]);
   const [mySchoolId, setMySchoolId] = useState("");
-  // Server-synced survey completion (localStorage fast-path + Airtable fallback)
-  const [surveyStatus, setSurveyStatus] = useState<Record<string, boolean>>(() => {
-    if (!user?.email) return {};
-    const email = user.email;
-    return {
-      "Pre Phase": isSurveyCompleted("Pre Phase", email),
-      "Mid Phase": isSurveyCompleted("Mid Phase", email),
-      "Post Phase": isSurveyCompleted("Post Phase", email),
-    };
-  });
-
-  useEffect(() => {
-    if (!user?.email || role !== "student" || nfcSession) return;
-    const email = user.email;
-    ["Pre Phase", "Mid Phase", "Post Phase"].forEach((phase) => {
-      checkSurveyCompletedFull(phase, email).then((done) => {
-        setSurveyStatus((prev) => ({ ...prev, [phase]: done }));
-      });
-    });
-  }, [user?.email, role, nfcSession]);
 
   const hasIdentity = !!user?.email || !!nfcSession;
-
-  // ── Mid Phase survey prompt ──
-  const [showMidPrompt, setShowMidPrompt] = useState(false);
-  useEffect(() => {
-    if (nfcSession) return;
-    if (!user?.email || !user?.id || !user?.created_at || role !== "student") return;
-    if (!isMidPhaseDue(user.created_at)) return;
-
-    checkSurveyCompletedFull("Mid Phase", user.email).then((completed) => {
-      if (completed) return;
-      isSurveyDismissed("Mid Phase", user.id!, user.email!).then((dismissed) => {
-        if (!dismissed) setShowMidPrompt(true);
-      });
-    });
-  }, [user?.email, user?.id, user?.created_at, role, nfcSession]);
-
-  // ── Post Phase survey prompt ──
-  const [showPostPrompt, setShowPostPrompt] = useState(false);
-  useEffect(() => {
-    if (nfcSession) return;
-    if (!user?.email || role !== "student") return;
-
-    const POST_PHASE_DATE = "2026-12-07";
-    const today = new Date().toISOString().slice(0, 10);
-    const isAfterTerm = today > POST_PHASE_DATE;
-    const hasHitMilestone = (riderTotals?.totalSessions ?? 0) >= 200;
-
-    if (isAfterTerm || hasHitMilestone) {
-      checkSurveyCompletedFull("Post Phase", user.email).then((completed) => {
-        if (!completed) setShowPostPrompt(true);
-      });
-    }
-  }, [user?.email, role, nfcSession, riderTotals?.totalSessions]);
 
   // ── Load data ──
   const loadData = async () => {
@@ -667,129 +612,6 @@ const Dashboard = () => {
           </motion.div>
         )}
 
-        {/* ═══ MID PHASE SURVEY BANNER ═══ */}
-        {showMidPrompt && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 flex items-center gap-4 border-[3px] border-accent bg-accent/10 p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
-          >
-            <AlertTriangle className="h-6 w-6 shrink-0 text-accent" />
-            <div className="flex-1">
-              <p className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
-                Mid Phase Check-in Ready
-              </p>
-              <p className="font-body text-xs text-muted-foreground">
-                It's been 4 weeks — time for a quick check-in survey!
-              </p>
-            </div>
-            <Link to="/survey?phase=Mid Phase">
-              <Button size="sm" className="tape-element font-display text-xs uppercase tracking-wider">
-                Start
-              </Button>
-            </Link>
-            <button onClick={() => {
-              setShowMidPrompt(false);
-              if (user?.id && user?.email) dismissSurvey("Mid Phase", user.id, user.email);
-            }}>
-              <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-            </button>
-          </motion.div>
-        )}
-
-        {showPostPrompt && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 flex items-center gap-4 border-[3px] border-primary bg-primary/10 p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
-          >
-            <ClipboardCheck className="h-6 w-6 shrink-0 text-primary" />
-            <div className="flex-1">
-              <p className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
-                End-of-Programme Survey
-              </p>
-              <p className="font-body text-xs text-muted-foreground">
-                Complete your end-of-programme survey to help us improve FreeWheeler for Sport NZ.
-              </p>
-            </div>
-            <Link to="/survey?phase=Post Phase">
-              <Button size="sm" className="tape-element-green font-display text-xs uppercase tracking-wider">
-                Start Survey
-              </Button>
-            </Link>
-          </motion.div>
-        )}
-
-        {/* ═══ DETAILED STATS (collapsible) ═══ */}
-        <details className="group mb-6 border-[3px] border-secondary bg-card shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-          <summary className="flex cursor-pointer items-center gap-2 p-4 font-display text-sm font-bold uppercase tracking-wider text-foreground select-none list-none [&::-webkit-details-marker]:hidden">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            Detailed Stats
-            <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
-          </summary>
-          <div className="grid grid-cols-2 gap-3 border-t-[2px] border-secondary p-4 sm:grid-cols-3 md:grid-cols-5">
-            <StatCard icon={Clock} value={riderTotals ? `${riderTotals.totalHours}h` : "0h"} label="Total Time" isFormatted index={0} />
-            <StatCard icon={MapPin} value={riderTotals ? `${riderTotals.totalDistance}` : "0"} label="Distance (km)" isFormatted index={1} />
-            <StatCard icon={Mountain} value={riderTotals?.totalElevation ?? 0} label="Elevation (m)" index={2} />
-            <StatCard icon={Gauge} value={riderTotals ? `${riderTotals.avgSpeed}` : "0"} label="Avg Speed" isFormatted index={3} />
-            <StatCard icon={TrendingUp} value={moodImprovement ?? "—"} label="Mood Change" isFormatted index={4} />
-          </div>
-        </details>
-
-        {role === "student" && user?.email && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="mb-6 border-[3px] border-secondary bg-card p-5 shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
-          >
-            <div className="mb-4 flex items-center gap-2">
-              <ClipboardCheck className="h-5 w-5 text-primary" />
-              <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
-                Surveys
-              </h3>
-            </div>
-            <div className="grid gap-2">
-              {[
-                { phase: "Pre Phase", label: "Pre Phase Survey", always: true },
-                { phase: "Mid Phase", label: "Mid Phase Survey (4 weeks)", always: true },
-                { phase: "Post Phase", label: "Post Phase Survey", always: true },
-              ].map(({ phase, label }) => {
-                const done = surveyStatus[phase] ?? false;
-                return (
-                  <div
-                    key={phase}
-                    className={`flex items-center gap-3 border-[2px] p-3 transition-all ${
-                      done ? "border-primary/30 bg-primary/5" : "border-secondary bg-card"
-                    }`}
-                  >
-                    {done ? (
-                      <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
-                    ) : (
-                      <div className="h-5 w-5 shrink-0 border-[2px] border-muted" />
-                    )}
-                    <span className="flex-1 font-display text-sm font-bold uppercase tracking-wider text-foreground">
-                      {label}
-                    </span>
-                    {done ? (
-                      <span className="font-display text-[10px] uppercase tracking-wider text-primary">
-                        ✅ Completed
-                      </span>
-                    ) : (
-                      <Link to={`/survey?phase=${encodeURIComponent(phase)}`}>
-                        <Button size="sm" variant="outline" className="font-display text-xs uppercase tracking-wider">
-                          Start
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-
-        {/* ═══ INTER-SCHOOL CHALLENGES ═══ */}
         {interSchoolProgress.length > 0 && (
           <div className="mb-6">
             <ChallengesDashboard
