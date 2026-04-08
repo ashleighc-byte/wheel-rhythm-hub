@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bike, Clock, Zap } from "lucide-react";
+import { Bike, Clock, Zap, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { pluraliseUnit } from "@/lib/dateFormat";
@@ -27,14 +27,11 @@ interface Rider {
   totalTime: string;
   totalPoints: number;
   totalMinutes: number;
+  totalDistance: number;
   level: string;
 }
 
-interface TopRidersProps {
-  mode?: "time" | "points";
-}
-
-const TopRiders = ({ mode = "time" }: TopRidersProps) => {
+const TopRiders = () => {
   const { user, role, nfcSession } = useAuth();
   const isAdmin = role === 'admin';
   const [riders, setRiders] = useState<Rider[]>([]);
@@ -47,7 +44,6 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
 
     const load = async () => {
       try {
-        // Read from Supabase cache instead of Airtable
         const allRiders = await getCachedTopRiders();
 
         let schoolFilterIds: Set<string> | null = null;
@@ -64,7 +60,6 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
             }
           }
         } else {
-          // Student — filter to their school
           let currentStudentRec;
           if (user?.email) {
             const currentStudentRes = await fetchStudents(user.email);
@@ -80,7 +75,6 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
           const userSchoolIds = currentStudentRec.fields["School"] as string[] | undefined;
           if (!userSchoolIds?.length) return;
           schoolFilterIds = new Set([userSchoolIds[0]]);
-          // Find school name from cached data
           const matchingRider = allRiders.find(r => r.schoolId === userSchoolIds[0]);
           schoolName = matchingRider?.school ?? "";
         }
@@ -90,11 +84,7 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
             if (!schoolFilterIds) return true;
             return r.schoolId ? schoolFilterIds.has(r.schoolId) : false;
           })
-          .sort((a, b) =>
-            mode === "points"
-              ? b.totalPoints - a.totalPoints
-              : b.totalMinutes - a.totalMinutes
-          )
+          .sort((a, b) => b.totalPoints - a.totalPoints)
           .slice(0, 10)
           .map((r, i) => ({
             rank: i + 1,
@@ -104,18 +94,18 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
             totalTime: r.totalTime,
             totalPoints: r.totalPoints,
             totalMinutes: r.totalMinutes,
+            totalDistance: r.totalDistance,
             level: r.level,
           }));
 
         setRiders(mapped);
 
-        const modeLabel = mode === "points" ? "Top Riders by Points" : "Top Riders";
         if (!isAdmin && schoolName) {
-          setTitleText(`${modeLabel} – ${schoolName}`);
+          setTitleText(`Top Riders – ${schoolName}`);
         } else if (isAdmin && regionName && regionName.toLowerCase() !== "all") {
-          setTitleText(`${modeLabel} – ${regionName}`);
+          setTitleText(`Top Riders – ${regionName}`);
         } else {
-          setTitleText(`${modeLabel} – All Schools`);
+          setTitleText(`Top Riders – All Schools`);
         }
       } catch (err) {
         console.error("TopRiders load error:", err);
@@ -123,7 +113,7 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
     };
 
     load();
-  }, [hasIdentity, isAdmin, user?.email, nfcSession?.studentId, mode]);
+  }, [hasIdentity, isAdmin, user?.email, nfcSession?.studentId]);
 
   return (
     <div className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
@@ -157,19 +147,19 @@ const TopRiders = ({ mode = "time" }: TopRidersProps) => {
                     {rider.level}
                   </Badge>
                 </div>
-                <div className="mt-1 flex gap-4 text-xs text-muted-foreground">
+                <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Bike className="h-3 w-3" /> {rider.sessions} sessions
                   </span>
-                  {mode === "points" ? (
-                    <span className="flex items-center gap-1">
-                      <Zap className="h-3 w-3" /> {rider.totalPoints} pts
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {formatTime(rider.totalTime)}
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1">
+                    <Zap className="h-3 w-3" /> {rider.totalPoints} pts
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" /> {rider.totalDistance} km
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> {formatTime(rider.totalTime)}
+                  </span>
                 </div>
               </div>
             </motion.div>
