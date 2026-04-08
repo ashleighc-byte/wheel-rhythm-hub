@@ -242,6 +242,20 @@ const Dashboard = () => {
 
   // ── Post Phase survey prompt ──
   const [showPostPrompt, setShowPostPrompt] = useState(false);
+  useEffect(() => {
+    if (nfcSession) return;
+    if (!user?.email || role !== "student") return;
+    if (isSurveyCompleted("Post Phase", user.email)) return;
+
+    const POST_PHASE_DATE = "2026-12-07";
+    const today = new Date().toISOString().slice(0, 10);
+    const isAfterTerm = today > POST_PHASE_DATE;
+    const hasHitMilestone = (riderTotals?.totalSessions ?? 0) >= 200;
+
+    if (isAfterTerm || hasHitMilestone) {
+      setShowPostPrompt(true);
+    }
+  }, [user?.email, role, nfcSession, riderTotals?.totalSessions]);
 
   // ── Load data ──
   const loadData = async () => {
