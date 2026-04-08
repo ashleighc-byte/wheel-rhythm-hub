@@ -25,10 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchStudents, fetchSessionReflections, callAirtable,
-  isSurveyCompleted, isMidPhaseDue, isValidRecordId,
-  checkSurveyCompletedFull
+  isValidRecordId, fetchStudentsByIds
 } from "@/lib/airtable";
-import { isSurveyDismissed, dismissSurvey } from "@/lib/surveyDismissals";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 import artEliteRider from "@/assets/art-elite-rider.jpeg";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
@@ -225,61 +223,8 @@ const Dashboard = () => {
   const [interSchoolProgress, setInterSchoolProgress] = useState<InterSchoolChallengeProgress[]>([]);
   const [teamRankings, setTeamRankings] = useState<TeamRanking[]>([]);
   const [mySchoolId, setMySchoolId] = useState("");
-  // Server-synced survey completion (localStorage fast-path + Airtable fallback)
-  const [surveyStatus, setSurveyStatus] = useState<Record<string, boolean>>(() => {
-    if (!user?.email) return {};
-    const email = user.email;
-    return {
-      "Pre Phase": isSurveyCompleted("Pre Phase", email),
-      "Mid Phase": isSurveyCompleted("Mid Phase", email),
-      "Post Phase": isSurveyCompleted("Post Phase", email),
-    };
-  });
-
-  useEffect(() => {
-    if (!user?.email || role !== "student" || nfcSession) return;
-    const email = user.email;
-    ["Pre Phase", "Mid Phase", "Post Phase"].forEach((phase) => {
-      checkSurveyCompletedFull(phase, email).then((done) => {
-        setSurveyStatus((prev) => ({ ...prev, [phase]: done }));
-      });
-    });
-  }, [user?.email, role, nfcSession]);
 
   const hasIdentity = !!user?.email || !!nfcSession;
-
-  // ── Mid Phase survey prompt ──
-  const [showMidPrompt, setShowMidPrompt] = useState(false);
-  useEffect(() => {
-    if (nfcSession) return;
-    if (!user?.email || !user?.id || !user?.created_at || role !== "student") return;
-    if (!isMidPhaseDue(user.created_at)) return;
-
-    checkSurveyCompletedFull("Mid Phase", user.email).then((completed) => {
-      if (completed) return;
-      isSurveyDismissed("Mid Phase", user.id!, user.email!).then((dismissed) => {
-        if (!dismissed) setShowMidPrompt(true);
-      });
-    });
-  }, [user?.email, user?.id, user?.created_at, role, nfcSession]);
-
-  // ── Post Phase survey prompt ──
-  const [showPostPrompt, setShowPostPrompt] = useState(false);
-  useEffect(() => {
-    if (nfcSession) return;
-    if (!user?.email || role !== "student") return;
-
-    const POST_PHASE_DATE = "2026-12-07";
-    const today = new Date().toISOString().slice(0, 10);
-    const isAfterTerm = today > POST_PHASE_DATE;
-    const hasHitMilestone = (riderTotals?.totalSessions ?? 0) >= 200;
-
-    if (isAfterTerm || hasHitMilestone) {
-      checkSurveyCompletedFull("Post Phase", user.email).then((completed) => {
-        if (!completed) setShowPostPrompt(true);
-      });
-    }
-  }, [user?.email, role, nfcSession, riderTotals?.totalSessions]);
 
   // ── Load data ──
   const loadData = async () => {
