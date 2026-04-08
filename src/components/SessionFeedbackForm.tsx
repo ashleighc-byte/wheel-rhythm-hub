@@ -207,7 +207,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
       <DialogContent className="max-h-[90vh] overflow-y-auto border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl uppercase tracking-wider text-foreground">
-            Tell Us About Your Ride
+            Log Your Ride
           </DialogTitle>
         </DialogHeader>
 
@@ -231,15 +231,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
                 <CheckCircle className="h-16 w-16 text-primary" />
               </motion.div>
               <h3 className="font-display text-xl uppercase text-foreground">Ride Logged!</h3>
-              <p className="font-body text-muted-foreground">Upload your session screenshot, rate your mood, and log your effort. Every ride moves your school up the leaderboard.</p>
-              <div className="w-full border-[2px] border-secondary bg-muted px-4 py-3 text-left">
-                <p className="flex items-center gap-2 font-display text-xs uppercase tracking-wider text-muted-foreground">
-                  <Zap className="h-4 w-4 text-primary" /> Points incoming
-                </p>
-                <p className="mt-1 font-body text-sm text-foreground">
-                  Your points will appear once your screenshot is processed by our AI agent.
-                </p>
-              </div>
+              <p className="font-body text-muted-foreground">Your session has been logged and your points have been recorded.</p>
               <Button
                 onClick={() => {
                   handleClose(false);
