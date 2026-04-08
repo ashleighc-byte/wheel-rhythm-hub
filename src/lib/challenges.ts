@@ -195,6 +195,18 @@ export function calculateIndividualProgress(
     case 'elevation':
       current = Math.round(windowSessions.reduce((sum, s) => sum + s.elevation_m, 0));
       break;
+    case 'avg_speed': {
+      // Sprint: average speed across qualifying rides (rides with speed > 0)
+      const qualifyingRides = windowSessions.filter(s => s.avg_speed_kmh > 0);
+      const MIN_QUALIFYING_RIDES = 3;
+      if (qualifyingRides.length >= MIN_QUALIFYING_RIDES) {
+        const avgSpeed = qualifyingRides.reduce((sum, s) => sum + s.avg_speed_kmh, 0) / qualifyingRides.length;
+        current = Math.round(avgSpeed * 10) / 10;
+      } else {
+        current = 0; // Not enough qualifying rides yet
+      }
+      break;
+    }
     default:
       current = 0;
   }
