@@ -5,7 +5,7 @@ import { CheckCircle2, Circle, Bike, ClipboardList, Heart, AlertTriangle, Target
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { useState, useEffect } from "react";
 import ReportIssueForm from "@/components/ReportIssueForm";
-import { fetchStudents, isSurveyCompleted } from "@/lib/airtable";
+import { fetchStudents } from "@/lib/airtable";
 import { LEVELS } from "@/lib/gamification";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import artSmartBike from "@/assets/art-smart-bike.jpeg";
