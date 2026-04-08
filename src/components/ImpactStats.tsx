@@ -1,18 +1,17 @@
 import { useState, useEffect } from "react";
-import { fetchGlobalDashboard } from "@/lib/airtable";
+import { getCachedGlobalStats } from "@/lib/leaderboardCache";
 
 const ImpactStats = () => {
   const [stats, setStats] = useState({ sessions: 0, riders: 0, schools: 0 });
 
   useEffect(() => {
-    fetchGlobalDashboard()
-      .then((res) => {
-        if (res.records.length > 0) {
-          const f = res.records[0].fields;
+    getCachedGlobalStats()
+      .then((data) => {
+        if (data) {
           setStats({
-            sessions: Number(f["Total Sessions"] ?? 0),
-            riders: Number(f["Total Riders"] ?? 0),
-            schools: Number(f["Total Schools"] ?? 0),
+            sessions: data.totalSessions,
+            riders: data.totalRiders,
+            schools: data.totalSchools,
           });
         }
       })

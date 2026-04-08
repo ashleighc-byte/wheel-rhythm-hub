@@ -1,71 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Zap } from "lucide-react";
-import { callAirtable } from "@/lib/airtable";
-import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
-
-interface SchoolRow {
-  rank: number;
-  name: string;
-  riders: number;
-  totalPoints: number;
-}
+import { getCachedSchoolRankings, type CachedSchoolRanking } from "@/lib/leaderboardCache";
 
 const SchoolLeaderboard = () => {
-  const [schools, setSchools] = useState<SchoolRow[]>([]);
+  const [schools, setSchools] = useState<CachedSchoolRanking[]>([]);
 
   useEffect(() => {
-    Promise.all([
-      callAirtable("Organisations", "GET"),
-      callAirtable("Student Registration", "GET"),
-      computeAllRiderPoints(),
-    ])
-      .then(([orgsRes, studentsRes, riderPointsMap]) => {
-        const orgMap = new Map<string, string>();
-        for (const r of orgsRes.records) {
-          orgMap.set(r.id, String(r.fields["Organisation Name"] ?? "Unknown"));
-        }
-
-        // Group students by school, count riders and sum points
-        const countMap = new Map<string, number>();
-        const pointsMap = new Map<string, number>();
-        for (const r of studentsRes.records) {
-          const schoolIds = r.fields["School"];
-          if (Array.isArray(schoolIds) && schoolIds.length > 0) {
-            const schoolId = schoolIds[0];
-            countMap.set(schoolId, (countMap.get(schoolId) ?? 0) + 1);
-            const computed = riderPointsMap.get(r.id);
-            pointsMap.set(schoolId, (pointsMap.get(schoolId) ?? 0) + (computed?.totalPoints ?? 0));
-          }
-        }
-
-        // Ensure every org appears
-        for (const [id] of orgMap.entries()) {
-          if (!countMap.has(id)) {
-            countMap.set(id, 0);
-            pointsMap.set(id, 0);
-          }
-        }
-
-        // Merge by name
-        const nameDataMap = new Map<string, { riders: number; points: number }>();
-        for (const [id, riders] of countMap.entries()) {
-          const name = orgMap.get(id) ?? id;
-          const prev = nameDataMap.get(name) ?? { riders: 0, points: 0 };
-          nameDataMap.set(name, {
-            riders: prev.riders + riders,
-            points: prev.points + (pointsMap.get(id) ?? 0),
-          });
-        }
-
-        // Sort by total points (primary), riders (secondary)
-        const rows: SchoolRow[] = Array.from(nameDataMap.entries())
-          .map(([name, data]) => ({ name, riders: data.riders, totalPoints: data.points, rank: 0 }))
-          .sort((a, b) => b.totalPoints - a.totalPoints || b.riders - a.riders)
-          .map((r, i) => ({ ...r, rank: i + 1 }));
-
-        setSchools(rows);
-      })
+    getCachedSchoolRankings()
+      .then(setSchools)
       .catch(console.error);
   }, []);
 
