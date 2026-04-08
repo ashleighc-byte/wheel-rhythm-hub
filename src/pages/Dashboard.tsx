@@ -548,16 +548,28 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* ═══ STATS CARDS ═══ */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 md:gap-4">
-          <StatCard icon={Bike} value={riderTotals?.totalSessions ?? 0} label="Rides" index={0} />
-          <StatCard icon={Clock} value={riderTotals ? `${riderTotals.totalHours}h` : "0h"} label="Total Time" isFormatted index={1} />
-          <StatCard icon={Zap} value={grandTotal} label="Points" index={2} />
-          <StatCard icon={MapPin} value={riderTotals ? `${riderTotals.totalDistance}` : "0"} label="Distance (km)" isFormatted index={3} />
-          <StatCard icon={Mountain} value={riderTotals?.totalElevation ?? 0} label="Elevation (m)" index={4} />
-          <StatCard icon={Gauge} value={riderTotals ? `${riderTotals.avgSpeed}` : "0"} label="Avg Speed" isFormatted index={5} />
-          <StatCard icon={TrendingUp} value={moodImprovement ?? "—"} label="Mood Change" isFormatted index={6} />
-          <StatCard icon={Flame} value={streak} label="Streak" index={7} />
+        {/* ═══ LEVEL PROGRESS — FIRST THING ═══ */}
+        <div className="mb-6">
+          <LevelProgress totalPoints={grandTotal} />
+        </div>
+
+        {/* ═══ GAMIFICATION QUICK STATS ═══ */}
+        <div className="mb-6 grid grid-cols-3 gap-3">
+          <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
+            <Zap className="mx-auto mb-1 h-5 w-5 text-primary" />
+            <p className="font-display text-2xl font-bold text-accent">{grandTotal}</p>
+            <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Points</p>
+          </div>
+          <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
+            <Flame className="mx-auto mb-1 h-5 w-5 text-primary" />
+            <p className="font-display text-2xl font-bold text-accent">{streak}</p>
+            <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Day Streak</p>
+          </div>
+          <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
+            <Bike className="mx-auto mb-1 h-5 w-5 text-primary" />
+            <p className="font-display text-2xl font-bold text-accent">{riderTotals?.totalSessions ?? 0}</p>
+            <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Rides</p>
+          </div>
         </div>
 
         {/* ═══ LOG A RIDE CTA ═══ */}
@@ -601,11 +613,6 @@ const Dashboard = () => {
             </div>
           </div>
         </motion.div>
-
-        {/* ═══ LEVEL PROGRESS ═══ */}
-        <div className="mb-6">
-          <LevelProgress totalPoints={grandTotal} />
-        </div>
 
         {/* ═══ MID PHASE SURVEY BANNER ═══ */}
         {showMidPrompt && (
