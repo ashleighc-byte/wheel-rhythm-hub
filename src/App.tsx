@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { checkSurveyCompletedFull } from "@/lib/airtable";
+
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -27,52 +27,13 @@ import RaceGame from "./pages/RaceGame";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, user, role, loading, nfcSession } = useAuth();
-  const [surveyChecked, setSurveyChecked] = useState(false);
-  const [surveyDone, setSurveyDone] = useState(false);
-  const email = user?.email?.toLowerCase();
+  const { session, loading, nfcSession } = useAuth();
 
-  useEffect(() => {
-    // NFC sessions skip the survey gate entirely
-    if (nfcSession) {
-      setSurveyDone(true);
-      setSurveyChecked(true);
-      return;
-    }
-
-    // Wait until role is resolved
-    if (loading) return;
-    if (!email) return;
-
-    // Admins skip the survey
-    if (role === 'admin') {
-      setSurveyDone(true);
-      setSurveyChecked(true);
-      return;
-    }
-
-    // Role not yet resolved — wait rather than treating null as "not a student"
-    if (role === null) return;
-
-    if (role !== 'student') {
-      setSurveyDone(true);
-      setSurveyChecked(true);
-      return;
-    }
-
-    // Check if Pre Phase survey is completed (localStorage + Airtable fallback)
-    checkSurveyCompletedFull("Pre Phase", email).then((done) => {
-      setSurveyDone(done);
-      setSurveyChecked(true);
-    });
-  }, [email, role, loading, nfcSession]);
-
-  // NFC-authenticated students get through
   if (nfcSession) {
     return <>{children}</>;
   }
 
-  if (loading || (!surveyChecked && session)) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="font-display text-xl uppercase tracking-wider text-foreground animate-pulse">
@@ -84,10 +45,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!session) {
     return <Navigate to="/auth" replace />;
-  }
-
-  if (!surveyDone) {
-    return <Navigate to="/survey?phase=Pre Phase" replace />;
   }
 
   return <>{children}</>;
