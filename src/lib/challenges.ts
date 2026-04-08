@@ -65,18 +65,18 @@ export interface SessionData {
 
 export const CHALLENGE_DEFINITIONS: ChallengeDefinition[] = [
   {
-    id: 'ch1-starter',
-    name: '6 Ride Starter Challenge',
+    id: 'ch1-sprint',
+    name: 'Sprint Challenge',
     startDate: '2026-04-20',
     endDate: '2026-05-03',
-    metricType: 'ride_count',
-    target: 6,
-    unit: 'rides',
+    metricType: 'avg_speed',
+    target: 25,
+    unit: 'km/h',
     mode: 'individual',
     reward: 'Bracelet',
     displayOrder: 1,
     active: true,
-    description: 'Complete 6 MyWhoosh rides to earn your FreeWheeler bracelet!',
+    description: 'Achieve an average speed of 25 km/h or higher across 3 qualifying rides to earn your FreeWheeler bracelet!',
   },
   {
     id: 'ch2-distance',
