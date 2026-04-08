@@ -360,7 +360,8 @@ export function formatTargetValue(def: ChallengeDefinition): string {
     case 'distance': return `${def.target} km`;
     case 'duration': return `${def.target} hours`;
     case 'elevation': return `${def.target} m`;
-    case 'team_time': return 'Fastest combined time';
+    case 'team_time': return 'Most combined time';
+    case 'avg_speed': return `${def.target} km/h avg (min 3 rides)`;
     default: return `${def.target} ${def.unit}`;
   }
 }
