@@ -132,14 +132,14 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
             <Route path="/survey" element={<SurveyRoute><SurveyPage /></SurveyRoute>} />
-            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/" element={<Index />} />
             <Route path="/leaderboards" element={<ProtectedRoute><Leaderboards /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/info" element={<ProtectedRoute><Info /></ProtectedRoute>} />
              <Route path="/teacher-dashboard" element={<AdminRoute><TeacherDashboard /></AdminRoute>} />
              <Route path="/setup-instructions" element={<AdminRoute><SetupInstructions /></AdminRoute>} />
-             <Route path="/setup-instructions/print" element={<SetupInstructionsPrint />} />
-              <Route path="/og-download" element={<OgImageDownload />} />
+             <Route path="/setup-instructions/print" element={<AdminRoute><SetupInstructionsPrint /></AdminRoute>} />
+              <Route path="/og-download" element={<ProtectedRoute><OgImageDownload /></ProtectedRoute>} />
                <Route path="/reset-password" element={<ResetPassword />} />
                <Route path="/webinar" element={<Webinar />} />
                <Route path="/studentregistration" element={<StudentRegistration />} />
