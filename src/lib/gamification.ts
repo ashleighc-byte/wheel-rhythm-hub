@@ -314,40 +314,22 @@ export function computeChallenges(totals: RiderTotals, sessions: RideSession[]):
   }));
 
   const challenges: Challenge[] = [
-    // Daily
+    // Daily (2 simple goals)
     { id: "daily-ride", type: "daily", title: "Ride Today", current: Math.min(todaySessions.length, 1), goal: 1, reward: 5, completed: todaySessions.length >= 1, repeatable: true },
-    { id: "daily-20min", type: "daily", title: "Ride 20 Min in One Session", current: Math.min(Math.round(bestTodayMinutes), 20), goal: 20, reward: 5, completed: bestTodayMinutes >= 20, repeatable: true },
-    { id: "daily-15pts", type: "daily", title: "Earn 15 Points Today", current: Math.min(todayPoints, 15), goal: 15, reward: 5, completed: todayPoints >= 15, repeatable: true },
-    { id: "daily-climb", type: "daily", title: "Climb 50 m Today", current: Math.min(Math.round(bestTodayElevation), 50), goal: 50, reward: 5, completed: bestTodayElevation >= 50, repeatable: true },
-    // Weekly
-    { id: "weekly-3rides", type: "weekly", title: "Ride 3 Times This Week", current: Math.min(weekSessions.length, 3), goal: 3, reward: 15, completed: weekSessions.length >= 3, repeatable: true },
-    { id: "weekly-5rides", type: "weekly", title: "Ride 5 Times This Week", current: Math.min(weekSessions.length, 5), goal: 5, reward: 25, completed: weekSessions.length >= 5, repeatable: true },
-    { id: "weekly-60min", type: "weekly", title: "Ride 60 Min This Week", current: Math.min(Math.round(weekMinutes), 60), goal: 60, reward: 15, completed: weekMinutes >= 60, repeatable: true },
-    { id: "weekly-120min", type: "weekly", title: "Ride 120 Min This Week", current: Math.min(Math.round(weekMinutes), 120), goal: 120, reward: 25, completed: weekMinutes >= 120, repeatable: true },
-    { id: "weekly-20km", type: "weekly", title: "Ride 20 km This Week", current: Math.min(Math.round(weekKm), 20), goal: 20, reward: 15, completed: weekKm >= 20, repeatable: true },
-    { id: "weekly-50pts", type: "weekly", title: "Earn 50 Points This Week", current: Math.min(weekPoints, 50), goal: 50, reward: 15, completed: weekPoints >= 50, repeatable: true },
-    { id: "weekly-100pts", type: "weekly", title: "Earn 100 Points This Week", current: Math.min(weekPoints, 100), goal: 100, reward: 25, completed: weekPoints >= 100, repeatable: true },
-    { id: "weekly-200elev", type: "weekly", title: "Climb 200 m This Week", current: Math.min(Math.round(weekElevation), 200), goal: 200, reward: 20, completed: weekElevation >= 200, repeatable: true },
-    // Milestones
-    { id: "milestone-first", type: "milestone", title: "Complete First Ride", current: Math.min(totals.totalSessions, 1), goal: 1, reward: 20, completed: totals.totalSessions >= 1, repeatable: false },
-    { id: "milestone-5sess", type: "milestone", title: "Reach 5 Sessions", current: Math.min(totals.totalSessions, 5), goal: 5, reward: 15, completed: totals.totalSessions >= 5, repeatable: false },
-    { id: "milestone-10sess", type: "milestone", title: "Reach 10 Sessions", current: Math.min(totals.totalSessions, 10), goal: 10, reward: 20, completed: totals.totalSessions >= 10, repeatable: false },
-    { id: "milestone-25sess", type: "milestone", title: "Reach 25 Sessions", current: Math.min(totals.totalSessions, 25), goal: 25, reward: 30, completed: totals.totalSessions >= 25, repeatable: false },
-    { id: "milestone-50km", type: "milestone", title: "Reach 50 km Total", current: Math.min(Math.round(totals.totalDistance), 50), goal: 50, reward: 20, completed: totals.totalDistance >= 50, repeatable: false },
-    { id: "milestone-100km", type: "milestone", title: "Reach 100 km Total", current: Math.min(Math.round(totals.totalDistance), 100), goal: 100, reward: 30, completed: totals.totalDistance >= 100, repeatable: false },
-    { id: "milestone-100min", type: "milestone", title: "Reach 100 Minutes Total", current: Math.min(Math.round(totals.totalMinutes), 100), goal: 100, reward: 20, completed: totals.totalMinutes >= 100, repeatable: false },
-    { id: "milestone-300min", type: "milestone", title: "Ride 5 Hours Total", current: Math.min(Math.round(totals.totalMinutes), 300), goal: 300, reward: 30, completed: totals.totalMinutes >= 300, repeatable: false },
-    // Elevation milestones
-    { id: "milestone-250elev", type: "milestone", title: "Climb 250 m Total", current: Math.min(totals.totalElevation, 250), goal: 250, reward: 20, completed: totals.totalElevation >= 250, repeatable: false },
-    { id: "milestone-500elev", type: "milestone", title: "Climb 500 m Total", current: Math.min(totals.totalElevation, 500), goal: 500, reward: 30, completed: totals.totalElevation >= 500, repeatable: false },
-    { id: "milestone-1000elev", type: "milestone", title: "Climb 1,000 m Total", current: Math.min(totals.totalElevation, 1000), goal: 1000, reward: 50, completed: totals.totalElevation >= 1000, repeatable: false },
-    { id: "milestone-hard-course", type: "milestone", title: "Ride a 150 m+ Elevation Course", current: Math.min(Math.round(bestSessionElevation), 150), goal: 150, reward: 25, completed: bestSessionElevation >= 150, repeatable: false },
-    { id: "milestone-mountain", type: "milestone", title: "Ride a 300 m+ Mountain Course", current: Math.min(Math.round(bestSessionElevation), 300), goal: 300, reward: 40, completed: bestSessionElevation >= 300, repeatable: false },
-    { id: "milestone-variety", type: "milestone", title: "Ride 3 Different Course Types", current: Math.min(uniqueElevationRanges.size, 3), goal: 3, reward: 25, completed: uniqueElevationRanges.size >= 3, repeatable: false },
-    // Speed milestones
-    { id: "milestone-speed20", type: "milestone", title: "Average 20+ km/h in a Ride", current: Math.min(Math.round(bestSessionSpeed), 20), goal: 20, reward: 15, completed: bestSessionSpeed >= 20, repeatable: false },
-    { id: "milestone-speed25", type: "milestone", title: "Average 25+ km/h in a Ride", current: Math.min(Math.round(bestSessionSpeed), 25), goal: 25, reward: 25, completed: bestSessionSpeed >= 25, repeatable: false },
-    { id: "milestone-speed30", type: "milestone", title: "Average 30+ km/h in a Ride", current: Math.min(Math.round(bestSessionSpeed), 30), goal: 30, reward: 40, completed: bestSessionSpeed >= 30, repeatable: false },
+    { id: "daily-20min", type: "daily", title: "Ride 20+ Minutes", current: Math.min(Math.round(bestTodayMinutes), 20), goal: 20, reward: 5, completed: bestTodayMinutes >= 20, repeatable: true },
+    // Weekly (3 clear goals)
+    { id: "weekly-3rides", type: "weekly", title: "3 Rides This Week", current: Math.min(weekSessions.length, 3), goal: 3, reward: 15, completed: weekSessions.length >= 3, repeatable: true },
+    { id: "weekly-5rides", type: "weekly", title: "5 Rides This Week", current: Math.min(weekSessions.length, 5), goal: 5, reward: 25, completed: weekSessions.length >= 5, repeatable: true },
+    { id: "weekly-60min", type: "weekly", title: "60 Min This Week", current: Math.min(Math.round(weekMinutes), 60), goal: 60, reward: 15, completed: weekMinutes >= 60, repeatable: true },
+    // Milestones (8 key progression goals)
+    { id: "milestone-first", type: "milestone", title: "First Ride", current: Math.min(totals.totalSessions, 1), goal: 1, reward: 20, completed: totals.totalSessions >= 1, repeatable: false },
+    { id: "milestone-10sess", type: "milestone", title: "10 Sessions", current: Math.min(totals.totalSessions, 10), goal: 10, reward: 20, completed: totals.totalSessions >= 10, repeatable: false },
+    { id: "milestone-25sess", type: "milestone", title: "25 Sessions", current: Math.min(totals.totalSessions, 25), goal: 25, reward: 30, completed: totals.totalSessions >= 25, repeatable: false },
+    { id: "milestone-50km", type: "milestone", title: "50 km Total", current: Math.min(Math.round(totals.totalDistance), 50), goal: 50, reward: 20, completed: totals.totalDistance >= 50, repeatable: false },
+    { id: "milestone-100km", type: "milestone", title: "100 km Total", current: Math.min(Math.round(totals.totalDistance), 100), goal: 100, reward: 30, completed: totals.totalDistance >= 100, repeatable: false },
+    { id: "milestone-300min", type: "milestone", title: "5 Hours Total", current: Math.min(Math.round(totals.totalMinutes), 300), goal: 300, reward: 30, completed: totals.totalMinutes >= 300, repeatable: false },
+    { id: "milestone-500elev", type: "milestone", title: "Climb 500 m", current: Math.min(totals.totalElevation, 500), goal: 500, reward: 30, completed: totals.totalElevation >= 500, repeatable: false },
+    { id: "milestone-speed20", type: "milestone", title: "Average 20+ km/h", current: Math.min(Math.round(bestSessionSpeed), 20), goal: 20, reward: 15, completed: bestSessionSpeed >= 20, repeatable: false },
   ];
 
   return challenges;
