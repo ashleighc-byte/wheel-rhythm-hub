@@ -637,7 +637,29 @@ const Dashboard = () => {
           </motion.div>
         )}
 
-        {/* ═══ SURVEYS CHECKLIST ═══ */}
+        {showPostPrompt && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 flex items-center gap-4 border-[3px] border-primary bg-primary/10 p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]"
+          >
+            <ClipboardCheck className="h-6 w-6 shrink-0 text-primary" />
+            <div className="flex-1">
+              <p className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
+                End-of-Programme Survey
+              </p>
+              <p className="font-body text-xs text-muted-foreground">
+                Complete your end-of-programme survey to help us improve FreeWheeler for Sport NZ.
+              </p>
+            </div>
+            <Link to="/survey?phase=Post Phase">
+              <Button size="sm" className="tape-element-green font-display text-xs uppercase tracking-wider">
+                Start Survey
+              </Button>
+            </Link>
+          </motion.div>
+        )}
+
         {role === "student" && user?.email && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
