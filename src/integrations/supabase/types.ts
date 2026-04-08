@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_feed: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          message: string
+          metadata: Json
+          rider_name: string
+          school_name: string
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          message: string
+          metadata?: Json
+          rider_name: string
+          school_name?: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          rider_name?: string
+          school_name?: string
+        }
+        Relationships: []
+      }
       leaderboard_cache: {
         Row: {
           cache_key: string
