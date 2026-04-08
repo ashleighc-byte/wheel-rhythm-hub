@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      leaderboard_cache: {
+        Row: {
+          cache_key: string
+          data: Json
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          cache_key: string
+          data?: Json
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          cache_key?: string
+          data?: Json
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       onboarding_completed: {
         Row: {
           completed_at: string
