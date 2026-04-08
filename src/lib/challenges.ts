@@ -349,6 +349,7 @@ export function formatProgressValue(current: number, def: ChallengeDefinition): 
     case 'duration': return formatDurationHHMM(current);
     case 'elevation': return `${current} m`;
     case 'team_time': return formatDurationHHMM(current);
+    case 'avg_speed': return `${current} km/h`;
     default: return `${current}`;
   }
 }
