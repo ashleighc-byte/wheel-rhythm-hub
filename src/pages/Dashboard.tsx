@@ -233,11 +233,13 @@ const Dashboard = () => {
   useEffect(() => {
     if (nfcSession) return;
     if (!user?.email || !user?.id || !user?.created_at || role !== "student") return;
-    if (isSurveyCompleted("Mid Phase", user.email)) return;
     if (!isMidPhaseDue(user.created_at)) return;
 
-    isSurveyDismissed("Mid Phase", user.id, user.email).then((dismissed) => {
-      if (!dismissed) setShowMidPrompt(true);
+    checkSurveyCompletedFull("Mid Phase", user.email).then((completed) => {
+      if (completed) return;
+      isSurveyDismissed("Mid Phase", user.id!, user.email!).then((dismissed) => {
+        if (!dismissed) setShowMidPrompt(true);
+      });
     });
   }, [user?.email, user?.id, user?.created_at, role, nfcSession]);
 
@@ -246,7 +248,6 @@ const Dashboard = () => {
   useEffect(() => {
     if (nfcSession) return;
     if (!user?.email || role !== "student") return;
-    if (isSurveyCompleted("Post Phase", user.email)) return;
 
     const POST_PHASE_DATE = "2026-12-07";
     const today = new Date().toISOString().slice(0, 10);
@@ -254,7 +255,9 @@ const Dashboard = () => {
     const hasHitMilestone = (riderTotals?.totalSessions ?? 0) >= 200;
 
     if (isAfterTerm || hasHitMilestone) {
-      setShowPostPrompt(true);
+      checkSurveyCompletedFull("Post Phase", user.email).then((completed) => {
+        if (!completed) setShowPostPrompt(true);
+      });
     }
   }, [user?.email, role, nfcSession, riderTotals?.totalSessions]);
 
