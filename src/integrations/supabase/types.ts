@@ -89,6 +89,27 @@ export type Database = {
         }
         Relationships: []
       }
+      survey_dismissals: {
+        Row: {
+          dismissed_at: string
+          id: string
+          phase: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string
+          id?: string
+          phase: string
+          user_id: string
+        }
+        Update: {
+          dismissed_at?: string
+          id?: string
+          phase?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
