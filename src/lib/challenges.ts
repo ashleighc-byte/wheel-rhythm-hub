@@ -130,12 +130,11 @@ export const CHALLENGE_DEFINITIONS: ChallengeDefinition[] = [
     target: 0,
     unit: 'hours',
     mode: 'team',
-    teamSize: 10,
     courseFilter: undefined,
     reward: 'FreeWheeler Trophy',
     displayOrder: 5,
     active: true,
-    description: 'School vs School — final 3-day sprint! Your school\'s top 10 riders compete for the fastest combined time. The winning school takes home the FreeWheeler Trophy!',
+    description: 'School vs School — final 3-day sprint! Every rider in your school contributes their time to the team total. The school with the most combined riding hours takes home the FreeWheeler Trophy!',
   },
 ];
 
