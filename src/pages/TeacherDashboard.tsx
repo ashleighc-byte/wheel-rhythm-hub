@@ -18,6 +18,7 @@ import { CheckCircle2, XCircle, Users, Clock, Bike, MessageSquare, Filter, Globe
 import StudentQRCodes from "@/components/StudentQRCodes";
 import TeacherObservationForm from "@/components/TeacherObservationForm";
 import AdminChallengesView from "@/components/AdminChallengesView";
+import RoleManagement from "@/components/RoleManagement";
 import { Button } from "@/components/ui/button";
 import {
   CHALLENGE_DEFINITIONS,
@@ -611,6 +612,13 @@ const TeacherDashboard = () => {
                 schoolStats={challengeSchoolStats}
                 teamRankings={challengeTeamRankings}
               />
+            )}
+
+            {/* Role Management — super admins only */}
+            {superAdmin && (
+              <div className="mt-6">
+                <RoleManagement />
+              </div>
             )}
           </>
         )}
