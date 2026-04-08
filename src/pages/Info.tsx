@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
-import { CheckCircle2, Circle, Bike, ClipboardList, Heart, AlertTriangle, Target, BarChart3, Calendar, Zap, Flame, BoltIcon, Trophy, Clock, MapPin, Mountain, Gauge } from "lucide-react";
+import { CheckCircle2, Circle, Bike, ClipboardList, Heart, AlertTriangle, Target, BarChart3, Calendar, Zap, Flame, Trophy } from "lucide-react";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { useState, useEffect } from "react";
 import ReportIssueForm from "@/components/ReportIssueForm";
@@ -173,78 +173,36 @@ const StudentInfo = () => {
               </h2>
             </div>
             <div className="space-y-4 font-body text-sm leading-relaxed text-foreground/90">
-              <p className="text-base font-semibold text-foreground">Every ride counts — and earns you points. The harder you ride, the more you earn.</p>
+              <p className="text-base font-semibold text-foreground">Simple. Every ride counts.</p>
 
-              {/* Base Points */}
+              {/* Session Points */}
               <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
                 <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">Session Points</p>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <Bike className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>10 points</strong> base for every completed ride</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>+1 point</strong> for every 10 minutes ridden</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>+1 point</strong> for every 5 km distance</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Mountain className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>+1 point</strong> for every 25 m climbed</span>
+                    <span><strong>10 points</strong> for every completed ride session</span>
                   </li>
                 </ul>
               </div>
 
-              {/* Speed Bonus */}
+              {/* Weekly Bonuses */}
               <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-accent">Speed Bonus</p>
-                <ul className="space-y-2">
+                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-accent">Weekly Bonuses</p>
+                <ul className="space-y-3">
                   <li className="flex items-start gap-3">
-                    <Gauge className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                    <span>20+ km/h avg = <strong>+2 pts</strong> · 25+ km/h = <strong>+4 pts</strong> · 30+ km/h = <strong>+6 pts</strong></span>
+                    <Calendar className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                    <span><strong>+5 bonus</strong> when you complete 3 sessions in a week</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Flame className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                    <span><strong>+10 bonus</strong> when you complete 5 sessions in a week</span>
                   </li>
                 </ul>
+                <p className="mt-3 text-xs text-foreground/60">
+                  These stack — ride 5 times in a week and earn +15 bonus points on top of your 50 session points!
+                </p>
               </div>
-
-              {/* Elevation / Hard Course Bonus */}
-              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-accent">Hard Course Bonus</p>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-3">
-                    <Mountain className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                    <span>75 m+ climb = <strong>+2 pts</strong> · 150 m+ = <strong>+5 pts</strong> · 300 m+ = <strong>+10 pts</strong> · 500 m+ = <strong>+15 pts</strong></span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Long Ride Bonus */}
-              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">Long Ride Bonus</p>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-3">
-                    <Clock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span>45+ minutes = <strong>+5 pts</strong> · 60+ minutes = <strong>+10 pts</strong></span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Streaks */}
-              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">Streak Bonuses</p>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-3">
-                    <Flame className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span>3-day streak = <strong>+5 pts</strong> · 5-day = <strong>+10</strong> · 7-day = <strong>+20</strong> · 14-day = <strong>+40</strong> · 30-day = <strong>+100</strong></span>
-                  </li>
-                </ul>
-              </div>
-
-              <p className="text-xs text-foreground/60">
-                Challenge rewards stack on top — daily (+5), weekly (+15–25), and milestone (+15–50) challenges all add bonus points.
-              </p>
 
               {/* Level Up */}
               <div className="border-[3px] border-secondary bg-card p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">

@@ -1,10 +1,11 @@
 /**
  * Shared helper: fetches all session reflections for all students,
- * computes points per rider using the gamification engine.
+ * computes points per rider using the unified formula:
+ * 10 pts/session + weekly bonuses.
  * Returns a Map<airtableStudentId, { totalPoints, totalMinutes, sessions }>.
  */
 import { callAirtable } from "@/lib/airtable";
-import { calculateSessionPoints, parseDurationToMinutes, isValidSession, getLevelName } from "@/lib/gamification";
+import { parseDurationToMinutes, isValidSession, getLevelName, calculateWeeklyBonus } from "@/lib/gamification";
 
 function parseSessionDataValue(raw: any): { distance_km: number; duration_hh_mm_ss: string; speed_kmh: number; elevation_m: number } | null {
   if (!raw) return null;
@@ -31,7 +32,6 @@ export interface RiderPointsSummary {
 }
 
 export async function computeAllRiderPoints(): Promise<Map<string, RiderPointsSummary>> {
-  // Fetch ALL session reflections (no filter)
   const sessionsRes = await callAirtable("Session Reflections", "GET");
 
   // Group sessions by student airtable ID
@@ -47,11 +47,11 @@ export async function computeAllRiderPoints(): Promise<Map<string, RiderPointsSu
   const result = new Map<string, RiderPointsSummary>();
 
   for (const [studentId, sessions] of studentSessions) {
-    let totalPoints = 0;
     let totalMinutes = 0;
     let totalDistance = 0;
     let totalElevation = 0;
     let validCount = 0;
+    const sessionDates: string[] = [];
 
     for (const s of sessions) {
       const rawData = s.fields["Session Data Table"];
@@ -64,17 +64,24 @@ export async function computeAllRiderPoints(): Promise<Map<string, RiderPointsSu
       const duration_minutes = parseDurationToMinutes(s.fields["Rollup Minutes"] ?? durationStr);
       const distance_km = Number(s.fields["Total km "] ?? parsed?.distance_km ?? 0);
       const elevation_m = Number(s.fields["Total Elevation"] ?? parsed?.elevation_m ?? 0);
-      const avg_speed_kmh = Number(s.fields["Avg Speed"] ?? parsed?.speed_kmh ?? 0);
 
-      const input = { duration_minutes, distance_km, elevation_m, avg_speed_kmh };
+      const input = { duration_minutes, distance_km, elevation_m, avg_speed_kmh: 0 };
       if (!isValidSession(input)) continue;
 
-      totalPoints += calculateSessionPoints(input);
       totalMinutes += duration_minutes;
       totalDistance += distance_km;
       totalElevation += elevation_m;
       validCount++;
+
+      // Collect date for weekly bonus calc
+      const dateStr = String(s.fields["Date"] ?? s.fields["Created"] ?? "").slice(0, 10);
+      if (dateStr) sessionDates.push(dateStr);
     }
+
+    // Unified formula: 10 pts/session + weekly bonuses
+    const sessionPoints = validCount * 10;
+    const weeklyBonus = calculateWeeklyBonus(sessionDates);
+    const totalPoints = sessionPoints + weeklyBonus;
 
     result.set(studentId, {
       totalPoints,
