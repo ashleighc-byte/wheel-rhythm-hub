@@ -187,6 +187,19 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
         }
       }
 
+      // Emit activity feed event
+      try {
+        const firstName = studentName.split(" ")[0];
+        await supabase.from("activity_feed" as any).insert({
+          event_type: "ride",
+          rider_name: firstName,
+          school_name: "",
+          message: "just logged a ride",
+        });
+      } catch (feedErr) {
+        console.error("Activity feed insert failed:", feedErr);
+      }
+
       setSubmitted(true);
       toast({ title: `+${pointsEarned} points earned!` });
     } catch (err: any) {
