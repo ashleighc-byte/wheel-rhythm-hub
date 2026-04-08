@@ -23,45 +23,49 @@ export interface RideSession {
 }
 
 // ── Points Calculation ────────────────────────────────────
-export function calculateSessionPoints(session: {
+/**
+ * Unified points formula:
+ * - 10 points per completed session (flat rate)
+ * - Weekly bonuses are calculated separately via calculateWeeklyBonus()
+ */
+export function calculateSessionPoints(_session: {
   duration_minutes: number;
   distance_km: number;
   elevation_m: number;
   avg_speed_kmh: number;
 }): number {
-  const { duration_minutes, distance_km, elevation_m, avg_speed_kmh } = session;
-
+  const { duration_minutes, distance_km } = _session;
   // Valid session check
   if (duration_minutes <= 0 && distance_km <= 0) return 0;
+  return 10; // flat 10 points per session
+}
 
-  let pts = 10; // base
+/**
+ * Calculate weekly bonus for a rider based on session dates.
+ * +5 bonus for completing 3 sessions in a week
+ * +10 bonus for completing 5 sessions in a week
+ * These stack: 5 sessions = +5 (for 3rd) + +10 (for 5th) = +15 total bonus
+ */
+export function calculateWeeklyBonus(sessionDates: string[]): number {
+  // Group sessions by ISO week (Mon-Sun)
+  const weekMap = new Map<string, number>();
+  for (const dateStr of sessionDates) {
+    const d = new Date(dateStr);
+    // Get Monday of the week
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d);
+    monday.setDate(diff);
+    const weekKey = monday.toISOString().slice(0, 10);
+    weekMap.set(weekKey, (weekMap.get(weekKey) ?? 0) + 1);
+  }
 
-  // Time bonus: 1pt per 10 min
-  pts += Math.floor(duration_minutes / 10);
-
-  // Distance bonus: 1pt per 5 km
-  pts += Math.floor(distance_km / 5);
-
-  // Elevation bonus: boosted for harder courses
-  // 1pt per 25 m (was 50 m) — rewards hill climbing more
-  pts += Math.floor(elevation_m / 25);
-
-  // High elevation single-ride bonus (hard course rewards)
-  if (elevation_m >= 500) pts += 15;
-  else if (elevation_m >= 300) pts += 10;
-  else if (elevation_m >= 150) pts += 5;
-  else if (elevation_m >= 75) pts += 2;
-
-  // Speed bonus
-  if (avg_speed_kmh >= 30) pts += 6;
-  else if (avg_speed_kmh >= 25) pts += 4;
-  else if (avg_speed_kmh >= 20) pts += 2;
-
-  // Long ride bonus
-  if (duration_minutes >= 60) pts += 10;
-  else if (duration_minutes >= 45) pts += 5;
-
-  return pts;
+  let totalBonus = 0;
+  for (const count of weekMap.values()) {
+    if (count >= 5) totalBonus += 15; // +5 for 3rd + +10 for 5th
+    else if (count >= 3) totalBonus += 5; // +5 for 3rd
+  }
+  return totalBonus;
 }
 
 export function isValidSession(s: { duration_minutes: number; distance_km: number }): boolean {
@@ -200,16 +204,20 @@ export function computeRiderTotals(riderId: string, riderName: string, schoolId:
   const totalMinutes = validSessions.reduce((s, r) => s + r.duration_minutes, 0);
   const totalDistance = validSessions.reduce((s, r) => s + r.distance_km, 0);
   const totalElevation = validSessions.reduce((s, r) => s + r.elevation_m, 0);
-  const totalSessionPoints = validSessions.reduce((s, r) => s + r.points, 0);
+
+  // 10 pts per session (flat)
+  const totalSessionPoints = totalSessions * 10;
 
   const speeds = validSessions.filter(s => s.avg_speed_kmh > 0).map(s => s.avg_speed_kmh);
   const avgSpeed = speeds.length > 0 ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
 
   const streak = computeStreaks(validSessions);
-  const streakBonus = getStreakBonusPoints(streak.milestonesReached);
 
-  // Challenge rewards computed elsewhere
-  const totalPoints = totalSessionPoints + streakBonus;
+  // Weekly bonus: +5 for 3 sessions/week, +10 for 5 sessions/week
+  const sessionDates = validSessions.map(s => s.date);
+  const weeklyBonus = calculateWeeklyBonus(sessionDates);
+
+  const totalPoints = totalSessionPoints + weeklyBonus;
 
   const { current, next } = getLevel(totalPoints);
   const xpToNextLevel = next ? next.min - totalPoints : 0;
@@ -224,7 +232,7 @@ export function computeRiderTotals(riderId: string, riderName: string, schoolId:
     currentStreak: streak.currentStreak,
     longestStreak: streak.longestStreak,
     streakMilestones: streak.milestonesReached,
-    streakBonusPoints: streakBonus,
+    streakBonusPoints: weeklyBonus,
     level: current, nextLevel: next, xpToNextLevel,
     completedChallenges: [],
     unlockedAchievements: [],
@@ -379,14 +387,14 @@ export function computeAchievements(totals: RiderTotals, schoolRank: number | nu
   ];
 }
 
-// ── Grand Total Points (session + streak + challenge) ─────
+// ── Grand Total Points (session + weekly bonus) ──────────
 export function computeGrandTotalPoints(
   sessions: RideSession[],
-  streakMilestones: number[],
-  challenges: Challenge[]
+  _streakMilestones: number[],
+  _challenges: Challenge[]
 ): number {
-  const sessionPts = sessions.filter(s => isValidSession(s)).reduce((s, r) => s + r.points, 0);
-  const streakPts = getStreakBonusPoints(streakMilestones);
-  const challengePts = getChallengeRewardPoints(challenges);
-  return sessionPts + streakPts + challengePts;
+  const validSessions = sessions.filter(s => isValidSession(s));
+  const sessionPts = validSessions.length * 10;
+  const weeklyBonus = calculateWeeklyBonus(validSessions.map(s => s.date));
+  return sessionPts + weeklyBonus;
 }
