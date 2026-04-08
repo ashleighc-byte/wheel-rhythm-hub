@@ -7,7 +7,7 @@ import { parseDurationToMinutes, isValidSession } from "./gamification";
 
 // ── Types ─────────────────────────────────────────────────
 
-export type MetricType = 'ride_count' | 'distance' | 'duration' | 'elevation' | 'team_time';
+export type MetricType = 'ride_count' | 'distance' | 'duration' | 'elevation' | 'team_time' | 'avg_speed';
 export type ChallengeMode = 'individual' | 'team';
 export type ChallengeStatus = 'upcoming' | 'active' | 'completed' | 'ended';
 
