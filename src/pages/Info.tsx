@@ -248,18 +248,14 @@ const StudentInfo = () => {
                       <p className="mt-1 font-body text-sm text-foreground/70">{item.description}</p>
                       {item.action && item.status !== "done" && (
                         <div className="mt-3">
-                          {item.action.type === "link" ? (
-                            <Link
-                              to={item.action.to}
-                              className="inline-block border-[2px] border-primary bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-transform hover:-translate-y-0.5"
-                            >
-                              {item.action.text}
-                            </Link>
-                          ) : (
-                            <button
-                              onClick={item.action.onClick}
-                              className="inline-block border-[2px] border-primary bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-transform hover:-translate-y-0.5"
-                            >
+                          <button
+                            onClick={item.action.onClick}
+                            className="inline-block border-[2px] border-primary bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-transform hover:-translate-y-0.5"
+                          >
+                            {item.action.text}
+                          </button>
+                        </div>
+                      )}
                               {item.action.text}
                             </button>
                           )}
