@@ -106,7 +106,7 @@ const StudentInfo = () => {
               </p>
             </div>
             <div className="flex-shrink-0 w-48 md:w-64">
-              <img src={brandGoHard} alt="Go hard without having to go anywhere" className="w-full h-auto" />
+              <img src={brandGoHard} alt="Go hard without having to go anywhere" className="w-full h-auto relative z-20" />
             </div>
           </div>
         </div>
