@@ -105,8 +105,8 @@ const StudentInfo = () => {
                 Everything you need to know — and everything you need to do.
               </p>
             </div>
-            <div className="flex-shrink-0 w-64 md:w-80">
-              <img src={brandHeroPedal} alt="Pedal Your Own Path" className="w-full h-auto rounded-sm border-[3px] border-accent shadow-[6px_6px_0px_hsl(var(--brand-neon)/0.3)]" />
+            <div className="flex-shrink-0 w-48 md:w-64">
+              <img src={brandGoHard} alt="Go hard without having to go anywhere" className="w-full h-auto" />
             </div>
           </div>
         </div>
