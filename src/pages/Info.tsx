@@ -105,8 +105,8 @@ const StudentInfo = () => {
                 Everything you need to know — and everything you need to do.
               </p>
             </div>
-            <div className="flex-shrink-0 w-64 md:w-96 z-20">
-              <img src={brandGoHard} alt="Go hard without having to go anywhere" className="w-full h-auto" />
+            <div className="flex-shrink-0 w-64 md:w-96 relative z-20">
+              <img src={brandGoHard} alt="Go hard without having to go anywhere" className="w-full h-auto drop-shadow-lg" />
             </div>
           </div>
         </div>
@@ -114,47 +114,52 @@ const StudentInfo = () => {
 
       {/* What is Free Wheeler */}
       <section className="bg-background py-12 relative overflow-hidden">
-        {/* Decorative overlay */}
-        <motion.img
-          src={brandPedalPath}
-          alt=""
-          aria-hidden="true"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="pointer-events-none absolute left-4 bottom-0 w-72 md:w-[28rem] z-20"
-        />
         <div className="container relative mx-auto px-4">
-          <div className="mx-auto max-w-2xl space-y-6 font-body text-base leading-relaxed text-foreground/90">
-            <p className="text-xl font-bold text-foreground">
-              Free Wheeler Bike League is a new way to do sport.
-            </p>
-            <p>
-              No teams. No trials. No pressure. Just jump on a bike and ride. Track your sessions, build your streak, and see how your school ranks on the leaderboard. Every ride counts.
-            </p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {[
-                { icon: Bike, label: "Ride at your own pace" },
-                { icon: BarChart3, label: "Track your progress" },
-                { icon: Trophy, label: "Compete with your school" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce"
-                >
-                  <item.icon className="mx-auto mb-2 h-6 w-6 text-primary" />
-                  <div className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
-                    {item.label}
-                  </div>
-                </div>
-              ))}
+          <div className="flex flex-col md:flex-row items-start gap-8">
+            {/* Pedal Your Own Path image - left side */}
+            <div className="flex-shrink-0 w-48 md:w-72 lg:w-80">
+              <motion.img
+                src={brandPedalPath}
+                alt="Pedal your own path"
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="w-full h-auto"
+              />
             </div>
-            <p>
-              This is a pilot — meaning we're trialling it to see how it works and whether it should grow into more schools. Your participation, data, and feedback directly shapes what happens next.
-            </p>
-            <p className="tape-element-green inline-block px-4 py-2 font-display text-lg font-bold uppercase">
-              Go hard — without having to go anywhere.
-            </p>
+            {/* Text content - right side */}
+            <div className="flex-1 space-y-6 font-body text-base leading-relaxed text-foreground/90">
+              <p className="text-xl font-bold text-foreground">
+                Free Wheeler Bike League is a new way to do sport.
+              </p>
+              <p>
+                No teams. No trials. No pressure. Just jump on a bike and ride. Track your sessions, build your streak, and see how your school ranks on the leaderboard. Every ride counts.
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {[
+                  { icon: Bike, label: "Ride at your own pace" },
+                  { icon: BarChart3, label: "Track your progress" },
+                  { icon: Trophy, label: "Compete with your school" },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce"
+                  >
+                    <item.icon className="mx-auto mb-2 h-6 w-6 text-primary" />
+                    <div className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
+                      {item.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p>
+                This is a pilot — meaning we're trialling it to see how it works and whether it should grow into more schools. Your participation, data, and feedback directly shapes what happens next.
+              </p>
+              <p className="tape-element-green inline-block px-4 py-2 font-display text-lg font-bold uppercase">
+                Go hard — without having to go anywhere.
+              </p>
+            </div>
           </div>
         </div>
       </section>
