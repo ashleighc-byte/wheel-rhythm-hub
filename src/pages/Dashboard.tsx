@@ -7,6 +7,7 @@ import {
   ChevronRight, Timer, Calendar, Sparkles, Mountain, Repeat,
   Gauge, ClipboardCheck, AlertTriangle, CheckCircle2, X, BarChart3
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import ChallengesDashboard from "@/components/ChallengesDashboard";
 import {
   CHALLENGE_DEFINITIONS,
