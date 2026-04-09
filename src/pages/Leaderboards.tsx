@@ -151,12 +151,12 @@ const Leaderboards = () => {
         // Fetch gender data from Airtable Student Registration
         try {
           const allStudents = await callAirtable("Student Registration", "GET");
-          const gMap = new Map<string, string>();
+          const gObj: Record<string, string> = {};
           for (const s of allStudents.records) {
             const gender = String(s.fields["Gender (optional)"] ?? "").toUpperCase().trim();
-            if (gender) gMap.set(s.id, gender);
+            if (gender) gObj[s.id] = gender;
           }
-          setGenderMap(gMap);
+          setGenderMap(gObj);
         } catch {
           // Non-fatal
         }
