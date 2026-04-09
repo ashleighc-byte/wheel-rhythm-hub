@@ -369,19 +369,21 @@ const Dashboard = () => {
 
       // ── Inter-School Challenges (loads after main content) ──
       try {
-        const [allStudentsForChallenges, allOrgsForChallenges, allSessionsRes] = await Promise.all([
+        const [allStudentsForChallenges, allSessionsRes] = await Promise.all([
           callAirtable("Student Registration", "GET"),
-          callAirtable("Organisations", "GET"),
           callAirtable("Session Reflections", "GET"),
         ]);
+        // Build student→school map using plain text School field
         const studentSchoolMap = new Map<string, string>();
         const schoolNameMap = new Map<string, string>();
         for (const s of allStudentsForChallenges.records) {
-          const sSchool = s.fields["School"] as string[] | undefined;
-          if (sSchool?.[0]) studentSchoolMap.set(s.id, sSchool[0]);
-        }
-        for (const o of allOrgsForChallenges.records) {
-          schoolNameMap.set(o.id, String(o.fields["Organisation Name"] ?? ""));
+          const sSchool = s.fields["School"];
+          const schoolStr = Array.isArray(sSchool) ? sSchool[0] : sSchool;
+          if (schoolStr) {
+            const name = String(schoolStr);
+            studentSchoolMap.set(s.id, name);
+            schoolNameMap.set(name, name); // school name is its own key
+          }
         }
         const challengeSessions = parseSessionsForChallenges(allSessionsRes.records, studentSchoolMap);
 
