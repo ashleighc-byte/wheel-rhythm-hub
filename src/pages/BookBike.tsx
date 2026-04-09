@@ -49,6 +49,7 @@ interface Booking {
 }
 
 const BookBike = () => {
+  const { session, loading: authLoading } = useAuth();
   const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
   const [selectedSchool, setSelectedSchool] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
