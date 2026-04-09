@@ -271,7 +271,7 @@ const Leaderboards = () => {
         <div className="container mx-auto px-4">
           {loading ? (
             <div className="flex min-h-[200px] items-center justify-center">
-              <Bike className="h-6 w-6 animate-pulse text-primary" />
+              <BrandBikeIcon variant="black" className="h-8 w-8 animate-pulse" />
               <span className="ml-2 font-display text-lg uppercase text-foreground">Loading...</span>
             </div>
           ) : (
