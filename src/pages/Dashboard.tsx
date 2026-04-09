@@ -30,7 +30,7 @@ import {
   isValidRecordId, fetchStudentsByIds
 } from "@/lib/airtable";
 import { formatFriendlyDate } from "@/lib/dateFormat";
-import brandHeroChain from "@/assets/brand-hero-chain.png";
+// Brand assets imported via BrandBikeIcon component
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getMilestoneBadgeImage } from "@/lib/milestoneBadges";
 import MtRuapehuTracker from "@/components/MtRuapehuTracker";
