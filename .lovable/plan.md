@@ -1,158 +1,69 @@
 
 
-# Content Update, Teacher Support Page & Bike Booking System
+# Fix Registration Form, Auth Redirect, and Terms Page
 
-## Overview
-Three major workstreams: (1) update copy across the site to reflect all recent changes, (2) build a teacher support/resource page with setup instructions, QR backup codes, and printable instructional posters, (3) build a bike booking timetable system.
+## Issues Identified
 
----
+1. **Registration form visibility**: The form uses `text-secondary-foreground` (neon green) and `bg-secondary-foreground/10` styling designed for a dark background. Inside the white Dialog, labels and inputs are nearly invisible green-on-white.
 
-## 1. Content/Copy Updates Across the Site
+2. **Authenticated users see old homepage**: `Index.tsx` shows `AuthenticatedHome` (with `HeroSection`, `CTASection`) when logged in. User should go straight to `/dashboard`. NFC bracelet users should go to the session log form.
 
-### Landing Page (`src/pages/Index.tsx`)
-- Update "How It Works" descriptions to reflect the current flow accurately (NFC bracelets, MyWhoosh, milestones)
-- Add note that registration is limited to 24 students per school, first-in-first-served
-- Add note that once registered, Sport Waikato will deliver a user pack (NFC bracelet + stickers) to the school
+3. **Terms page**: Has basic placeholder content. Needs to be rebuilt using the actual MoU document content.
 
-### About Page (`src/pages/Info.tsx`)
-- **Student view**: Update to remove survey references, update checklist to reflect current features (milestones not levels), ensure "How Points Work" section matches the new formula
-- **Teacher view**: Update timeline phases to reflect current pilot structure, remove survey references, update to mention booking system
-
-### Dashboard (`src/pages/Dashboard.tsx`)
-- Remove any remaining references to levels, surveys, or race mode in copy/comments
-
-### Registration Form (`src/components/StudentRegistrationForm.tsx`)
-- Add a visible "24 spots per school" counter showing spots remaining (already have this data from `registration-count` edge function)
-- Show "Registration closed" when school is full
+4. **Runtime error**: `Cannot read properties of null (reading 'useState')` in `useAuth.tsx` — likely a React import issue or StrictMode problem. Will investigate during implementation.
 
 ---
 
-## 2. Teacher Support Page
+## 1. Fix Registration Form Visibility
 
-### New Page: `src/pages/TeacherResources.tsx`
-A dedicated teacher resource hub (admin-only route at `/teacher-resources`).
+**File:** `src/components/StudentRegistrationForm.tsx`
 
-**Sections:**
+- Replace all `text-secondary-foreground` classes with `text-foreground` (dark brown, readable on white)
+- Replace all `bg-secondary-foreground/10` input backgrounds with `bg-muted` or standard input styling
+- Replace `border-secondary-foreground/20` with `border-border`
+- Replace `placeholder:text-secondary-foreground/40` with `placeholder:text-muted-foreground`
+- The "or" divider and Google button similarly need updated colors
 
-#### A. Setup Instructions
-Content covering:
-- **Space**: Teachers need a dedicated space with access to power outlets for the 2 smart bikes
-- **WiFi**: Need WiFi code available — bikes connect via the MyWhoosh app
-- **MyWhoosh Setup**: Download MyWhoosh onto the iPad/tablet provided by Sport Waikato. Link to admin account credentials
-- **iPad Screenshot**: Instructions on how to screenshot on iPad (press top button + volume up simultaneously, or use AssistiveTouch)
-- **Student Access**: Students use NFC bracelets to log in — tap their bracelet on the device, log their session. No teacher monitoring needed
-- **Share the Link**: Teachers share the website link with students to register. First 24 students per school — first in, first served
-- **Logistics**: Consider how to structure bike access — suggest using the built-in booking system so students know when bikes are available
-- **After Registration**: Sport Waikato receives registration info, creates user packs (NFC bracelet + stickers), and delivers to the school
+## 2. Redirect Authenticated Users to Dashboard
 
-#### B. Student QR Code Backup
-- Reuse existing `StudentQRCodes` component — fetch students for the teacher's school and render the printable QR backup sheet directly on this page
+**File:** `src/pages/Index.tsx`
 
-#### C. Printable Instructional Posters (2 posters)
-Generate as printable sections (print-friendly CSS):
+- When `user` is authenticated, redirect to `/dashboard` using `<Navigate to="/dashboard" replace />`
+- Remove the `AuthenticatedHome` component entirely (it duplicates dashboard functionality)
+- The NFC redirect already works via `NfcTap.tsx` which opens the session form directly
 
-**Poster 1 — "How to Log a Ride"**
-1. Tap your NFC bracelet on the device
-2. Your name appears — tap "Log a Ride"
-3. Fill in your session details (distance, time, elevation, course)
-4. Submit — you're done!
+**File:** `src/App.tsx`  
+- `AuthRoute` already redirects logged-in users from `/auth` to `/` → this will now chain to `/dashboard`
+- Alternatively, change `AuthRoute` redirect to `/dashboard` directly
 
-**Poster 2 — "How to Book a Bike"**
-1. Go to freewheeler.lovable.app/book
-2. Pick your date and time slot
-3. Choose Bike A or Bike B
-4. Book your 15-minute slot (book 2 for a 30-minute ride)
+## 3. Rebuild Terms Page from MoU
 
-### Navigation Update (`src/components/Navbar.tsx`)
-- Add "RESOURCES" to teacher nav dropdown under "About the Pilot" → `{ label: "Teacher Resources", path: "/teacher-resources" }`
+**File:** `src/pages/Terms.tsx`
 
-### Route (`src/App.tsx`)
-- Add `/teacher-resources` as an `AdminRoute`
+Replace the placeholder with comprehensive terms based on the MoU document:
 
----
+1. **Programme Overview** — Free Wheeler Bike League description, Proton Wattbike + MyWhoosh
+2. **Objectives** — inclusive cycling, wellbeing, positive movement
+3. **Participant Responsibilities** — use equipment responsibly, follow school policies, NFC bracelet care
+4. **School Responsibilities** — space, supervision, consent collection
+5. **Sport Waikato Responsibilities** — equipment, digital platforms, technical guidance, user packs
+6. **Data Management & Privacy** — anonymisation, secure storage, authorised access only, aggregated reporting to Sport NZ
+7. **Consent** — checkbox = consent for data collection; under-16 requires parent/guardian; withdraw by contacting coordinator
+8. **Duration** — programme runs for the agreed pilot period
+9. **Contact** — programme coordinator or Sport Waikato team
 
-## 3. Bike Booking System
+## 4. Fix Runtime Error
 
-### Database: New `bike_bookings` table
+**File:** `src/main.tsx`
 
-```sql
-CREATE TABLE public.bike_bookings (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  school_name text NOT NULL,
-  bike_label text NOT NULL CHECK (bike_label IN ('Bike A', 'Bike B')),
-  booking_date date NOT NULL,
-  time_slot text NOT NULL,
-  booked_by_name text NOT NULL,
-  booked_by_email text,
-  user_id uuid,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.bike_bookings ENABLE ROW LEVEL SECURITY;
-
--- Anyone authenticated can view bookings for their school
-CREATE POLICY "Users can view school bookings"
-  ON public.bike_bookings FOR SELECT TO authenticated
-  USING (true);
-
--- Anyone authenticated can insert bookings
-CREATE POLICY "Users can insert bookings"
-  ON public.bike_bookings FOR INSERT TO authenticated
-  WITH CHECK (true);
-
--- Users can delete their own bookings
-CREATE POLICY "Users can cancel own bookings"
-  ON public.bike_bookings FOR DELETE TO authenticated
-  USING (auth.uid() = user_id);
-
--- Anon can also view and insert (for public "Book Now" page for office staff)
-CREATE POLICY "Anon can view bookings"
-  ON public.bike_bookings FOR SELECT TO anon
-  USING (true);
-
-CREATE POLICY "Anon can insert bookings"
-  ON public.bike_bookings FOR INSERT TO anon
-  WITH CHECK (true);
-
--- Unique constraint to prevent double-booking
-ALTER TABLE public.bike_bookings
-  ADD CONSTRAINT unique_bike_slot UNIQUE (school_name, bike_label, booking_date, time_slot);
-```
-
-### New Page: `src/pages/BookBike.tsx`
-Public page at `/book` — no auth required (office staff can book on behalf of students).
-
-**UI:**
-- School selector (dropdown of active schools from `registration-count` endpoint)
-- Date picker (only future dates, weekdays only)
-- Timetable grid: rows = 15-min time slots from 8:00 AM to 4:00 PM (32 slots), columns = Bike A | Bike B
-- Each cell: clickable if available (green), greyed out if booked (shows name)
-- On click: small form pops up — "Student Name" (required), "Email" (optional) → inserts into `bike_bookings`
-- Cancel: if a user booked it, they can click to cancel their own booking
-
-**Time slots:** `08:00`, `08:15`, `08:30`, ... `15:45` (32 slots total)
-
-### Navigation
-- Add "BOOK NOW" to the public landing page footer and as a top-nav link on the public site
-- Add "BOOK A BIKE" to the student nav links in `Navbar.tsx`
-
-### Route (`src/App.tsx`)
-- Add `/book` as a public route (no auth required)
+- Wrap `<App />` in `<React.StrictMode>` (or remove if already wrapped incorrectly)
+- The `useState` null error often indicates duplicate React instances — check if this resolves after the other changes
 
 ---
-
-## Files to Create
-1. `src/pages/TeacherResources.tsx` — Teacher support hub
-2. `src/pages/BookBike.tsx` — Public bike booking timetable
 
 ## Files to Modify
-1. `src/App.tsx` — Add routes `/teacher-resources` (admin), `/book` (public)
-2. `src/components/Navbar.tsx` — Add "BOOK A BIKE" to student nav, "Teacher Resources" to teacher dropdown
-3. `src/pages/Index.tsx` — Update copy, add "Book Now" to footer, add registration cap note
-4. `src/pages/Info.tsx` — Update copy for both student and teacher views
-5. `src/pages/Dashboard.tsx` — Clean up residual level/survey/race references
-6. `src/components/StudentRegistrationForm.tsx` — Show spots remaining counter
-
-## Database Migration
-- Create `bike_bookings` table with RLS policies and unique constraint
+1. `src/components/StudentRegistrationForm.tsx` — Fix all color classes for white background
+2. `src/pages/Index.tsx` — Replace `AuthenticatedHome` with `Navigate` to `/dashboard`
+3. `src/pages/Terms.tsx` — Full rewrite with MoU-based content
+4. `src/main.tsx` — Fix React rendering if needed
 
