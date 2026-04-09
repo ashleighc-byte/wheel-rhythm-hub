@@ -537,7 +537,60 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* ═══ FIRST RIDE WELCOME BANNER ═══ */}
+        {/* ═══ RIDE ACTIVITY CHART ═══ */}
+        {rideSessions.length > 1 && (() => {
+          // Aggregate rides by date for chart
+          const dateMap = new Map<string, { distance: number; points: number; rides: number }>();
+          for (const s of rideSessions) {
+            const prev = dateMap.get(s.date) ?? { distance: 0, points: 0, rides: 0 };
+            dateMap.set(s.date, {
+              distance: prev.distance + s.distance_km,
+              points: prev.points + s.points,
+              rides: prev.rides + 1,
+            });
+          }
+          const chartData = Array.from(dateMap.entries())
+            .map(([date, d]) => ({ date: date.slice(5), distance: Math.round(d.distance * 10) / 10, points: d.points, rides: d.rides }))
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .slice(-14); // last 14 days
+
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="mb-6 overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
+            >
+              <div className="leaderboard-header flex items-center gap-2 px-5 py-3">
+                <BarChart3 className="h-4 w-4" />
+                <h3 className="text-base tracking-wider">Ride Activity</h3>
+              </div>
+              <div className="px-4 py-4" style={{ height: 220 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} barSize={20}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} unit=" km" width={50} />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "2px solid hsl(var(--secondary))",
+                        borderRadius: 0,
+                        fontFamily: "var(--font-display)",
+                        fontSize: 12,
+                      }}
+                      formatter={(value: number, name: string) => [
+                        name === "distance" ? `${value} km` : `${value} pts`,
+                        name === "distance" ? "Distance" : "Points"
+                      ]}
+                    />
+                    <Bar dataKey="distance" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+          );
+        })()}
         {rideSessions.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
