@@ -328,7 +328,7 @@ const Dashboard = () => {
       if (mySchoolName) {
         try {
           const schoolStudentsRes = await callAirtable("Student Registration", "GET", {
-            filterByFormula: `{School}='${mySchoolName}'`,
+            filterByFormula: `AND({School}='${mySchoolName}',{NFC Status}='Bracelet Received')`,
           });
           const schoolStudentIds = schoolStudentsRes.records.map((s: any) => s.id);
           const riderPointsMap = await computeAllRiderPoints(schoolStudentIds);
