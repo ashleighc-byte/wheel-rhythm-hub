@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import StatsBar from "@/components/StatsBar";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, callAirtable } from "@/lib/airtable";
-import { getCachedTopRiders, getCachedSchoolRankings, getCachedPopularTracks, type CachedRider, type CachedPopularTrack } from "@/lib/leaderboardCache";
+import { getCachedTopRiders, getCachedSchoolRankings, getCachedPopularTracks, getCachedGlobalStats, type CachedRider, type CachedPopularTrack } from "@/lib/leaderboardCache";
 import { pluraliseUnit } from "@/lib/dateFormat";
 
 function formatTime(timeStr: string): string {
@@ -112,6 +112,7 @@ const RiderTable = ({ title, riders, icon }: { title: string; riders: RiderRow[]
 const Leaderboards = () => {
   const { user, nfcSession } = useAuth();
   const [allRiders, setAllRiders] = useState<CachedRider[]>([]);
+  const [totalActiveRiders, setTotalActiveRiders] = useState(0);
   const [schoolName, setSchoolName] = useState("");
   const [userAirtableId, setUserAirtableId] = useState("");
   const [popularTracks, setPopularTracks] = useState<CachedPopularTrack[]>([]);
@@ -121,12 +122,14 @@ const Leaderboards = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [riders, tracks] = await Promise.all([
+        const [riders, tracks, globalStats] = await Promise.all([
           getCachedTopRiders(),
           getCachedPopularTracks(),
+          getCachedGlobalStats(),
         ]);
         setAllRiders(riders);
         setPopularTracks(tracks);
+        setTotalActiveRiders(globalStats?.totalRiders ?? riders.length);
 
         // Find current user's school
         let studentRec;
@@ -228,7 +231,7 @@ const Leaderboards = () => {
                 #{userGlobalRank}
               </p>
               <p className="font-body text-sm text-secondary-foreground/60">
-                out of {allRiders.length} riders across all schools
+                out of {totalActiveRiders} riders across all schools
               </p>
             </motion.div>
           </div>
