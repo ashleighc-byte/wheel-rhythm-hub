@@ -270,7 +270,11 @@ const Dashboard = () => {
           const duration_minutes = parseDurationToMinutes(s.fields["Rollup Minutes"] ?? durationStr);
           const distance_km = Number(s.fields["Total km "] ?? parsed?.distance_km ?? 0);
           const elevation_m = Number(parsed?.elevation_m ?? 0);
-          const avg_speed_kmh = Number(parsed?.speed_kmh ?? 0);
+          const avg_speed_kmh = Number(s.fields["Avg Speed"] ?? parsed?.speed_kmh ?? 0);
+
+          // Parse course/track from "Combined Course and Track" field (format: "Course | Track")
+          const combinedCourseTrack = String(s.fields["Combined Course and Track"] ?? "");
+          const courseMap = combinedCourseTrack || (parsed ? `${(parsed as any).course_map ?? ""} | ${(parsed as any).track_name ?? ""}`.replace(/^ \| $/, "") : "");
 
           const sessionInput = { duration_minutes, distance_km, elevation_m, avg_speed_kmh };
           const points = calculateSessionPoints(sessionInput);
@@ -291,6 +295,7 @@ const Dashboard = () => {
             reflection: String(s.fields["What did you enjoy or not enjoy about today's session?"] ?? ""),
             screenshotUrl: undefined,
             points,
+            courseMap,
           } satisfies RideSession;
         })
         .sort((a, b) => b.date.localeCompare(a.date));
