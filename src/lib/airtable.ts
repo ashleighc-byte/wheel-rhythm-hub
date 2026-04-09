@@ -177,13 +177,18 @@ export async function validateStudentApproval(email: string): Promise<{ approved
 }
 
 export async function validateTeacherApproval(email: string): Promise<{ approved: boolean }> {
-  const safe = escapeFormulaValue(email);
-  const formula = `AND(LOWER({Email}) = LOWER('${safe}'), OR({Status} = 'active', {Status} = 'Active'))`;
-  const result = await callAirtable('Organisations', 'GET', {
-    filterByFormula: formula,
-    maxRecords: 1,
-  });
-  return { approved: result.records.length > 0 };
+  try {
+    const safe = escapeFormulaValue(email);
+    const formula = `AND(LOWER({Email}) = LOWER('${safe}'), OR({Status} = 'active', {Status} = 'Active'))`;
+    const result = await callAirtable('Organisations', 'GET', {
+      filterByFormula: formula,
+      maxRecords: 1,
+    });
+    return { approved: result.records.length > 0 };
+  } catch (err) {
+    console.warn('Teacher approval check failed (Organisations table may be inaccessible):', err);
+    return { approved: false };
+  }
 }
 
 export async function validateUserApproval(email: string): Promise<{ approved: boolean; role: 'admin' | 'student'; studentName?: string }> {

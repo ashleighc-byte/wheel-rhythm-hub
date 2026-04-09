@@ -244,40 +244,16 @@ const Dashboard = () => {
       const rec = studentsRes.records[0];
       const f = rec.fields;
       const rawSchool = f["School"];
-      // School can be a linked record array ["recXXX"] or a plain string "School Name"
-      const schoolIsLinked = Array.isArray(rawSchool) && rawSchool.length > 0 && typeof rawSchool[0] === "string" && rawSchool[0].startsWith("rec");
-      const schoolIds = schoolIsLinked ? (rawSchool as string[]) : undefined;
-      const schoolNameDirect = !schoolIsLinked && rawSchool ? String(rawSchool) : "";
+      // School is a plain text field like "Sport Waikato"
+      const mySchoolName = rawSchool ? String(Array.isArray(rawSchool) ? rawSchool[0] : rawSchool) : "";
       const sessionIds = f["Session Reflections"] as string[] | undefined;
 
-      // Fetch only this student's school org + their own sessions in parallel
-      const schoolOrgFilter = schoolIds?.length
-        ? { filterByFormula: `RECORD_ID()='${schoolIds[0]}'`, maxRecords: 1 }
-        : schoolNameDirect
-        ? { filterByFormula: `{Organisation Name}='${schoolNameDirect}'`, maxRecords: 1 }
-        : undefined;
-      const [orgsRes, sessionsRes] = await Promise.all([
-        schoolOrgFilter ? callAirtable("Organisations", "GET", schoolOrgFilter) : Promise.resolve({ records: [] }),
-        fetchSessionReflections(sessionIds),
-      ]);
+      // Fetch sessions (skip Organisations table — use school name directly)
+      const sessionsRes = await fetchSessionReflections(sessionIds);
 
-      // Resolve school name and school student IDs
-      let localSchoolId = "";
-      let mySchoolName = schoolNameDirect;
-      let schoolStudentIds: string[] = [];
-      if (orgsRes.records.length > 0) {
-        const org = orgsRes.records[0];
-        localSchoolId = org.id;
-        mySchoolName = String(org.fields["Organisation Name"] ?? mySchoolName);
-        const orgRec = orgsRes.records[0];
-        schoolStudentIds = Array.isArray(orgRec?.fields["Student Registration"])
-          ? (orgRec.fields["Student Registration"] as string[])
-          : [];
-        setSchoolName(mySchoolName);
-        setMySchoolId(localSchoolId);
-      } else if (mySchoolName) {
-        setSchoolName(mySchoolName);
-      }
+      let localSchoolId = mySchoolName; // use school name as ID
+      setSchoolName(mySchoolName);
+      setMySchoolId(mySchoolName);
 
       const riderName = String(f["Full Name"] ?? nfcSession?.fullName ?? "Rider");
 
@@ -342,38 +318,42 @@ const Dashboard = () => {
       setGrandTotal(grand);
 
       // School leaderboard preview — only fetch school students and their sessions
-      if (schoolIds?.length && schoolStudentIds.length) {
-        const [schoolStudentsRes, riderPointsMap] = await Promise.all([
-          fetchStudentsByIds(schoolStudentIds),
-          computeAllRiderPoints(schoolStudentIds),
-        ]);
-        const schoolmates = schoolStudentsRes.records;
+      if (mySchoolName) {
+        try {
+          const schoolStudentsRes = await callAirtable("Student Registration", "GET", {
+            filterByFormula: `{School}='${mySchoolName}'`,
+          });
+          const schoolStudentIds = schoolStudentsRes.records.map((s: any) => s.id);
+          const riderPointsMap = await computeAllRiderPoints(schoolStudentIds);
+          const schoolmates = schoolStudentsRes.records;
 
-        const ranked = schoolmates
-          .map((s) => {
-            const computed = riderPointsMap.get(s.id);
-            return {
-              id: s.id,
-              name: String(s.fields["Full Name"] ?? ""),
-              sessions: computed?.sessions ?? 0,
-              // Use the current user's grand total (includes challenges/streaks), computed points for others
-              totalPoints: s.id === rec.id ? grand : (computed?.totalPoints ?? 0),
-            };
-          })
-          .sort((a, b) => b.totalPoints - a.totalPoints);
+          const ranked = schoolmates
+            .map((s: any) => {
+              const computed = riderPointsMap.get(s.id);
+              return {
+                id: s.id,
+                name: String(s.fields["Full Name"] ?? ""),
+                sessions: computed?.sessions ?? 0,
+                totalPoints: s.id === rec.id ? grand : (computed?.totalPoints ?? 0),
+              };
+            })
+            .sort((a: any, b: any) => b.totalPoints - a.totalPoints);
 
-        const rank = ranked.findIndex((s) => s.id === rec.id) + 1;
-        setSchoolRank(rank > 0 ? rank : null);
+          const rank = ranked.findIndex((s: any) => s.id === rec.id) + 1;
+          setSchoolRank(rank > 0 ? rank : null);
 
-        setSchoolRiders(
-          ranked.slice(0, 5).map((s, i) => ({
-            rank: i + 1,
-            name: s.name,
-            points: s.totalPoints,
-            sessions: s.sessions,
-            isCurrentUser: s.id === rec.id,
-          }))
-        );
+          setSchoolRiders(
+            ranked.slice(0, 5).map((s: any, i: number) => ({
+              rank: i + 1,
+              name: s.name,
+              points: s.totalPoints,
+              sessions: s.sessions,
+              isCurrentUser: s.id === rec.id,
+            }))
+          );
+        } catch (err) {
+          console.error("School leaderboard error:", err);
+        }
       }
 
       // Achievements
@@ -389,19 +369,21 @@ const Dashboard = () => {
 
       // ── Inter-School Challenges (loads after main content) ──
       try {
-        const [allStudentsForChallenges, allOrgsForChallenges, allSessionsRes] = await Promise.all([
+        const [allStudentsForChallenges, allSessionsRes] = await Promise.all([
           callAirtable("Student Registration", "GET"),
-          callAirtable("Organisations", "GET"),
           callAirtable("Session Reflections", "GET"),
         ]);
+        // Build student→school map using plain text School field
         const studentSchoolMap = new Map<string, string>();
         const schoolNameMap = new Map<string, string>();
         for (const s of allStudentsForChallenges.records) {
-          const sSchool = s.fields["School"] as string[] | undefined;
-          if (sSchool?.[0]) studentSchoolMap.set(s.id, sSchool[0]);
-        }
-        for (const o of allOrgsForChallenges.records) {
-          schoolNameMap.set(o.id, String(o.fields["Organisation Name"] ?? ""));
+          const sSchool = s.fields["School"];
+          const schoolStr = Array.isArray(sSchool) ? sSchool[0] : sSchool;
+          if (schoolStr) {
+            const name = String(schoolStr);
+            studentSchoolMap.set(s.id, name);
+            schoolNameMap.set(name, name); // school name is its own key
+          }
         }
         const challengeSessions = parseSessionsForChallenges(allSessionsRes.records, studentSchoolMap);
 

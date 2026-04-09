@@ -14,24 +14,10 @@ Deno.serve(async (req) => {
     const AIRTABLE_BASE_ID = Deno.env.get("AIRTABLE_BASE_ID");
 
     if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
-      console.error("Missing env vars:", { hasKey: !!AIRTABLE_API_KEY, hasBase: !!AIRTABLE_BASE_ID });
       throw new Error("Missing Airtable configuration");
     }
 
-    // Fetch active organisations (case-insensitive status check)
-    const orgsUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent("Organisations")}?filterByFormula=${encodeURIComponent("OR({Status}='active',{Status}='Active')")}`;
-    const orgsRes = await fetch(orgsUrl, {
-      headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` },
-    });
-
-    if (!orgsRes.ok) {
-      const errBody = await orgsRes.text();
-      console.error("Airtable orgs error:", orgsRes.status, errBody);
-      throw new Error(`Failed to fetch organisations: ${orgsRes.status}`);
-    }
-    const orgsData = await orgsRes.json();
-
-    // Fetch ALL student registrations with pagination
+    // Fetch ALL student registrations with pagination, using School text field
     let allStudents: any[] = [];
     let offset: string | undefined;
     do {
@@ -51,21 +37,24 @@ Deno.serve(async (req) => {
       offset = studentsData.offset;
     } while (offset);
 
-    // Count students per org
-    const countByOrg: Record<string, number> = {};
+    // Count students per school name
+    const countBySchool: Record<string, number> = {};
     for (const s of allStudents) {
-      const schoolLinks: string[] = s.fields?.School || [];
-      for (const orgId of schoolLinks) {
-        countByOrg[orgId] = (countByOrg[orgId] || 0) + 1;
+      const school = s.fields?.School;
+      if (school) {
+        const name = String(school);
+        countBySchool[name] = (countBySchool[name] || 0) + 1;
       }
     }
 
     const LIMIT = 24;
-    const schools = orgsData.records.map((org: any) => ({
-      id: org.id,
-      name: org.fields["Organisation Name"] || org.fields["Name"] || "",
-      spots_taken: countByOrg[org.id] || 0,
-      spots_remaining: Math.max(0, LIMIT - (countByOrg[org.id] || 0)),
+    // Get unique school names from students
+    const schoolNames = Object.keys(countBySchool);
+    const schools = schoolNames.map((name) => ({
+      id: name,
+      name,
+      spots_taken: countBySchool[name] || 0,
+      spots_remaining: Math.max(0, LIMIT - (countBySchool[name] || 0)),
     }));
 
     return new Response(JSON.stringify({ schools }), {
