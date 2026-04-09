@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      bike_bookings: {
+        Row: {
+          bike_label: string
+          booked_by_email: string | null
+          booked_by_name: string
+          booking_date: string
+          created_at: string
+          id: string
+          school_name: string
+          time_slot: string
+          user_id: string | null
+        }
+        Insert: {
+          bike_label: string
+          booked_by_email?: string | null
+          booked_by_name: string
+          booking_date: string
+          created_at?: string
+          id?: string
+          school_name: string
+          time_slot: string
+          user_id?: string | null
+        }
+        Update: {
+          bike_label?: string
+          booked_by_email?: string | null
+          booked_by_name?: string
+          booking_date?: string
+          created_at?: string
+          id?: string
+          school_name?: string
+          time_slot?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       leaderboard_cache: {
         Row: {
           cache_key: string
