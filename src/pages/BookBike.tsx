@@ -143,16 +143,20 @@ const BookBike = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-secondary border-b-4 border-primary">
-        <div className="container mx-auto flex items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logoSrc} alt="Free Wheeler" className="h-10 object-contain md:h-12" />
-          </Link>
-          <Link to="/auth" className="tape-element text-sm md:text-base">
-            SIGN IN
-          </Link>
-        </div>
-      </header>
+      {session ? (
+        <Navbar />
+      ) : (
+        <header className="bg-secondary border-b-4 border-primary">
+          <div className="container mx-auto flex items-center justify-between px-4 py-3">
+            <Link to="/" className="flex items-center gap-2">
+              <img src={logoSrc} alt="Free Wheeler" className="h-10 object-contain md:h-12" />
+            </Link>
+            <Link to="/auth" className="tape-element text-sm md:text-base">
+              SIGN IN
+            </Link>
+          </div>
+        </header>
+      )}
 
       <div className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-4xl">
