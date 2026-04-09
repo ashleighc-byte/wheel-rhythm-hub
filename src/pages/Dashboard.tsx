@@ -747,6 +747,56 @@ const Dashboard = () => {
 
         </div>
 
+        {/* ═══ EARNED BADGES GALLERY ═══ */}
+        {challenges.filter(c => c.completed).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="mb-6"
+          >
+            <div className="mb-4 flex items-center gap-2">
+              <Award className="h-5 w-5 text-primary" />
+              <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
+                Earned Badges
+              </h3>
+            </div>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+              {challenges.filter(c => c.completed).map((c, i) => {
+                // Badge style inspired by the uploaded reference
+                const badgeColors = [
+                  "from-[hsl(var(--primary))] to-[hsl(var(--accent))]",
+                  "from-[hsl(var(--accent))] to-[hsl(var(--primary))]",
+                ];
+                return (
+                  <motion.div
+                    key={c.id}
+                    initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
+                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.2 + i * 0.08, type: "spring", stiffness: 200 }}
+                    className="group relative flex flex-col items-center"
+                  >
+                    <div className="relative flex h-20 w-20 items-center justify-center rounded-lg border-[3px] border-primary bg-gradient-to-br from-secondary to-muted shadow-[3px_3px_0px_hsl(var(--brand-dark))] transition-transform group-hover:scale-105 md:h-24 md:w-24">
+                      <div className="absolute inset-1 rounded-md border border-primary/20 bg-secondary/60" />
+                      <div className="relative flex flex-col items-center gap-1">
+                        <Sparkles className="h-6 w-6 text-primary md:h-7 md:w-7" />
+                        <Bike className="h-4 w-4 text-accent" />
+                      </div>
+                      {/* Completed checkmark */}
+                      <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary shadow-sm">
+                        <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    </div>
+                    <span className="mt-2 text-center font-display text-[9px] font-bold uppercase leading-tight tracking-wider text-foreground md:text-[10px]">
+                      {c.title}
+                    </span>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
         {/* ═══ MILESTONES ═══ */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
