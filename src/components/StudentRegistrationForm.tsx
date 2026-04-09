@@ -206,7 +206,7 @@ const StudentRegistrationForm = () => {
         {/* Name row */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="font-display text-xs uppercase tracking-wider text-secondary-foreground/80">
+            <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
               First Name *
             </Label>
             <Input
@@ -214,11 +214,11 @@ const StudentRegistrationForm = () => {
               onChange={(e) => setFirstName(e.target.value)}
               required
               placeholder="First name"
-              className="border-2 border-secondary-foreground/20 bg-secondary-foreground/10 text-secondary-foreground placeholder:text-secondary-foreground/40"
+              className="border-2 border-border bg-muted text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <div>
-            <Label className="font-display text-xs uppercase tracking-wider text-secondary-foreground/80">
+            <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
               Last Name *
             </Label>
             <Input
@@ -226,7 +226,7 @@ const StudentRegistrationForm = () => {
               onChange={(e) => setLastName(e.target.value)}
               required
               placeholder="Last name"
-              className="border-2 border-secondary-foreground/20 bg-secondary-foreground/10 text-secondary-foreground placeholder:text-secondary-foreground/40"
+              className="border-2 border-border bg-muted text-foreground placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -234,11 +234,11 @@ const StudentRegistrationForm = () => {
         {/* Gender + Year Level */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="font-display text-xs uppercase tracking-wider text-secondary-foreground/80">
+            <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
               Gender
             </Label>
             <Select value={gender} onValueChange={setGender}>
-              <SelectTrigger className="border-2 border-secondary-foreground/20 bg-secondary-foreground/10 text-secondary-foreground">
+              <SelectTrigger className="border-2 border-border bg-muted text-foreground">
                 <SelectValue placeholder="Optional" />
               </SelectTrigger>
               <SelectContent>
@@ -251,11 +251,11 @@ const StudentRegistrationForm = () => {
             </Select>
           </div>
           <div>
-            <Label className="font-display text-xs uppercase tracking-wider text-secondary-foreground/80">
+            <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
               Year Level *
             </Label>
             <Select value={yearLevel} onValueChange={setYearLevel} required>
-              <SelectTrigger className="border-2 border-secondary-foreground/20 bg-secondary-foreground/10 text-secondary-foreground">
+              <SelectTrigger className="border-2 border-border bg-muted text-foreground">
                 <SelectValue placeholder="Select year" />
               </SelectTrigger>
               <SelectContent>
@@ -271,7 +271,7 @@ const StudentRegistrationForm = () => {
 
         {/* School combobox */}
         <div>
-          <Label className="font-display text-xs uppercase tracking-wider text-secondary-foreground/80">
+          <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
             School *
           </Label>
           <Popover open={schoolOpen} onOpenChange={setSchoolOpen}>
@@ -280,7 +280,7 @@ const StudentRegistrationForm = () => {
                 variant="outline"
                 role="combobox"
                 aria-expanded={schoolOpen}
-                className="w-full justify-between border-2 border-secondary-foreground/20 bg-secondary-foreground/10 text-secondary-foreground hover:bg-secondary-foreground/20"
+                className="w-full justify-between border-2 border-border bg-muted text-foreground hover:bg-muted"
               >
                 {school || "Search or type school name..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -350,7 +350,7 @@ const StudentRegistrationForm = () => {
 
         {/* Email */}
         <div>
-          <Label className="font-display text-xs uppercase tracking-wider text-secondary-foreground/80">
+          <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
             School Email *
           </Label>
           <Input
@@ -359,14 +359,14 @@ const StudentRegistrationForm = () => {
             onChange={(e) => setEmail(e.target.value)}
             required
             placeholder="you@school.nz"
-            className="border-2 border-secondary-foreground/20 bg-secondary-foreground/10 text-secondary-foreground placeholder:text-secondary-foreground/40"
+            className="border-2 border-border bg-muted text-foreground placeholder:text-muted-foreground"
           />
         </div>
 
         {/* Password */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="font-display text-xs uppercase tracking-wider text-secondary-foreground/80">
+            <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
               Password *
             </Label>
             <Input
@@ -376,11 +376,11 @@ const StudentRegistrationForm = () => {
               required
               minLength={6}
               placeholder="••••••••"
-              className="border-2 border-secondary-foreground/20 bg-secondary-foreground/10 text-secondary-foreground placeholder:text-secondary-foreground/40"
+              className="border-2 border-border bg-muted text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <div>
-            <Label className="font-display text-xs uppercase tracking-wider text-secondary-foreground/80">
+            <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
               Confirm *
             </Label>
             <Input
@@ -390,7 +390,7 @@ const StudentRegistrationForm = () => {
               required
               minLength={6}
               placeholder="••••••••"
-              className="border-2 border-secondary-foreground/20 bg-secondary-foreground/10 text-secondary-foreground placeholder:text-secondary-foreground/40"
+              className="border-2 border-border bg-muted text-foreground placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -405,7 +405,7 @@ const StudentRegistrationForm = () => {
           />
           <Label
             htmlFor="terms"
-            className="font-body text-xs leading-snug text-secondary-foreground/80"
+            className="font-body text-xs leading-snug text-foreground/80"
           >
             I agree to the{" "}
             <Link
@@ -435,11 +435,11 @@ const StudentRegistrationForm = () => {
       </form>
 
       <div className="mt-4 flex items-center gap-3">
-        <div className="h-px flex-1 bg-secondary-foreground/20" />
-        <span className="font-display text-xs uppercase tracking-wider text-secondary-foreground/50">
+        <div className="h-px flex-1 bg-muted" />
+        <span className="font-display text-xs uppercase tracking-wider text-muted-foreground">
           or
         </span>
-        <div className="h-px flex-1 bg-secondary-foreground/20" />
+        <div className="h-px flex-1 bg-muted" />
       </div>
 
       <Button
@@ -447,7 +447,7 @@ const StudentRegistrationForm = () => {
         variant="outline"
         onClick={handleGoogleSignUp}
         disabled={googleLoading}
-        className="mt-4 w-full border-2 border-secondary-foreground/20 bg-secondary-foreground/10 font-display text-sm uppercase tracking-wider text-secondary-foreground transition-transform hover:scale-105"
+        className="mt-4 w-full border-2 border-border bg-muted font-display text-sm uppercase tracking-wider text-foreground transition-transform hover:scale-105"
       >
         {googleLoading ? (
           <Loader2 className="mr-2 h-5 w-5 animate-spin" />

@@ -1,14 +1,8 @@
-import { useEffect, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Bike, Users, Trophy } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import HeroSection from "@/components/HeroSection";
-import CTASection from "@/components/CTASection";
-import SessionFeedbackForm from "@/components/SessionFeedbackForm";
-import OnboardingTour from "@/components/OnboardingTour";
 import StudentRegistrationForm from "@/components/StudentRegistrationForm";
-import { useOnboarding } from "@/hooks/useOnboarding";
 import { useAuth } from "@/hooks/useAuth";
 import logoSrc from "@/assets/fw-logo-new.png";
 import artRaceModeHero from "@/assets/art-race-mode-hero.png";
