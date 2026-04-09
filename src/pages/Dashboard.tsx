@@ -711,10 +711,48 @@ const Dashboard = () => {
               {challenges.filter(c => c.completed).length}/{challenges.length} completed
             </span>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {challenges.map((c, i) => (
-              <ChallengeCard key={c.id} challenge={c} index={i} />
-            ))}
+          <div className="space-y-3">
+            {challenges.map((c, i) => {
+              const pct = Math.min((c.current / c.goal) * 100, 100);
+              return (
+                <motion.div
+                  key={c.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + i * 0.04 }}
+                  className={`border-[3px] bg-card p-3 shadow-[4px_4px_0px_hsl(var(--brand-dark))] ${
+                    c.completed ? "border-primary" : "border-secondary"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {c.completed ? (
+                        <Sparkles className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Target className="h-4 w-4 text-accent" />
+                      )}
+                      <span className="font-display text-xs font-bold uppercase tracking-wider text-foreground">{c.title}</span>
+                    </div>
+                    <span className="font-display text-xs font-bold text-primary flex items-center gap-0.5">
+                      <Zap className="h-3 w-3" /> +{c.reward} pts
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-4 border-[2px] border-secondary bg-muted overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.8, delay: 0.4 + i * 0.04 }}
+                        className={`h-full ${c.completed ? "bg-primary" : "bg-accent"}`}
+                      />
+                    </div>
+                    <span className="font-display text-xs font-bold text-muted-foreground whitespace-nowrap min-w-[4rem] text-right">
+                      {c.current}/{c.goal}
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
 
