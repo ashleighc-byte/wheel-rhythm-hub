@@ -55,9 +55,18 @@ const TeacherResources = () => {
     loadStudents();
   }, [user?.email]);
 
-  const handlePrintPoster = (posterId: string) => {
-    const content = document.getElementById(posterId);
-    if (!content) return;
+  const handlePrintPoster = (type: "log" | "book") => {
+    const content = type === "log"
+      ? `<h1>🚴 How to Log a Ride</h1>
+         <div class="step"><div class="step-num">1</div><div class="step-text"><div class="step-title">Tap Your NFC Bracelet</div>Hold your bracelet against the iPad to open the session form.</div></div>
+         <div class="step"><div class="step-num">2</div><div class="step-text"><div class="step-title">Your Name Appears</div>Check it's you, then tap "Log a Ride".</div></div>
+         <div class="step"><div class="step-num">3</div><div class="step-text"><div class="step-title">Fill In Your Details</div>Enter your distance, time, elevation, and course from MyWhoosh.</div></div>
+         <div class="step"><div class="step-num">4</div><div class="step-text"><div class="step-title">Submit</div>Hit submit and you're done! Your points are calculated automatically.</div></div>`
+      : `<h1>📅 How to Book a Bike</h1>
+         <div class="step"><div class="step-num">1</div><div class="step-text"><div class="step-title">Go to the Website</div>Visit freewheeler.lovable.app/book on any device.</div></div>
+         <div class="step"><div class="step-num">2</div><div class="step-text"><div class="step-title">Pick Your Date & Time</div>Select a weekday and choose a 15-minute slot.</div></div>
+         <div class="step"><div class="step-num">3</div><div class="step-text"><div class="step-title">Choose Your Bike</div>Pick Bike A or Bike B — whichever is available.</div></div>
+         <div class="step"><div class="step-num">4</div><div class="step-text"><div class="step-title">Confirm</div>Enter your name and book. Want 30 minutes? Book two slots!</div></div>`;
     const win = window.open("", "_blank");
     if (!win) return;
     win.document.write(`
@@ -71,7 +80,7 @@ const TeacherResources = () => {
         .step-title { font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
         @media print { body { padding: 20px; } }
       </style>
-      </head><body>${content.innerHTML}</body></html>
+      </head><body>${content}</body></html>
     `);
     win.document.close();
     win.print();
@@ -230,7 +239,7 @@ const TeacherResources = () => {
                   <li className="flex gap-2"><span className="font-bold text-primary">4.</span> Submit — you're done!</li>
                 </ol>
                 <button
-                  onClick={() => handlePrintPoster("poster-log-ride")}
+                  onClick={() => handlePrintPoster("log")}
                   className="mt-4 inline-flex items-center gap-1 border-[2px] border-primary bg-primary px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-wider text-primary-foreground transition-transform hover:-translate-y-0.5"
                 >
                   <Printer className="h-3 w-3" /> Print Poster
@@ -249,7 +258,7 @@ const TeacherResources = () => {
                   <li className="flex gap-2"><span className="font-bold text-primary">4.</span> Book your 15-min slot (book 2 for 30 min)</li>
                 </ol>
                 <button
-                  onClick={() => handlePrintPoster("poster-book-bike")}
+                  onClick={() => handlePrintPoster("book")}
                   className="mt-4 inline-flex items-center gap-1 border-[2px] border-primary bg-primary px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-wider text-primary-foreground transition-transform hover:-translate-y-0.5"
                 >
                   <Printer className="h-3 w-3" /> Print Poster

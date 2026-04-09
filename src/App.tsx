@@ -98,9 +98,11 @@ const App = () => (
                <Route path="/reset-password" element={<ResetPassword />} />
                <Route path="/webinar" element={<Webinar />} />
                <Route path="/terms" element={<Terms />} />
+               <Route path="/book" element={<BookBike />} />
                <Route path="/studentregistration" element={<StudentRegistration />} />
-             <Route path="/race" element={<ProtectedRoute><RaceGame /></ProtectedRoute>} />
-             <Route path="/tap/:token" element={<NfcTap />} />
+              <Route path="/race" element={<ProtectedRoute><RaceGame /></ProtectedRoute>} />
+              <Route path="/teacher-resources" element={<AdminRoute><TeacherResources /></AdminRoute>} />
+              <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
