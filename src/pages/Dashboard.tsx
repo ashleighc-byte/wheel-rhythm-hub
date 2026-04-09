@@ -511,7 +511,7 @@ const Dashboard = () => {
 
 
         {/* ═══ GAMIFICATION QUICK STATS ═══ */}
-        <div className="mb-6 grid grid-cols-3 gap-3">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
           <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
             <Zap className="mx-auto mb-1 h-5 w-5 text-primary" />
             <p className="font-display text-2xl font-bold text-accent">{grandTotal}</p>
@@ -523,6 +523,20 @@ const Dashboard = () => {
               {rideSessions.reduce((sum, s) => sum + (s.distance_km || 0), 0).toFixed(1)}
             </p>
             <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total km</p>
+          </div>
+          <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
+            <Clock className="mx-auto mb-1 h-5 w-5 text-primary" />
+            <p className="font-display text-2xl font-bold text-accent">
+              {Math.floor(rideSessions.reduce((sum, s) => sum + (s.duration_minutes || 0), 0) / 60)}
+            </p>
+            <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Hours</p>
+          </div>
+          <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
+            <Mountain className="mx-auto mb-1 h-5 w-5 text-primary" />
+            <p className="font-display text-2xl font-bold text-accent">
+              {Math.round(rideSessions.reduce((sum, s) => sum + (s.elevation_m || 0), 0))}
+            </p>
+            <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Elevation</p>
           </div>
           <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
             <Bike className="mx-auto mb-1 h-5 w-5 text-primary" />
