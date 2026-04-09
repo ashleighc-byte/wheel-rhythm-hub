@@ -9,6 +9,7 @@ const studentNavLinks = [
   { label: "ABOUT", path: "/info", tourId: "about" },
   { label: "LEADERBOARD", path: "/leaderboards", tourId: "leaderboards" },
   { label: "MY DASHBOARD", path: "/dashboard", tourId: "dashboard" },
+  { label: "BOOK A BIKE", path: "/book", tourId: "book" },
 ];
 
 const teacherNavLinks = [
@@ -19,6 +20,7 @@ const teacherNavLinks = [
     dropdown: [
       { label: "About the Pilot", path: "/info" },
       { label: "Setup Instructions", path: "/setup-instructions" },
+      { label: "Teacher Resources", path: "/teacher-resources" },
     ],
   },
   { label: "LEADERBOARD", path: "/leaderboards", tourId: "leaderboards" },

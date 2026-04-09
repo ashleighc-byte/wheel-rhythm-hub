@@ -50,7 +50,7 @@ const StudentRegistrationForm = () => {
   const [school, setSchool] = useState("");
   const [schoolSearch, setSchoolSearch] = useState("");
   const [schoolOpen, setSchoolOpen] = useState(false);
-  const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
+  const [schools, setSchools] = useState<{ id: string; name: string; spots_remaining?: number }[]>([]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -69,7 +69,7 @@ const StudentRegistrationForm = () => {
         if (res.ok) {
           const data = await res.json();
           setSchools(
-            (data.schools || []).map((s: any) => ({ id: s.id, name: s.name }))
+            (data.schools || []).map((s: any) => ({ id: s.id, name: s.name, spots_remaining: s.spots_remaining }))
           );
         }
       } catch {
@@ -336,6 +336,16 @@ const StudentRegistrationForm = () => {
               </Command>
             </PopoverContent>
           </Popover>
+          {school && (() => {
+            const selected = schools.find(s => s.name === school);
+            if (selected && selected.spots_remaining !== undefined) {
+              if (selected.spots_remaining <= 0) {
+                return <p className="mt-1 font-display text-xs text-destructive">❌ Registration closed — all 24 spots are taken.</p>;
+              }
+              return <p className="mt-1 font-display text-xs text-muted-foreground">🎯 {selected.spots_remaining} of 24 spots remaining</p>;
+            }
+            return null;
+          })()}
         </div>
 
         {/* Email */}
