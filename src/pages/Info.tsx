@@ -16,26 +16,25 @@ const timelinePhases = [
     title: "Registration & Onboarding",
     items: [
       "Student permission forms completed",
-      "Students registered in the system",
-      "Intro sessions delivered",
+      "Students registered on the website",
+      "NFC bracelet packs delivered to schools",
     ],
   },
   {
     phase: "Phase 2",
     title: "Active Pilot Period",
     items: [
-      "Weekly cycling sessions",
-      "Students log session data",
-      "Post-session feedback collected",
-      "Ongoing observation and participation tracking",
+      "Students ride and log sessions using NFC bracelets",
+      "Points and milestones tracked automatically",
+      "Bike booking system available for scheduling",
     ],
   },
   {
     phase: "Phase 3",
     title: "Evaluation & Review",
     items: [
-      "Survey analysis",
-      "Student voice feedback review",
+      "Participation data analysis",
+      "Student engagement review",
       "Data summary report created",
     ],
   },

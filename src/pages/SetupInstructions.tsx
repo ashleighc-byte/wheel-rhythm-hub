@@ -419,8 +419,9 @@ const SetupInstructions = () => {
                   <ul className="mt-3 space-y-1.5 font-body text-sm text-secondary-foreground/80">
                     {[
                       "Their own session history and stats",
-                      "A leaderboard of students from their school",
-                      "Their checklist of pilot tasks",
+                      "Milestones and points progress",
+                      "School leaderboard rankings",
+                      "Bike booking timetable",
                     ].map((item) => (
                       <li key={item} className="flex gap-2">
                         <span className="mt-1.5 h-2 w-2 shrink-0 bg-accent" />
@@ -437,7 +438,7 @@ const SetupInstructions = () => {
                     {[
                       "Leaderboards across all schools",
                       "Top riders from the region",
-                      "Survey completion per student",
+                      "Student participation tracking",
                       "Recent session submissions",
                     ].map((item) => (
                       <li key={item} className="flex gap-2">
