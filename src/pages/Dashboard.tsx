@@ -491,17 +491,8 @@ const Dashboard = () => {
                     </span>
                     {schoolRank && (
                       <span className="border-[2px] border-accent bg-secondary px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-wider text-accent">
-                        Rank #{schoolRank}
+                        School Rank #{schoolRank}
                       </span>
-                    )}
-                    {streak > 0 && (
-                      <motion.span
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ repeat: Infinity, duration: 1.5 }}
-                        className="flex items-center gap-1 border-[2px] border-accent bg-accent px-2 py-0.5 font-display text-[10px] font-bold uppercase text-accent-foreground"
-                      >
-                        <Flame className="h-3 w-3 animate-flame-flicker" /> {streak} streak
-                      </motion.span>
                     )}
                   </div>
                 </div>
