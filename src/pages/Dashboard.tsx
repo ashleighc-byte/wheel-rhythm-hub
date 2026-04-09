@@ -436,10 +436,7 @@ const Dashboard = () => {
   const weekStartStr = weekStart.toISOString().slice(0, 10);
   const thisWeekSessions = rideSessions.filter(s => s.date >= weekStartStr && isValidSession(s));
 
-  // Split challenges by type
-  const dailyChallenges = challenges.filter(c => c.type === "daily");
-  const weeklyChallenges = challenges.filter(c => c.type === "weekly");
-  const milestoneChallenges = challenges.filter(c => c.type === "milestone");
+  // All challenges displayed as milestones (no type grouping)
 
   // ── Loading ──
   if (loading) {
