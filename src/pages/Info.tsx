@@ -106,7 +106,7 @@ const StudentInfo = () => {
               </p>
             </div>
             <div className="flex-shrink-0 w-48 md:w-64">
-              <img src={brandGoHard} alt="Go hard without having to go anywhere" className="w-full h-auto" />
+              <img src={brandGoHard} alt="Go hard without having to go anywhere" className="w-full h-auto relative z-20" />
             </div>
           </div>
         </div>
@@ -120,9 +120,9 @@ const StudentInfo = () => {
           alt=""
           aria-hidden="true"
           initial={{ opacity: 0 }}
-          whileInView={{ opacity: 0.05 }}
+          whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="pointer-events-none absolute -left-20 bottom-0 w-64 md:w-96"
+          className="pointer-events-none absolute -left-20 bottom-0 w-64 md:w-96 z-20"
         />
         <div className="container relative mx-auto px-4">
           <div className="mx-auto max-w-2xl space-y-6 font-body text-base leading-relaxed text-foreground/90">
