@@ -5,7 +5,7 @@ import { Bike, Users, Trophy } from "lucide-react";
 import StudentRegistrationForm from "@/components/StudentRegistrationForm";
 import { useAuth } from "@/hooks/useAuth";
 import logoSrc from "@/assets/fw-logo-new.png";
-import artRaceModeHero from "@/assets/art-race-mode-hero.png";
+import brandHeroPedal from "@/assets/brand-hero-pedal.png";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +37,7 @@ const PublicLanding = () => {
       <section className="relative overflow-hidden bg-secondary">
         <div className="absolute inset-0 speed-lines" />
         <div className="absolute inset-0">
-          <img src={artRaceModeHero} alt="" className="h-full w-full object-cover opacity-25" />
+          <img src={brandHeroPedal} alt="" className="h-full w-full object-cover opacity-25" />
           <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary/90 to-secondary/70" />
         </div>
 
