@@ -7,6 +7,7 @@ import {
   ChevronRight, Timer, Calendar, Sparkles, Mountain, Repeat,
   Gauge, ClipboardCheck, AlertTriangle, CheckCircle2, X, BarChart3
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import ChallengesDashboard from "@/components/ChallengesDashboard";
 import {
   CHALLENGE_DEFINITIONS,
@@ -422,7 +423,6 @@ const Dashboard = () => {
 
   // ── Derived values ──
   const firstName = riderTotals?.riderName.split(" ")[0] ?? nfcSession?.firstName ?? "Rider";
-  const streak = riderTotals?.currentStreak ?? 0;
 
   // This-week sessions
   const now = new Date();
@@ -490,17 +490,8 @@ const Dashboard = () => {
                     </span>
                     {schoolRank && (
                       <span className="border-[2px] border-accent bg-secondary px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-wider text-accent">
-                        Rank #{schoolRank}
+                        School Rank #{schoolRank}
                       </span>
-                    )}
-                    {streak > 0 && (
-                      <motion.span
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ repeat: Infinity, duration: 1.5 }}
-                        className="flex items-center gap-1 border-[2px] border-accent bg-accent px-2 py-0.5 font-display text-[10px] font-bold uppercase text-accent-foreground"
-                      >
-                        <Flame className="h-3 w-3 animate-flame-flicker" /> {streak} streak
-                      </motion.span>
                     )}
                   </div>
                 </div>
@@ -545,7 +536,60 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* ═══ FIRST RIDE WELCOME BANNER ═══ */}
+        {/* ═══ RIDE ACTIVITY CHART ═══ */}
+        {rideSessions.length > 1 && (() => {
+          // Aggregate rides by date for chart
+          const dateMap = new Map<string, { distance: number; points: number; rides: number }>();
+          for (const s of rideSessions) {
+            const prev = dateMap.get(s.date) ?? { distance: 0, points: 0, rides: 0 };
+            dateMap.set(s.date, {
+              distance: prev.distance + s.distance_km,
+              points: prev.points + s.points,
+              rides: prev.rides + 1,
+            });
+          }
+          const chartData = Array.from(dateMap.entries())
+            .map(([date, d]) => ({ date: date.slice(5), distance: Math.round(d.distance * 10) / 10, points: d.points, rides: d.rides }))
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .slice(-14); // last 14 days
+
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="mb-6 overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
+            >
+              <div className="leaderboard-header flex items-center gap-2 px-5 py-3">
+                <BarChart3 className="h-4 w-4" />
+                <h3 className="text-base tracking-wider">Ride Activity</h3>
+              </div>
+              <div className="px-4 py-4" style={{ height: 220 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} barSize={20}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                    <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} unit=" km" width={50} />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "2px solid hsl(var(--secondary))",
+                        borderRadius: 0,
+                        fontFamily: "var(--font-display)",
+                        fontSize: 12,
+                      }}
+                      formatter={(value: number, name: string) => [
+                        name === "distance" ? `${value} km` : `${value} pts`,
+                        name === "distance" ? "Distance" : "Points"
+                      ]}
+                    />
+                    <Bar dataKey="distance" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+          );
+        })()}
         {rideSessions.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -701,6 +745,56 @@ const Dashboard = () => {
           </motion.div>
 
         </div>
+
+        {/* ═══ EARNED BADGES GALLERY ═══ */}
+        {challenges.filter(c => c.completed).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="mb-6"
+          >
+            <div className="mb-4 flex items-center gap-2">
+              <Award className="h-5 w-5 text-primary" />
+              <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
+                Earned Badges
+              </h3>
+            </div>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+              {challenges.filter(c => c.completed).map((c, i) => {
+                // Badge style inspired by the uploaded reference
+                const badgeColors = [
+                  "from-[hsl(var(--primary))] to-[hsl(var(--accent))]",
+                  "from-[hsl(var(--accent))] to-[hsl(var(--primary))]",
+                ];
+                return (
+                  <motion.div
+                    key={c.id}
+                    initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
+                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.2 + i * 0.08, type: "spring", stiffness: 200 }}
+                    className="group relative flex flex-col items-center"
+                  >
+                    <div className="relative flex h-20 w-20 items-center justify-center rounded-lg border-[3px] border-primary bg-gradient-to-br from-secondary to-muted shadow-[3px_3px_0px_hsl(var(--brand-dark))] transition-transform group-hover:scale-105 md:h-24 md:w-24">
+                      <div className="absolute inset-1 rounded-md border border-primary/20 bg-secondary/60" />
+                      <div className="relative flex flex-col items-center gap-1">
+                        <Sparkles className="h-6 w-6 text-primary md:h-7 md:w-7" />
+                        <Bike className="h-4 w-4 text-accent" />
+                      </div>
+                      {/* Completed checkmark */}
+                      <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary shadow-sm">
+                        <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    </div>
+                    <span className="mt-2 text-center font-display text-[9px] font-bold uppercase leading-tight tracking-wider text-foreground md:text-[10px]">
+                      {c.title}
+                    </span>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
 
         {/* ═══ MILESTONES ═══ */}
         <motion.div
