@@ -1,14 +1,8 @@
-import { useEffect, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Bike, Users, Trophy } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import HeroSection from "@/components/HeroSection";
-import CTASection from "@/components/CTASection";
-import SessionFeedbackForm from "@/components/SessionFeedbackForm";
-import OnboardingTour from "@/components/OnboardingTour";
 import StudentRegistrationForm from "@/components/StudentRegistrationForm";
-import { useOnboarding } from "@/hooks/useOnboarding";
 import { useAuth } from "@/hooks/useAuth";
 import logoSrc from "@/assets/fw-logo-new.png";
 import artRaceModeHero from "@/assets/art-race-mode-hero.png";
@@ -159,48 +153,6 @@ const PublicLanding = () => {
   );
 };
 
-// ── Authenticated Home Page ──────────────────────────────────────────────────
-
-const AuthenticatedHome = () => {
-  const location = useLocation();
-  const [logOpen, setLogOpen] = useState(false);
-  const { showTour, completeTour, role } = useOnboarding();
-
-  useEffect(() => {
-    if (location.state?.openLogRide) {
-      setLogOpen(true);
-      window.history.replaceState({}, "");
-    }
-  }, [location.state]);
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <HeroSection />
-      <CTASection />
-      <SessionFeedbackForm open={logOpen} onOpenChange={setLogOpen} />
-      {showTour && <OnboardingTour role={role} onComplete={completeTour} />}
-
-      <footer className="border-t-4 border-primary bg-secondary px-4 py-10">
-        <div className="container mx-auto text-center">
-          <div className="font-display text-lg font-bold uppercase text-accent">
-            Free Wheeler Bike League
-          </div>
-          <p className="mt-2 font-body text-sm text-secondary-foreground/60">
-            Pedal Your Own Path · © 2026
-          </p>
-          <Link
-            to="/terms"
-            className="mt-2 inline-block font-body text-xs text-secondary-foreground/40 underline hover:text-secondary-foreground/60"
-          >
-            Terms & Conditions
-          </Link>
-        </div>
-      </footer>
-    </div>
-  );
-};
-
 // ── Router ───────────────────────────────────────────────────────────────────
 
 const Index = () => {
@@ -208,7 +160,7 @@ const Index = () => {
 
   if (loading) return null;
 
-  return user ? <AuthenticatedHome /> : <PublicLanding />;
+  return user ? <Navigate to="/dashboard" replace /> : <PublicLanding />;
 };
 
 export default Index;
