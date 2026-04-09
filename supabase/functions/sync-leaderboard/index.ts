@@ -139,8 +139,7 @@ Deno.serve(async (req) => {
     for (const s of prevSchoolArr) prevSchoolMap.set(s.name, s.rank);
 
     // Fetch all data from Airtable in parallel
-    const [orgs, students, sessions, globalDash] = await Promise.all([
-      fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Organisations'),
+    const [students, sessions, globalDash] = await Promise.all([
       fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Student Registration'),
       fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Session Reflections'),
       fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Global Dashboard', { maxRecords: '1' }),
