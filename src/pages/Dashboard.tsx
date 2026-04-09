@@ -502,7 +502,7 @@ const Dashboard = () => {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 300 }}
-                  className="flex h-14 w-14 items-center justify-center border-[3px] border-accent shadow-[0_0_16px_hsl(var(--brand-neon)/0.3)] md:h-16 md:w-16"
+                  className="flex h-14 w-14 items-center justify-center border-[3px] border-accent bg-brand-dark shadow-[0_0_16px_hsl(var(--brand-neon)/0.3)] md:h-16 md:w-16"
                 >
                   <BrandBikeIcon className="h-12 w-12 md:h-14 md:w-14" />
                 </motion.div>
