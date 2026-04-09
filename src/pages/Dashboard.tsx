@@ -2,11 +2,12 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Bike, Clock, MapPin, TrendingUp, Trophy, Plus, Zap,
+  Clock, MapPin, TrendingUp, Trophy, Plus, Zap,
   Frown, Meh, Smile, Laugh, Flame, Target, Award, Star,
   ChevronRight, Timer, Calendar, Sparkles, Mountain, Repeat,
   Gauge, ClipboardCheck, AlertTriangle, CheckCircle2, X, BarChart3
 } from "lucide-react";
+import BrandBikeIcon from "@/components/BrandBikeIcon";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import ChallengesDashboard from "@/components/ChallengesDashboard";
 import {
@@ -332,7 +333,7 @@ const Dashboard = () => {
             String(Array.isArray(value) ? value[0] ?? "" : value ?? "").trim().toLowerCase();
 
           const activeStudentsRes = await callAirtable("Student Registration", "GET", {
-            filterByFormula: `OR({NFC Bracelet}='Bracelet Received',{NFC Status}='Bracelet Received')`,
+            filterByFormula: `OR({NFC Bracelet}='Bracelet Received',{NFC Bracelet}='bracelet received')`,
           });
 
           const schoolmates = activeStudentsRes.records.filter(
@@ -484,11 +485,13 @@ const Dashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 relative overflow-hidden border-[3px] border-secondary bg-secondary p-5 shadow-[6px_6px_0px_hsl(var(--brand-dark))] md:p-7"
+          className="mb-6 relative overflow-hidden border-[3px] border-secondary bg-secondary p-5 shadow-[6px_6px_0px_hsl(var(--brand-green))] md:p-7"
         >
-          <div className="absolute inset-0">
-            <img src={brandHeroChain} alt="" className="h-full w-full object-cover opacity-15" />
-            <div className="absolute inset-0 bg-secondary/75" />
+          {/* Decorative speed lines */}
+          <div className="absolute inset-0 speed-lines" />
+          {/* Subtle brand pattern */}
+          <div className="absolute right-0 top-0 h-full w-1/3 opacity-[0.06]">
+            <BrandBikeIcon className="h-full w-full text-accent" />
           </div>
           <div className="relative">
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -499,7 +502,7 @@ const Dashboard = () => {
                   transition={{ type: "spring", stiffness: 300 }}
                   className="flex h-14 w-14 items-center justify-center border-[3px] border-accent bg-secondary shadow-[0_0_16px_hsl(var(--brand-neon)/0.3)] md:h-16 md:w-16"
                 >
-                  <Bike className="h-7 w-7 text-accent md:h-8 md:w-8" />
+                  <BrandBikeIcon className="h-9 w-9 text-accent md:h-10 md:w-10" />
                 </motion.div>
                 <div>
                   <h1 className="text-3xl text-secondary-foreground md:text-4xl lg:text-5xl">
