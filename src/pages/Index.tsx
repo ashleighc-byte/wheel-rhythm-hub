@@ -6,6 +6,9 @@ import StudentRegistrationForm from "@/components/StudentRegistrationForm";
 import { useAuth } from "@/hooks/useAuth";
 import logoSrc from "@/assets/fw-logo-new.png";
 import brandHeroPedal from "@/assets/brand-hero-pedal.png";
+import brandGoHard from "@/assets/brand-go-hard.png";
+import brandPowerLegs from "@/assets/brand-power-legs.png";
+import brandPedalPath from "@/assets/brand-pedal-path.png";
 import {
   Dialog,
   DialogContent,
@@ -91,8 +94,19 @@ const PublicLanding = () => {
       </Dialog>
 
       {/* How it Works */}
-      <section className="bg-background py-14">
-        <div className="container mx-auto px-4">
+      <section className="bg-background py-14 relative overflow-hidden">
+        {/* Decorative "Power's In Your Legs" overlay */}
+        <motion.img
+          src={brandPowerLegs}
+          alt=""
+          aria-hidden="true"
+          initial={{ opacity: 0, x: 80 }}
+          whileInView={{ opacity: 0.06, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="pointer-events-none absolute -right-16 top-1/2 -translate-y-1/2 w-64 md:w-96"
+        />
+        <div className="container relative mx-auto px-4">
           <h2 className="mb-10 text-center text-2xl text-foreground md:text-3xl">
             HOW IT WORKS
           </h2>
@@ -123,6 +137,21 @@ const PublicLanding = () => {
           </p>
         </div>
       </section>
+
+      {/* Brand divider – Go Hard chain */}
+      <div className="relative bg-secondary py-10 overflow-hidden">
+        <div className="container mx-auto flex items-center justify-center px-4">
+          <motion.img
+            src={brandGoHard}
+            alt="Go hard without having to go anywhere"
+            initial={{ opacity: 0, rotate: -5, scale: 0.8 }}
+            whileInView={{ opacity: 1, rotate: 0, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, type: "spring" }}
+            className="h-32 w-32 object-contain md:h-48 md:w-48"
+          />
+        </div>
+      </div>
 
       {/* Footer */}
       <footer className="border-t-4 border-primary bg-secondary px-4 py-10">

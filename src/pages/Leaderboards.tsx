@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Bike, Clock, Zap, MapPin, Mountain, ChevronDown, ChevronUp, Trophy, Map } from "lucide-react";
+import brandGoHard from "@/assets/brand-go-hard.png";
+import brandPedalPath from "@/assets/brand-pedal-path.png";
 import Navbar from "@/components/Navbar";
 import StatsBar from "@/components/StatsBar";
 import { useAuth } from "@/hooks/useAuth";
@@ -216,6 +218,32 @@ const Leaderboards = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <StatsBar />
+
+      {/* Decorative brand divider */}
+      <div className="relative bg-background overflow-hidden">
+        <div className="container mx-auto flex items-center justify-between px-4 py-4">
+          <motion.img
+            src={brandPedalPath}
+            alt=""
+            aria-hidden="true"
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 0.08, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-48 md:w-72"
+          />
+          <motion.img
+            src={brandGoHard}
+            alt=""
+            aria-hidden="true"
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 0.06, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 w-32 md:w-48"
+          />
+        </div>
+      </div>
 
       {/* User rank banner */}
       {userGlobalRank && (
