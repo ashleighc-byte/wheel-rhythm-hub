@@ -29,7 +29,7 @@ import {
   isValidRecordId, fetchStudentsByIds
 } from "@/lib/airtable";
 import { formatFriendlyDate } from "@/lib/dateFormat";
-import artEliteRider from "@/assets/art-elite-rider.jpeg";
+import brandHeroChain from "@/assets/brand-hero-chain.png";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getMilestoneBadgeImage } from "@/lib/milestoneBadges";
 import MtRuapehuTracker from "@/components/MtRuapehuTracker";

@@ -7,8 +7,8 @@ import { useState, useEffect } from "react";
 import ReportIssueForm from "@/components/ReportIssueForm";
 import { fetchStudents } from "@/lib/airtable";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import artSmartBike from "@/assets/art-smart-bike.jpeg";
-import artEcycling from "@/assets/art-ecycling.jpeg";
+import brandHeroPedal from "@/assets/brand-hero-pedal.png";
+import brandHeroPower from "@/assets/brand-hero-power.png";
 
 const timelinePhases = [
   {
