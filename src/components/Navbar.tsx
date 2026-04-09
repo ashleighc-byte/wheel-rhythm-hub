@@ -109,7 +109,7 @@ const Navbar = () => {
             <img
               src={brandLogo}
               alt="Free Wheeler Bike League"
-              className="h-12 w-auto object-contain rounded"
+              className="h-36 w-auto object-contain rounded"
             />
           </Link>
 
