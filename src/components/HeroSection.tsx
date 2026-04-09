@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import brandHeroPower from "@/assets/brand-hero-power.png";
+import brandPedalPath from "@/assets/brand-pedal-path.png";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -15,7 +16,13 @@ const HeroSection = () => {
     <section className="relative overflow-hidden bg-secondary">
       {/* Speed lines decoration */}
       <div className="absolute inset-0 speed-lines" />
-
+      {/* Subtle brand watermark overlay */}
+      <img
+        src={brandPedalPath}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-20 bottom-0 w-56 opacity-[0.04] md:w-80"
+      />
       <div className="container relative mx-auto px-4 py-16 md:py-24">
         <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           {/* Text content */}

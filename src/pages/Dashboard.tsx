@@ -31,6 +31,8 @@ import {
 } from "@/lib/airtable";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 // Brand assets imported via BrandBikeIcon component
+import brandGoHard from "@/assets/brand-go-hard.png";
+import brandPedalPath from "@/assets/brand-pedal-path.png";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getMilestoneBadgeImage } from "@/lib/milestoneBadges";
 import MtRuapehuTracker from "@/components/MtRuapehuTracker";
@@ -815,7 +817,15 @@ const Dashboard = () => {
         )}
 
         {/* ═══ MT RUAPEHU ELEVATION TRACKER ═══ */}
-        <MtRuapehuTracker totalElevation={rideSessions.reduce((sum, s) => sum + (s.elevation_m || 0), 0)} />
+        <div className="relative">
+          <img
+            src={brandGoHard}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-8 top-1/2 -translate-y-1/2 w-24 opacity-[0.06] md:w-36"
+          />
+          <MtRuapehuTracker totalElevation={rideSessions.reduce((sum, s) => sum + (s.elevation_m || 0), 0)} />
+        </div>
 
         {/* ═══ MILESTONES (only incomplete ones) ═══ */}
         {challenges.filter(c => !c.completed).length > 0 && (
@@ -823,8 +833,15 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="mb-6"
+            className="mb-6 relative overflow-hidden"
           >
+            {/* Decorative brand watermark */}
+            <img
+              src={brandPedalPath}
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-12 top-1/2 -translate-y-1/2 w-48 opacity-[0.04] md:w-64"
+            />
             <div className="mb-4 flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
               <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
