@@ -199,17 +199,12 @@ Deno.serve(async (req) => {
       riderPoints.set(studentId, { totalPoints: pts, totalMinutes: totalMin, totalDistance: totalDist, totalElevation: totalElev, sessions: valid, streak });
     }
 
-    // Build org map
-    const orgMap = new Map<string, string>();
-    for (const o of orgs) orgMap.set(o.id, String(o.fields['Organisation Name'] ?? 'Unknown'));
-
     // School rankings — only schools with active students, deduplicated by name
+    // School field is a plain string, not a linked record
     const schoolDataByName = new Map<string, { riders: number; points: number }>();
     for (const s of activeStudents) {
-      const schoolIds = s.fields['School'] as string[] | undefined;
-      if (!schoolIds?.length) continue;
-      const sid = schoolIds[0];
-      const sName = orgMap.get(sid) ?? sid;
+      const sName = String(s.fields['School'] ?? '').trim();
+      if (!sName) continue;
       const prev = schoolDataByName.get(sName) ?? { riders: 0, points: 0 };
       const computed = riderPoints.get(s.id);
       schoolDataByName.set(sName, { riders: prev.riders + 1, points: prev.points + (computed?.totalPoints ?? 0) });
@@ -224,11 +219,11 @@ Deno.serve(async (req) => {
     const topRiders = activeStudents
       .map((s: any) => {
         const computed = riderPoints.get(s.id);
-        const schoolId = (s.fields['School'] as string[])?.[0] ?? '';
+        const schoolName = String(s.fields['School'] ?? '').trim();
         return {
           name: String(s.fields['Full Name'] ?? ''),
-          school: orgMap.get(schoolId) ?? '',
-          schoolId,
+          school: schoolName,
+          schoolId: '',
           sessions: computed?.sessions ?? 0,
           totalPoints: computed?.totalPoints ?? 0,
           totalMinutes: computed?.totalMinutes ?? 0,
