@@ -4,11 +4,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { CheckCircle2, Circle, Bike, ClipboardList, Heart, AlertTriangle, Target, BarChart3, Calendar, Zap, Flame, Trophy } from "lucide-react";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import ReportIssueForm from "@/components/ReportIssueForm";
 import { fetchStudents } from "@/lib/airtable";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import brandHeroPedal from "@/assets/brand-hero-pedal.png";
 import brandHeroPower from "@/assets/brand-hero-power.png";
+import brandGoHard from "@/assets/brand-go-hard.png";
+import brandPedalPath from "@/assets/brand-pedal-path.png";
+import brandPowerLegs from "@/assets/brand-power-legs.png";
 
 const timelinePhases = [
   {
@@ -109,8 +113,18 @@ const StudentInfo = () => {
       </section>
 
       {/* What is Free Wheeler */}
-      <section className="bg-background py-12">
-        <div className="container mx-auto px-4">
+      <section className="bg-background py-12 relative overflow-hidden">
+        {/* Decorative overlay */}
+        <motion.img
+          src={brandPedalPath}
+          alt=""
+          aria-hidden="true"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 0.05 }}
+          viewport={{ once: true }}
+          className="pointer-events-none absolute -left-20 bottom-0 w-64 md:w-96"
+        />
+        <div className="container relative mx-auto px-4">
           <div className="mx-auto max-w-2xl space-y-6 font-body text-base leading-relaxed text-foreground/90">
             <p className="text-xl font-bold text-foreground">
               Free Wheeler Bike League is a new way to do sport.
