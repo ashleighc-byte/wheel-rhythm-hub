@@ -487,7 +487,7 @@ const Dashboard = () => {
           className="mb-6 relative overflow-hidden border-[3px] border-secondary bg-secondary p-5 shadow-[6px_6px_0px_hsl(var(--brand-dark))] md:p-7"
         >
           <div className="absolute inset-0">
-            <img src={artEliteRider} alt="" className="h-full w-full object-cover opacity-15" />
+            <img src={brandHeroChain} alt="" className="h-full w-full object-cover opacity-15" />
             <div className="absolute inset-0 bg-secondary/75" />
           </div>
           <div className="relative">

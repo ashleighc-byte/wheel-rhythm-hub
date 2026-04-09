@@ -91,7 +91,7 @@ const StudentInfo = () => {
       {/* Hero */}
       <section className="bg-secondary py-14 md:py-20 relative overflow-hidden speed-lines">
         <div className="absolute inset-0">
-          <img src={artSmartBike} alt="" className="h-full w-full object-cover opacity-20" />
+          <img src={brandHeroPedal} alt="" className="h-full w-full object-cover opacity-20" />
           <div className="absolute inset-0 bg-secondary/75" />
         </div>
         <div className="container mx-auto px-4 text-center relative z-10">
@@ -353,7 +353,7 @@ const TeacherInfo = () => {
       {/* Hero */}
       <section className="bg-secondary py-16 md:py-24 relative overflow-hidden speed-lines">
         <div className="absolute inset-0">
-          <img src={artEcycling} alt="" className="h-full w-full object-cover opacity-20" />
+          <img src={brandHeroPower} alt="" className="h-full w-full object-cover opacity-20" />
           <div className="absolute inset-0 bg-secondary/75" />
         </div>
         <div className="container mx-auto px-4 text-center relative z-10">
