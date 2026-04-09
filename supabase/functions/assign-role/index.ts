@@ -11,7 +11,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get the user from the auth header
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'No auth header' }), {
@@ -24,7 +23,6 @@ Deno.serve(async (req) => {
     const airtableApiKey = Deno.env.get('AIRTABLE_API_KEY')!;
     const airtableBaseId = Deno.env.get('AIRTABLE_BASE_ID')!;
 
-    // Verify user with anon client
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } }
@@ -37,9 +35,9 @@ Deno.serve(async (req) => {
     }
 
     const email = user.email;
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // Check if role already assigned
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: existingRoles } = await adminClient
       .from('user_roles')
       .select('role')
@@ -51,16 +49,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check Organisations table (teachers) first
-    const orgUrl = `https://api.airtable.com/v0/${airtableBaseId}/${encodeURIComponent('Organisations')}?filterByFormula=${encodeURIComponent(`{Email} = '${email}'`)}&maxRecords=1`;
-    const orgRes = await fetch(orgUrl, {
-      headers: { 'Authorization': `Bearer ${airtableApiKey}` }
-    });
-    const orgData = await orgRes.json();
-
+    // Try Organisations table for teachers, but handle 403 gracefully
     let role: 'admin' | 'student' = 'student';
-    if (orgData.records && orgData.records.length > 0) {
-      role = 'admin';
+    try {
+      const orgUrl = `https://api.airtable.com/v0/${airtableBaseId}/${encodeURIComponent('Organisations')}?filterByFormula=${encodeURIComponent(`{Email} = '${email}'`)}&maxRecords=1`;
+      const orgRes = await fetch(orgUrl, {
+        headers: { 'Authorization': `Bearer ${airtableApiKey}` }
+      });
+      if (orgRes.ok) {
+        const orgData = await orgRes.json();
+        if (orgData.records && orgData.records.length > 0) {
+          role = 'admin';
+        }
+      } else {
+        console.warn('Organisations table inaccessible, defaulting to student role');
+      }
+    } catch (err) {
+      console.warn('Organisations lookup failed:', err);
     }
 
     // Insert role
