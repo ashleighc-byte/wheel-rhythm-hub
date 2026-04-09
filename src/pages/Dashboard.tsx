@@ -677,8 +677,8 @@ const Dashboard = () => {
                       className="w-full text-left px-5 py-3 transition-colors hover:bg-muted"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-secondary">
-                          <BrandBikeIcon className="h-5 w-5 text-accent" />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+                          <BrandBikeIcon className="h-10 w-10" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
