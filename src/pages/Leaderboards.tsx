@@ -197,7 +197,7 @@ const Leaderboards = () => {
           : 0,
         totalElevation: Math.round(r.totalElevation ?? 0),
         isCurrentUser: r.airtableId === userAirtableId,
-        gender: genderMap.get(r.airtableId) ?? "",
+        gender: genderMap[r.airtableId] ?? "",
       }));
   }, [sortedAll, schoolName, userAirtableId, genderMap]);
 
