@@ -1,32 +1,42 @@
 
+# Brand Visual Redesign – Professional Audit & Fix
 
-# Fix Book a Bike Page for Both Authenticated and Public Users
+## Problems Identified
+1. **Brand graphics used as dark, barely-visible background textures** – the "Pedal Your Own Path" and "Chain" graphics are crammed into `object-cover` backgrounds with 15-25% opacity, making them unrecognizable
+2. **Dashboard hero section** is a dark brown bar with the chain graphic invisible behind it
+3. **About/Info page hero** has the "Pedal Your Own Path" graphic as an unrecognizable dark smear
+4. **Generic Lucide icons** used for bike icon on dashboard instead of the brand bike icon from the logo
+5. **No use of the brand's neon (#DBFE66) "tape device" energy** in section transitions or decorative elements
+6. **Large empty spaces** between sections with no visual interest
 
-## Problem
-The BookBike page always renders its own public-style header (with "SIGN IN" link) regardless of whether the user is logged in. When a signed-in student clicks "BOOK A BIKE" from the navbar, they lose the app navigation and see the public landing header instead.
+## Proposed Changes
 
-## Solution
+### 1. Create a Brand Bike SVG Icon Component
+- Extract the cyclist icon from the logo as a reusable SVG component
+- Use it in the dashboard greeting, stat cards, and anywhere a bike icon appears
+- Replace the generic Lucide `Bike` icon throughout
 
-### File: `src/pages/BookBike.tsx`
+### 2. Dashboard Hero Redesign
+- Remove the barely-visible background image
+- Use the brand's dark brown + neon green pattern: bold "HEY, NAME" with the brand cyclist icon
+- Add a subtle speed-lines pattern (from the brand tape device) as decoration
 
-1. **Import `useAuth`** and check for `session` / `loading` state
-2. **Conditional header rendering:**
-   - If authenticated → render `<Navbar />` (the standard app navigation bar)
-   - If not authenticated → keep the existing public header with logo + "SIGN IN" link
-3. **Pre-fill school** for authenticated users if their school is known (from the user's Airtable student record)
-4. Add a loading state while auth is resolving to prevent flash of wrong header
+### 3. About/Info Page Hero Redesign  
+- Remove the background image approach entirely
+- Use the "Pedal Your Own Path" graphic as a **visible featured image** alongside the hero text (side-by-side layout), not hidden behind an overlay
+- Or use the neon/olive color-block approach from the brand landing page mockup
 
-### Schools Not Appearing
+### 4. Add Brand Graphics as Visible Section Dividers
+- Use the "Power's In Your Legs" and "Chain" graphics as **visible, properly sized decorative images** between content sections
+- Scale them to fit without cropping, with proper aspect ratios
 
-The `registration-count` edge function fetches schools from Airtable's "Student Registration" table. If no students are registered yet for a school, it won't appear. This is working as designed — schools only show once they have at least one registered student. No change needed here unless the list should include schools with zero registrations.
+### 5. Fix the Airtable Filter Error (runtime fix)
+- The `NFC Bracelet` field filter is failing – fix the field name casing
 
-### No Route Change Needed
-
-`/book` is already a public route (no wrapper in App.tsx), which is correct since unauthenticated users should also be able to book.
-
-## Summary of Changes
-
-| File | Change |
-|------|--------|
-| `src/pages/BookBike.tsx` | Import `useAuth`, conditionally render `Navbar` vs public header based on auth state |
-
+## Files to Modify
+- `src/components/BrandBikeIcon.tsx` (new) – SVG brand cyclist icon
+- `src/pages/Dashboard.tsx` – hero section, replace Lucide bike icons
+- `src/pages/Info.tsx` – hero section, add visible brand graphics between sections
+- `src/components/HeroSection.tsx` – landing page hero with proper brand image usage
+- `src/components/Navbar.tsx` – use brand icon if needed
+- `src/pages/Dashboard.tsx` – fix Airtable field name for NFC filter

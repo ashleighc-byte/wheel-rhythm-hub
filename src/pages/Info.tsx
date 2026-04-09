@@ -89,18 +89,22 @@ const StudentInfo = () => {
       <Navbar />
 
       {/* Hero */}
-      <section className="bg-secondary py-14 md:py-20 relative overflow-hidden speed-lines">
-        <div className="absolute inset-0">
-          <img src={brandHeroPedal} alt="" className="h-full w-full object-cover opacity-20" />
-          <div className="absolute inset-0 bg-secondary/75" />
-        </div>
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
-            What's This All About?
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl font-body text-lg text-secondary-foreground/70">
-            Everything you need to know — and everything you need to do.
-          </p>
+      <section className="bg-secondary py-14 md:py-20 relative overflow-hidden">
+        <div className="absolute inset-0 speed-lines" />
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
+                What's This All About?
+              </h1>
+              <p className="mt-4 max-w-xl font-body text-lg text-secondary-foreground/70">
+                Everything you need to know — and everything you need to do.
+              </p>
+            </div>
+            <div className="flex-shrink-0 w-64 md:w-80">
+              <img src={brandHeroPedal} alt="Pedal Your Own Path" className="w-full h-auto rounded-sm border-[3px] border-accent shadow-[6px_6px_0px_hsl(var(--brand-neon)/0.3)]" />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -351,18 +355,22 @@ const TeacherInfo = () => {
       <Navbar />
 
       {/* Hero */}
-      <section className="bg-secondary py-16 md:py-24 relative overflow-hidden speed-lines">
-        <div className="absolute inset-0">
-          <img src={brandHeroPower} alt="" className="h-full w-full object-cover opacity-20" />
-          <div className="absolute inset-0 bg-secondary/75" />
-        </div>
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
-            Pilot Programme Information
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl font-body text-lg text-secondary-foreground/70">
-            Everything you need to know about the Free Wheeler Bike League pilot.
-          </p>
+      <section className="bg-secondary py-16 md:py-24 relative overflow-hidden">
+        <div className="absolute inset-0 speed-lines" />
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
+                Pilot Programme Information
+              </h1>
+              <p className="mt-4 max-w-xl font-body text-lg text-secondary-foreground/70">
+                Everything you need to know about the Free Wheeler Bike League pilot.
+              </p>
+            </div>
+            <div className="flex-shrink-0 w-64 md:w-80">
+              <img src={brandHeroPower} alt="The Power's In Your Legs" className="w-full h-auto rounded-sm border-[3px] border-accent shadow-[6px_6px_0px_hsl(var(--brand-neon)/0.3)]" />
+            </div>
+          </div>
         </div>
       </section>
 
