@@ -269,11 +269,14 @@ const Dashboard = () => {
         const org = orgsRes.records[0];
         localSchoolId = org.id;
         mySchoolName = String(org.fields["Organisation Name"] ?? mySchoolName);
-        schoolStudentIds = Array.isArray(org?.fields["Student Registration"])
-          ? (org!.fields["Student Registration"] as string[])
+        const orgRec = orgsRes.records[0];
+        schoolStudentIds = Array.isArray(orgRec?.fields["Student Registration"])
+          ? (orgRec.fields["Student Registration"] as string[])
           : [];
         setSchoolName(mySchoolName);
         setMySchoolId(localSchoolId);
+      } else if (mySchoolName) {
+        setSchoolName(mySchoolName);
       }
 
       const riderName = String(f["Full Name"] ?? nfcSession?.fullName ?? "Rider");
