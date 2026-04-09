@@ -260,23 +260,7 @@ const TeacherResources = () => {
         </div>
       </section>
 
-      {/* Hidden printable poster content */}
-      <div className="hidden">
-        <div id="poster-log-ride">
-          <h1>🚴 How to Log a Ride</h1>
-          <div class="step"><div class="step-num">1</div><div class="step-text"><div class="step-title">Tap Your NFC Bracelet</div>Hold your bracelet against the iPad to open the session form.</div></div>
-          <div class="step"><div class="step-num">2</div><div class="step-text"><div class="step-title">Your Name Appears</div>Check it's you, then tap "Log a Ride".</div></div>
-          <div class="step"><div class="step-num">3</div><div class="step-text"><div class="step-title">Fill In Your Details</div>Enter your distance, time, elevation, and course from MyWhoosh.</div></div>
-          <div class="step"><div class="step-num">4</div><div class="step-text"><div class="step-title">Submit</div>Hit submit and you're done! Your points are calculated automatically.</div></div>
-        </div>
-        <div id="poster-book-bike">
-          <h1>📅 How to Book a Bike</h1>
-          <div class="step"><div class="step-num">1</div><div class="step-text"><div class="step-title">Go to the Website</div>Visit freewheeler.lovable.app/book on any device.</div></div>
-          <div class="step"><div class="step-num">2</div><div class="step-text"><div class="step-title">Pick Your Date & Time</div>Select a weekday and choose a 15-minute slot.</div></div>
-          <div class="step"><div class="step-num">3</div><div class="step-text"><div class="step-title">Choose Your Bike</div>Pick Bike A or Bike B — whichever is available.</div></div>
-          <div class="step"><div class="step-num">4</div><div class="step-text"><div class="step-title">Confirm</div>Enter your name and book. Want 30 minutes? Book two slots!</div></div>
-        </div>
-      </div>
+      {/* Poster content is rendered inline in the print function via handlePrintPoster */}
 
       {showQR && (
         <StudentQRCodes

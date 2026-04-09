@@ -23,6 +23,8 @@ import Webinar from "./pages/Webinar";
 import StudentRegistration from "./pages/StudentRegistration";
 import RaceGame from "./pages/RaceGame";
 import Terms from "./pages/Terms";
+import BookBike from "./pages/BookBike";
+import TeacherResources from "./pages/TeacherResources";
 
 
 const queryClient = new QueryClient();
