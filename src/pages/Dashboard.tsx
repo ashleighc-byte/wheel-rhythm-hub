@@ -531,9 +531,11 @@ const Dashboard = () => {
             <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Points</p>
           </div>
           <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
-            <Flame className="mx-auto mb-1 h-5 w-5 text-primary" />
-            <p className="font-display text-2xl font-bold text-accent">{streak}</p>
-            <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Day Streak</p>
+            <MapPin className="mx-auto mb-1 h-5 w-5 text-primary" />
+            <p className="font-display text-2xl font-bold text-accent">
+              {rideSessions.reduce((sum, s) => sum + (s.distance_km || 0), 0).toFixed(1)}
+            </p>
+            <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total km</p>
           </div>
           <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
             <Bike className="mx-auto mb-1 h-5 w-5 text-primary" />
@@ -541,38 +543,6 @@ const Dashboard = () => {
             <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Rides</p>
           </div>
         </div>
-
-        {/* ═══ LOG A RIDE CTA ═══ */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mb-6"
-        >
-          <div className="flex gap-3">
-            <button
-              onClick={() => setLogOpen(true)}
-              className="tape-element-green flex flex-1 items-center justify-center gap-3 py-5 text-xl md:text-2xl"
-            >
-              <Bike className="h-7 w-7" />
-              LOG A RIDE
-            </button>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="border-[2px] border-secondary bg-card p-3 text-center hover-bounce">
-              <Target className="mx-auto mb-1 h-4 w-4 text-primary" />
-              <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Next Milestone</p>
-              <p className="font-display text-xs font-bold text-foreground">
-                {challenges.find(c => !c.completed)?.title ?? "All done!"}
-              </p>
-            </div>
-            <div className="border-[2px] border-secondary bg-card p-3 text-center hover-bounce">
-              <Calendar className="mx-auto mb-1 h-4 w-4 text-primary" />
-              <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">This Week</p>
-              <p className="font-display text-lg font-bold text-accent">{thisWeekSessions.length} rides</p>
-            </div>
-          </div>
-        </motion.div>
 
         {/* ═══ FIRST RIDE WELCOME BANNER ═══ */}
         {rideSessions.length === 0 && (
@@ -741,10 +711,48 @@ const Dashboard = () => {
               {challenges.filter(c => c.completed).length}/{challenges.length} completed
             </span>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {challenges.map((c, i) => (
-              <ChallengeCard key={c.id} challenge={c} index={i} />
-            ))}
+          <div className="space-y-3">
+            {challenges.map((c, i) => {
+              const pct = Math.min((c.current / c.goal) * 100, 100);
+              return (
+                <motion.div
+                  key={c.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + i * 0.04 }}
+                  className={`border-[3px] bg-card p-3 shadow-[4px_4px_0px_hsl(var(--brand-dark))] ${
+                    c.completed ? "border-primary" : "border-secondary"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {c.completed ? (
+                        <Sparkles className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Target className="h-4 w-4 text-accent" />
+                      )}
+                      <span className="font-display text-xs font-bold uppercase tracking-wider text-foreground">{c.title}</span>
+                    </div>
+                    <span className="font-display text-xs font-bold text-primary flex items-center gap-0.5">
+                      <Zap className="h-3 w-3" /> +{c.reward} pts
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-4 border-[2px] border-secondary bg-muted overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.8, delay: 0.4 + i * 0.04 }}
+                        className={`h-full ${c.completed ? "bg-primary" : "bg-accent"}`}
+                      />
+                    </div>
+                    <span className="font-display text-xs font-bold text-muted-foreground whitespace-nowrap min-w-[4rem] text-right">
+                      {c.current}/{c.goal}
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
 
