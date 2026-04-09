@@ -19,6 +19,7 @@ import {
   Check,
   FileDown,
   Smartphone,
+  Calendar,
 } from "lucide-react";
 
 const PERMISSION_LINK = "https://bit.ly/GameFITPermission";
