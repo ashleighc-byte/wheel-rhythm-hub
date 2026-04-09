@@ -616,7 +616,7 @@ const Dashboard = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-display text-sm font-bold uppercase text-foreground">
+                             <span className="font-display text-sm font-bold uppercase text-foreground">
                               {formatFriendlyDate(session.date)}
                             </span>
                             {session.points > 0 && (
@@ -625,7 +625,13 @@ const Dashboard = () => {
                               </span>
                             )}
                           </div>
-                          {/* All metrics with icons, no mood faces */}
+                          {/* Course / Track name */}
+                          {session.courseMap && (
+                            <p className="font-display text-[10px] uppercase tracking-wider text-primary/80 truncate">
+                              {session.courseMap}
+                            </p>
+                          )}
+                          {/* Metrics row */}
                           <div className="mt-1 flex flex-wrap items-center gap-3 font-body text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Timer className="h-3 w-3" /> {Math.round(session.duration_minutes)} min
@@ -633,14 +639,14 @@ const Dashboard = () => {
                             <span className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" /> {session.distance_km} km
                             </span>
-                            {session.elevation_m > 0 && (
-                              <span className="flex items-center gap-1">
-                                <Mountain className="h-3 w-3" /> {session.elevation_m} m
-                              </span>
-                            )}
                             {session.avg_speed_kmh > 0 && (
                               <span className="flex items-center gap-1">
                                 <Gauge className="h-3 w-3" /> {session.avg_speed_kmh} km/h
+                              </span>
+                            )}
+                            {session.elevation_m > 0 && (
+                              <span className="flex items-center gap-1">
+                                <Mountain className="h-3 w-3" /> {session.elevation_m} m
                               </span>
                             )}
                           </div>
