@@ -322,7 +322,7 @@ const Dashboard = () => {
       setChallenges(ch);
       setGrandTotal(grand);
 
-      // School leaderboard preview — only fetch school students and their sessions
+      // School leaderboard preview — use computeAllRiderPoints for consistent ranking
       if (mySchoolName) {
         try {
           const schoolStudentsRes = await callAirtable("Student Registration", "GET", {
@@ -339,7 +339,7 @@ const Dashboard = () => {
                 id: s.id,
                 name: String(s.fields["Full Name"] ?? ""),
                 sessions: computed?.sessions ?? 0,
-                totalPoints: s.id === rec.id ? grand : (computed?.totalPoints ?? 0),
+                totalPoints: computed?.totalPoints ?? 0,
               };
             })
             .sort((a: any, b: any) => b.totalPoints - a.totalPoints);
