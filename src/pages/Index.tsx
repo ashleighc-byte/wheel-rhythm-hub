@@ -104,9 +104,9 @@ const PublicLanding = () => {
           </h2>
           <div className="mx-auto grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
             {[
-              { icon: Bike, title: "Ride", desc: "Jump on a smart bike and ride in MyWhoosh at school." },
-              { icon: Trophy, title: "Earn Points", desc: "10 points per ride plus bonuses for streaks, elevation, and speed." },
-              { icon: Users, title: "Compete", desc: "Climb the leaderboard and push your school to the top." },
+              { icon: Bike, title: "Ride", desc: "Jump on a smart bike at school and ride in MyWhoosh. No equipment needed — just show up." },
+              { icon: Trophy, title: "Earn Points", desc: "10 points per ride plus bonuses for streaks, elevation, speed, and trying new tracks." },
+              { icon: Users, title: "Compete", desc: "Climb the leaderboard, hit milestones, and push your school to the top." },
             ].map((item, i) => (
               <motion.div
                 key={item.title}
@@ -124,6 +124,9 @@ const PublicLanding = () => {
               </motion.div>
             ))}
           </div>
+          <p className="mt-6 text-center font-body text-xs text-muted-foreground">
+            Limited to 24 students per school — first in, first served. Once registered, Sport Waikato will deliver your NFC bracelet and user pack to your school.
+          </p>
         </div>
       </section>
 
@@ -136,12 +139,20 @@ const PublicLanding = () => {
           <p className="mt-2 font-body text-sm text-secondary-foreground/60">
             Pedal Your Own Path · © 2026
           </p>
-          <Link
-            to="/terms"
-            className="mt-2 inline-block font-body text-xs text-secondary-foreground/40 underline hover:text-secondary-foreground/60"
-          >
-            Terms & Conditions
-          </Link>
+          <div className="mt-3 flex items-center justify-center gap-4">
+            <Link
+              to="/book"
+              className="font-display text-xs uppercase tracking-wider text-secondary-foreground/60 underline hover:text-secondary-foreground/80"
+            >
+              Book a Bike
+            </Link>
+            <Link
+              to="/terms"
+              className="font-display text-xs uppercase tracking-wider text-secondary-foreground/40 underline hover:text-secondary-foreground/60"
+            >
+              Terms & Conditions
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
