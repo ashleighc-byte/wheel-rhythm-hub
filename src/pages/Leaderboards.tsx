@@ -228,7 +228,7 @@ const Leaderboards = () => {
                 #{userGlobalRank}
               </p>
               <p className="font-body text-sm text-secondary-foreground/60">
-                out of {sortedAll.length} riders across all schools
+                out of {allRiders.length} riders across all schools
               </p>
             </motion.div>
           </div>

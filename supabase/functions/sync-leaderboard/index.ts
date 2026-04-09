@@ -294,13 +294,14 @@ Deno.serve(async (req) => {
       else console.log(`Inserted ${batch.length} activity events`);
     }
 
-    // Global stats
-    const gf = globalDash[0]?.fields ?? {};
+    // Global stats — compute from actual data, not Airtable Global Dashboard
+    const totalSessionsComputed = Array.from(riderPoints.values()).reduce((s, r) => s + r.sessions, 0);
+    const totalMinutesComputed = Array.from(riderPoints.values()).reduce((s, r) => s + r.totalMinutes, 0);
     const globalStats = {
-      totalSessions: Number(gf['Total Sessions'] ?? 0),
-      totalRiders: Number(gf['Total Riders'] ?? 0),
-      totalSchools: Number(gf['Total Schools'] ?? 0),
-      totalHours: Number(gf['Total Hours'] ?? 0),
+      totalSessions: totalSessionsComputed,
+      totalRiders: activeStudents.length,
+      totalSchools: schoolDataByName.size,
+      totalHours: Math.floor(totalMinutesComputed / 60),
     };
 
     // Upsert cache rows
