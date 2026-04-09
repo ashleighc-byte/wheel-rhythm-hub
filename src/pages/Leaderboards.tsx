@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, callAirtable } from "@/lib/airtable";
 import { getCachedTopRiders, getCachedSchoolRankings, getCachedPopularTracks, type CachedRider, type CachedPopularTrack } from "@/lib/leaderboardCache";
 import { pluraliseUnit } from "@/lib/dateFormat";
-import artRideCompleteNew from "@/assets/art-ride-complete-new.png";
 
 function formatTime(timeStr: string): string {
   const parts = timeStr.split(":");
@@ -28,7 +27,7 @@ interface RiderRow {
   sessions: number;
   totalPoints: number;
   totalDistance: number;
-  totalTime: string;
+  avgSpeed: number;
   totalElevation: number;
   isCurrentUser: boolean;
   gender?: string;
@@ -56,7 +55,7 @@ const RiderTable = ({ title, riders, icon }: { title: string; riders: RiderRow[]
               <th className="px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Sessions</th>
               <th className="px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Points</th>
               <th className="hidden sm:table-cell px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Distance</th>
-              <th className="hidden md:table-cell px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Time</th>
+              <th className="hidden sm:table-cell px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Avg Speed</th>
               <th className="hidden md:table-cell px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Elevation</th>
             </tr>
           </thead>
@@ -87,7 +86,7 @@ const RiderTable = ({ title, riders, icon }: { title: string; riders: RiderRow[]
                   </span>
                 </td>
                 <td className="hidden sm:table-cell px-4 py-3 text-center font-body text-sm text-muted-foreground">{rider.totalDistance} km</td>
-                <td className="hidden md:table-cell px-4 py-3 text-center font-body text-sm text-muted-foreground">{formatTime(rider.totalTime)}</td>
+                <td className="hidden sm:table-cell px-4 py-3 text-center font-body text-sm text-muted-foreground">{rider.avgSpeed} km/h</td>
                 <td className="hidden md:table-cell px-4 py-3 text-center font-body text-sm text-muted-foreground">{rider.totalElevation} m</td>
               </motion.tr>
             ))}
@@ -114,9 +113,9 @@ const Leaderboards = () => {
   const { user, nfcSession } = useAuth();
   const [allRiders, setAllRiders] = useState<CachedRider[]>([]);
   const [schoolName, setSchoolName] = useState("");
-  const [userSchoolId, setUserSchoolId] = useState("");
   const [userAirtableId, setUserAirtableId] = useState("");
   const [popularTracks, setPopularTracks] = useState<CachedPopularTrack[]>([]);
+  const [genderMap, setGenderMap] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -144,12 +143,22 @@ const Leaderboards = () => {
 
         if (studentRec) {
           setUserAirtableId(studentRec.id);
-          const schoolIds = studentRec.fields["School"] as string[] | undefined;
-          if (schoolIds?.length) {
-            setUserSchoolId(schoolIds[0]);
-            const match = riders.find(r => r.schoolId === schoolIds[0]);
-            setSchoolName(match?.school ?? "");
+          const rawSchool = studentRec.fields["School"];
+          const sName = rawSchool ? String(Array.isArray(rawSchool) ? rawSchool[0] : rawSchool) : "";
+          setSchoolName(sName);
+        }
+
+        // Fetch gender data from Airtable Student Registration
+        try {
+          const allStudents = await callAirtable("Student Registration", "GET");
+          const gMap = new Map<string, string>();
+          for (const s of allStudents.records) {
+            const gender = String(s.fields["Gender (optional)"] ?? "").toUpperCase().trim();
+            if (gender) gMap.set(s.id, gender);
           }
+          setGenderMap(gMap);
+        } catch {
+          // Non-fatal
         }
       } catch (err) {
         console.error("Leaderboards load error:", err);
@@ -160,7 +169,7 @@ const Leaderboards = () => {
     load();
   }, [user?.email, nfcSession?.studentId]);
 
-  // All riders sorted by points for rank
+  // All riders sorted by points
   const sortedAll = useMemo(() =>
     [...allRiders].sort((a, b) => b.totalPoints - a.totalPoints),
   [allRiders]);
@@ -172,30 +181,32 @@ const Leaderboards = () => {
     return idx >= 0 ? idx + 1 : null;
   }, [sortedAll, userAirtableId]);
 
-  // School riders
+  // School riders — match by school name (cached `school` field)
   const schoolRiders = useMemo(() => {
-    if (!userSchoolId) return [];
+    if (!schoolName) return [];
     return sortedAll
-      .filter(r => r.schoolId === userSchoolId)
+      .filter(r => r.school === schoolName)
       .map((r, i): RiderRow => ({
         rank: i + 1,
         name: r.name,
         sessions: r.sessions,
         totalPoints: r.totalPoints,
         totalDistance: Math.round((r.totalDistance ?? 0) * 10) / 10,
-        totalTime: r.totalTime ?? "0:00",
+        avgSpeed: r.totalMinutes > 0 && r.totalDistance > 0
+          ? Math.round(((r.totalDistance ?? 0) / ((r.totalMinutes ?? 1) / 60)) * 10) / 10
+          : 0,
         totalElevation: Math.round(r.totalElevation ?? 0),
         isCurrentUser: r.airtableId === userAirtableId,
-        gender: r.gender,
+        gender: genderMap.get(r.airtableId) ?? "",
       }));
-  }, [sortedAll, userSchoolId, userAirtableId]);
+  }, [sortedAll, schoolName, userAirtableId, genderMap]);
 
   const femaleRiders = useMemo(() =>
-    schoolRiders.filter(r => r.gender?.toLowerCase() === "female").map((r, i) => ({ ...r, rank: i + 1 })),
+    schoolRiders.filter(r => r.gender === "F").map((r, i) => ({ ...r, rank: i + 1 })),
   [schoolRiders]);
 
   const maleRiders = useMemo(() =>
-    schoolRiders.filter(r => r.gender?.toLowerCase() === "male").map((r, i) => ({ ...r, rank: i + 1 })),
+    schoolRiders.filter(r => r.gender === "M").map((r, i) => ({ ...r, rank: i + 1 })),
   [schoolRiders]);
 
   return (
@@ -224,19 +235,16 @@ const Leaderboards = () => {
         </section>
       )}
 
-      {/* Engagement stats moved here */}
+      {/* School Rankings Table */}
       <section className="bg-muted py-8">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-4xl">
-            <h3 className="mb-4 text-center font-display text-lg font-bold uppercase tracking-wider text-foreground">
-              School Rankings
-            </h3>
-            <SchoolRankingsCompact />
+            <SchoolRankingsTable />
           </div>
         </div>
       </section>
 
-      {/* Tables */}
+      {/* Rider Tables */}
       <section className="bg-background pb-20 pt-8">
         <div className="container mx-auto space-y-8 px-4">
           {loading ? (
@@ -247,12 +255,12 @@ const Leaderboards = () => {
           ) : (
             <>
               <RiderTable
-                title={schoolName ? `Top Riders – ${schoolName}` : "Top Riders"}
+                title={schoolName ? `Top Riders – ${schoolName}` : "Top Riders – Your School"}
                 riders={schoolRiders}
                 icon={<Trophy className="h-5 w-5" />}
               />
-              <RiderTable title="Top Female Riders" riders={femaleRiders} />
-              <RiderTable title="Top Male Riders" riders={maleRiders} />
+              <RiderTable title="Top Riders – Female" riders={femaleRiders} />
+              <RiderTable title="Top Riders – Male" riders={maleRiders} />
 
               {/* Popular Tracks */}
               {popularTracks.length > 0 && (
@@ -302,8 +310,8 @@ const Leaderboards = () => {
   );
 };
 
-// Compact school rankings component (replaces SchoolLeaderboard in sidebar)
-function SchoolRankingsCompact() {
+// School Rankings as a proper table
+function SchoolRankingsTable() {
   const [schools, setSchools] = useState<{ rank: number; name: string; riders: number; totalPoints: number }[]>([]);
 
   useEffect(() => {
@@ -313,32 +321,50 @@ function SchoolRankingsCompact() {
   if (schools.length === 0) return null;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-      {schools.map((school, i) => (
-        <motion.div
-          key={school.name}
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: i * 0.08 }}
-          className="border-[3px] border-secondary bg-card p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce"
-        >
-          <div className="flex items-center gap-3">
-            <div className={`rank-badge ${i < 3 ? "bg-accent text-accent-foreground" : ""}`}>
-              {school.rank}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-display text-sm font-bold uppercase text-foreground truncate">{school.name}</p>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span>{school.riders} riders</span>
-                <span className="flex items-center gap-1">
-                  <Zap className="h-3 w-3 text-primary" /> {school.totalPoints} pts
-                </span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      ))}
+    <div className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
+      <div className="leaderboard-header flex items-center gap-2 px-6 py-4">
+        <Trophy className="h-5 w-5" />
+        <h3 className="text-lg tracking-wider md:text-xl">School Rankings</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b-[2px] border-secondary bg-muted">
+              <th className="px-4 py-3 text-left font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">#</th>
+              <th className="px-4 py-3 text-left font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">School</th>
+              <th className="px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Riders</th>
+              <th className="px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Points</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-muted">
+            {schools.map((school, i) => (
+              <motion.tr
+                key={school.name}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05, duration: 0.3 }}
+                className="transition-colors hover:bg-muted/50"
+              >
+                <td className="px-4 py-3">
+                  <div className={`rank-badge text-xs ${i < 3 ? "bg-accent text-accent-foreground" : ""}`}>
+                    {school.rank}
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="font-display text-sm font-bold uppercase text-foreground">{school.name}</span>
+                </td>
+                <td className="px-4 py-3 text-center font-body text-sm text-muted-foreground">{school.riders}</td>
+                <td className="px-4 py-3 text-center">
+                  <span className="flex items-center justify-center gap-1 font-display text-sm font-bold text-primary">
+                    <Zap className="h-3 w-3" /> {school.totalPoints}
+                  </span>
+                </td>
+              </motion.tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
