@@ -50,7 +50,7 @@ const StudentRegistrationForm = () => {
   const [school, setSchool] = useState("");
   const [schoolSearch, setSchoolSearch] = useState("");
   const [schoolOpen, setSchoolOpen] = useState(false);
-  const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
+  const [schools, setSchools] = useState<{ id: string; name: string; spots_remaining?: number }[]>([]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -69,7 +69,7 @@ const StudentRegistrationForm = () => {
         if (res.ok) {
           const data = await res.json();
           setSchools(
-            (data.schools || []).map((s: any) => ({ id: s.id, name: s.name }))
+            (data.schools || []).map((s: any) => ({ id: s.id, name: s.name, spots_remaining: s.spots_remaining }))
           );
         }
       } catch {
