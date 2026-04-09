@@ -6,14 +6,12 @@ import brandLogo from "@/assets/fw-logo-new.png";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 
 const studentNavLinks = [
-  { label: "HOME", path: "/", tourId: "home" },
-  { label: "ABOUT THE PILOT", path: "/info", tourId: "about" },
-  { label: "LEADERBOARDS", path: "/leaderboards", tourId: "leaderboards" },
+  { label: "ABOUT", path: "/info", tourId: "about" },
+  { label: "LEADERBOARD", path: "/leaderboards", tourId: "leaderboards" },
   { label: "MY DASHBOARD", path: "/dashboard", tourId: "dashboard" },
 ];
 
 const teacherNavLinks = [
-  { label: "HOME", path: "/", tourId: "home" },
   {
     label: "ABOUT THE PILOT",
     path: "/info",
@@ -23,7 +21,7 @@ const teacherNavLinks = [
       { label: "Setup Instructions", path: "/setup-instructions" },
     ],
   },
-  { label: "LEADERBOARDS", path: "/leaderboards", tourId: "leaderboards" },
+  { label: "LEADERBOARD", path: "/leaderboards", tourId: "leaderboards" },
   { label: "TEACHER DASHBOARD", path: "/teacher-dashboard", tourId: "teacher-dashboard" },
 ];
 

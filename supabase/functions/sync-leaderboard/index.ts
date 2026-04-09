@@ -5,7 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-/** Fetch all records from an Airtable table with pagination */
 async function fetchAllAirtable(baseId: string, apiKey: string, table: string, params?: Record<string, string>) {
   const allRecords: any[] = [];
   let offset: string | undefined;
@@ -53,6 +52,18 @@ function parseSessionData(raw: any) {
   } catch { return null; }
 }
 
+/** Points formula matching frontend gamification.ts */
+function calculateSessionPoints(elevation_m: number, avg_speed_kmh: number): number {
+  let pts = 10;
+  if (elevation_m >= 300) pts += 10;
+  else if (elevation_m >= 150) pts += 5;
+  else if (elevation_m >= 50) pts += 2;
+  if (avg_speed_kmh >= 30) pts += 10;
+  else if (avg_speed_kmh >= 25) pts += 5;
+  else if (avg_speed_kmh >= 20) pts += 2;
+  return pts;
+}
+
 function calculateWeeklyBonus(dates: string[]): number {
   const weekMap = new Map<string, number>();
   for (const dateStr of dates) {
@@ -66,13 +77,16 @@ function calculateWeeklyBonus(dates: string[]): number {
   }
   let bonus = 0;
   for (const count of weekMap.values()) {
-    if (count >= 5) bonus += 15;
-    else if (count >= 3) bonus += 5;
+    if (count >= 3) bonus += 5;
   }
   return bonus;
 }
 
-/** Count consecutive riding days ending today or yesterday */
+function calculateTrackVarietyBonus(courseMaps: string[]): number {
+  const unique = new Set(courseMaps.filter(c => c.trim()).map(c => c.trim().toLowerCase()));
+  return unique.size * 3;
+}
+
 function calculateStreak(dates: string[]): number {
   if (!dates.length) return 0;
   const unique = [...new Set(dates)].sort().reverse();
@@ -98,24 +112,6 @@ function calculateStreak(dates: string[]): number {
   return streak;
 }
 
-const LEVELS = [
-  { name: "Pedal Pusher", min: 0 },
-  { name: "Gear Shifter", min: 50 },
-  { name: "Hill Climber", min: 150 },
-  { name: "Breakaway Rider", min: 300 },
-  { name: "Pace Setter", min: 500 },
-  { name: "Sprint Leader", min: 800 },
-  { name: "Free Wheeler Legend", min: 1200 },
-];
-
-function getLevelName(pts: number): string {
-  let name = LEVELS[0].name;
-  for (let i = LEVELS.length - 1; i >= 0; i--) {
-    if (pts >= LEVELS[i].min) { name = LEVELS[i].name; break; }
-  }
-  return name;
-}
-
 const STREAK_MILESTONES = [3, 5, 7, 10, 14, 21, 30];
 
 Deno.serve(async (req) => {
@@ -128,7 +124,7 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    // ── Load previous cache for diff detection ──
+    // Load previous cache for diff detection
     const { data: prevCache } = await adminClient
       .from('leaderboard_cache')
       .select('cache_key, data')
@@ -150,7 +146,7 @@ Deno.serve(async (req) => {
       fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Global Dashboard', { maxRecords: '1' }),
     ]);
 
-    // ── Compute rider points ──
+    // Compute rider points with new formula
     const studentSessions = new Map<string, any[]>();
     for (const rec of sessions) {
       const links = rec.fields?.['Student Registration'] as string[] | undefined;
@@ -160,11 +156,12 @@ Deno.serve(async (req) => {
       studentSessions.get(sid)!.push(rec);
     }
 
-    const riderPoints = new Map<string, { totalPoints: number; totalMinutes: number; totalDistance: number; totalElevation: number; sessions: number; level: string; streak: number }>();
+    const riderPoints = new Map<string, { totalPoints: number; totalMinutes: number; totalDistance: number; totalElevation: number; sessions: number; streak: number }>();
 
     for (const [studentId, sess] of studentSessions) {
-      let totalMin = 0, totalDist = 0, totalElev = 0, valid = 0;
+      let totalMin = 0, totalDist = 0, totalElev = 0, valid = 0, sessionPts = 0;
       const dates: string[] = [];
+      const courseMaps: string[] = [];
 
       for (const s of sess) {
         const rawData = s.fields['Session Data Table'];
@@ -175,26 +172,32 @@ Deno.serve(async (req) => {
         const mins = parseDuration(s.fields['Rollup Minutes'] ?? durStr);
         const dist = Number(s.fields['Total km '] ?? parsed?.distance_km ?? 0);
         const elev = Number(s.fields['Total Elevation'] ?? parsed?.elevation_m ?? 0);
+        const speed = Number(parsed?.speed_kmh ?? 0);
 
         if (mins <= 0 && dist <= 0) continue;
         totalMin += mins;
         totalDist += dist;
         totalElev += elev;
         valid++;
+        sessionPts += calculateSessionPoints(elev, speed);
         const dateStr = String(s.fields['Date'] ?? s.fields['Created'] ?? '').slice(0, 10);
         if (dateStr) dates.push(dateStr);
+        const courseMap = String(s.fields['Course Map'] ?? '').trim();
+        if (courseMap) courseMaps.push(courseMap);
       }
 
-      const pts = valid * 10 + calculateWeeklyBonus(dates);
+      const weeklyBonus = calculateWeeklyBonus(dates);
+      const trackBonus = calculateTrackVarietyBonus(courseMaps);
+      const pts = sessionPts + weeklyBonus + trackBonus;
       const streak = calculateStreak(dates);
-      riderPoints.set(studentId, { totalPoints: pts, totalMinutes: totalMin, totalDistance: totalDist, totalElevation: totalElev, sessions: valid, level: getLevelName(pts), streak });
+      riderPoints.set(studentId, { totalPoints: pts, totalMinutes: totalMin, totalDistance: totalDist, totalElevation: totalElev, sessions: valid, streak });
     }
 
-    // ── Build org map ──
+    // Build org map
     const orgMap = new Map<string, string>();
     for (const o of orgs) orgMap.set(o.id, String(o.fields['Organisation Name'] ?? 'Unknown'));
 
-    // ── School rankings ──
+    // School rankings
     const schoolData = new Map<string, { riders: number; points: number }>();
     for (const s of students) {
       const schoolIds = s.fields['School'] as string[] | undefined;
@@ -213,7 +216,7 @@ Deno.serve(async (req) => {
       .sort((a, b) => b.totalPoints - a.totalPoints || b.riders - a.riders)
       .map((r, i) => ({ ...r, rank: i + 1 }));
 
-    // ── Top riders ──
+    // Top riders with gender
     const topRiders = students
       .map((s: any) => {
         const computed = riderPoints.get(s.id);
@@ -227,29 +230,32 @@ Deno.serve(async (req) => {
           totalMinutes: computed?.totalMinutes ?? 0,
           totalDistance: computed?.totalDistance ?? 0,
           totalElevation: computed?.totalElevation ?? 0,
-          level: computed?.level ?? 'Pedal Pusher',
+          level: '', // levels removed from display
           streak: computed?.streak ?? 0,
           totalTime: String(s.fields['Total Time (h:mm)'] ?? '0:00'),
           airtableId: s.id,
+          gender: String(s.fields['Gender'] ?? ''),
         };
       })
       .filter((r: any) => r.sessions > 0);
 
-    // ── Generate activity feed events (diffs) ──
+    // Popular tracks aggregate
+    const trackCounts = new Map<string, number>();
+    for (const s of sessions) {
+      const courseMap = String(s.fields['Course Map'] ?? '').trim();
+      if (courseMap) {
+        trackCounts.set(courseMap, (trackCounts.get(courseMap) ?? 0) + 1);
+      }
+    }
+    const popularTracks = Array.from(trackCounts.entries())
+      .map(([name, rides]) => ({ name, rides }))
+      .sort((a, b) => b.rides - a.rides);
+
+    // Generate activity feed events (diffs)
     const feedEvents: { event_type: string; rider_name: string; school_name: string; message: string }[] = [];
 
     for (const rider of topRiders) {
       const prev = prevRiderMap.get(rider.airtableId ?? rider.name);
-
-      // Level-up detection
-      if (prev && prev.level && rider.level !== prev.level && rider.level !== 'Pedal Pusher') {
-        feedEvents.push({
-          event_type: 'level_up',
-          rider_name: rider.name.split(' ')[0],
-          school_name: rider.school,
-          message: `leveled up to ${rider.level}`,
-        });
-      }
 
       // Streak milestone detection
       if (rider.streak > 0) {
@@ -262,7 +268,7 @@ Deno.serve(async (req) => {
               school_name: rider.school,
               message: `hit a ${milestone}-day streak`,
             });
-            break; // only emit highest new milestone
+            break;
           }
         }
       }
@@ -281,7 +287,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Insert feed events (limit to 10 per sync to avoid spam)
+    // Insert feed events
     if (feedEvents.length > 0) {
       const batch = feedEvents.slice(0, 10);
       const { error: feedErr } = await adminClient.from('activity_feed').insert(batch);
@@ -289,7 +295,7 @@ Deno.serve(async (req) => {
       else console.log(`Inserted ${batch.length} activity events`);
     }
 
-    // ── Global stats ──
+    // Global stats
     const gf = globalDash[0]?.fields ?? {};
     const globalStats = {
       totalSessions: Number(gf['Total Sessions'] ?? 0),
@@ -298,12 +304,13 @@ Deno.serve(async (req) => {
       totalHours: Number(gf['Total Hours'] ?? 0),
     };
 
-    // ── Upsert cache rows ──
+    // Upsert cache rows
     const now = new Date().toISOString();
     const rows = [
       { cache_key: 'school_rankings', data: schoolRankings, updated_at: now },
       { cache_key: 'top_riders', data: topRiders, updated_at: now },
       { cache_key: 'global_stats', data: globalStats, updated_at: now },
+      { cache_key: 'popular_tracks', data: popularTracks, updated_at: now },
     ];
 
     for (const row of rows) {

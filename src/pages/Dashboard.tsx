@@ -19,7 +19,7 @@ import {
 } from "@/lib/challenges";
 import Navbar from "@/components/Navbar";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
-import LevelProgress from "@/components/LevelProgress";
+// LevelProgress removed — levels no longer shown
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,7 +34,7 @@ import {
   calculateSessionPoints, parseDurationToMinutes, isValidSession,
   computeStreaks, getStreakBonusPoints, computeRiderTotals,
   computeChallenges, computeAchievements, computeGrandTotalPoints,
-  getLevel, getLevelName,
+  getLevel,
   type RideSession, type Challenge, type Achievement, type RiderTotals,
 } from "@/lib/gamification";
 
@@ -44,7 +44,6 @@ interface SchoolmateRider {
   name: string;
   points: number;
   sessions: number;
-  level: string;
   isCurrentUser: boolean;
 }
 
@@ -363,7 +362,6 @@ const Dashboard = () => {
             name: s.name,
             points: s.totalPoints,
             sessions: s.sessions,
-            level: getLevelName(s.totalPoints),
             isCurrentUser: s.id === rec.id,
           }))
         );
@@ -428,7 +426,6 @@ const Dashboard = () => {
 
   // ── Derived values ──
   const firstName = riderTotals?.riderName.split(" ")[0] ?? nfcSession?.firstName ?? "Rider";
-  const currentLevel = riderTotals ? riderTotals.level : getLevel(0).current;
   const streak = riderTotals?.currentStreak ?? 0;
 
   // This-week sessions
@@ -503,9 +500,6 @@ const Dashboard = () => {
                         Rank #{schoolRank}
                       </span>
                     )}
-                    <span className="border-[2px] border-primary bg-primary px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
-                      {currentLevel.name}
-                    </span>
                     {streak > 0 && (
                       <motion.span
                         animate={{ scale: [1, 1.1, 1] }}
@@ -522,10 +516,6 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* ═══ LEVEL PROGRESS — FIRST THING ═══ */}
-        <div className="mb-6">
-          <LevelProgress totalPoints={grandTotal} />
-        </div>
 
         {/* ═══ GAMIFICATION QUICK STATS ═══ */}
         <div className="mb-6 grid grid-cols-3 gap-3">
@@ -792,11 +782,8 @@ const Dashboard = () => {
                         <span className={`font-display text-sm font-bold uppercase ${
                           rider.isCurrentUser ? "text-primary" : "text-foreground"
                         }`}>
-                          {rider.name} {rider.isCurrentUser && "(You)"}
+                         {rider.name} {rider.isCurrentUser && "(You)"}
                         </span>
-                        <Badge variant="secondary" className="text-[8px]">
-                          {rider.level}
-                        </Badge>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -896,7 +883,9 @@ const Dashboard = () => {
               {[
                 { icon: Bike, label: "Every Ride", value: "10 pts" },
                 { icon: Calendar, label: "3 Rides in a Week", value: "+5 bonus" },
-                { icon: Star, label: "5 Rides in a Week", value: "+10 bonus" },
+                { icon: Mountain, label: "Elevation Bonus", value: "+2 to +10 pts" },
+                { icon: Gauge, label: "Speed Bonus", value: "+2 to +10 pts" },
+                { icon: MapPin, label: "Track Variety", value: "+3 per new track" },
                 { icon: Target, label: "Challenge Rewards", value: "+5 to +30 pts" },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-3 border-[2px] border-secondary bg-muted p-3">

@@ -19,6 +19,7 @@ export interface CachedRider {
   level: string;
   totalTime: string;
   airtableId: string;
+  gender?: string;
 }
 
 export interface CachedGlobalStats {
@@ -26,6 +27,11 @@ export interface CachedGlobalStats {
   totalRiders: number;
   totalSchools: number;
   totalHours: number;
+}
+
+export interface CachedPopularTrack {
+  name: string;
+  rides: number;
 }
 
 async function getCache<T>(key: string): Promise<{ data: T | null; updatedAt: string | null }> {
@@ -52,4 +58,9 @@ export async function getCachedTopRiders(): Promise<CachedRider[]> {
 export async function getCachedGlobalStats(): Promise<CachedGlobalStats | null> {
   const { data } = await getCache<CachedGlobalStats>('global_stats');
   return data;
+}
+
+export async function getCachedPopularTracks(): Promise<CachedPopularTrack[]> {
+  const { data } = await getCache<CachedPopularTrack[]>('popular_tracks');
+  return data ?? [];
 }

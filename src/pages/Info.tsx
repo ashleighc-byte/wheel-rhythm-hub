@@ -6,7 +6,6 @@ import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { useState, useEffect } from "react";
 import ReportIssueForm from "@/components/ReportIssueForm";
 import { fetchStudents } from "@/lib/airtable";
-import { LEVELS } from "@/lib/gamification";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import artSmartBike from "@/assets/art-smart-bike.jpeg";
 import artEcycling from "@/assets/art-ecycling.jpeg";
@@ -169,35 +168,67 @@ const StudentInfo = () => {
                 </ul>
               </div>
 
-              {/* Weekly Bonuses */}
+              {/* Streak Bonus */}
               <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-accent">Weekly Bonuses</p>
+                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-accent">Streak Bonus</p>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
-                    <Calendar className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                    <Flame className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
                     <span><strong>+5 bonus</strong> when you complete 3 sessions in a week</span>
                   </li>
-                  <li className="flex items-start gap-3">
-                    <Flame className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                    <span><strong>+10 bonus</strong> when you complete 5 sessions in a week</span>
-                  </li>
                 </ul>
-                <p className="mt-3 text-xs text-foreground/60">
-                  These stack — ride 5 times in a week and earn +15 bonus points on top of your 50 session points!
-                </p>
               </div>
 
-              {/* Level Up */}
-              <div className="border-[3px] border-secondary bg-card p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-primary">Level Up</p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {LEVELS.map((lvl) => (
-                    <div key={lvl.name} className="bg-muted px-2 py-2 text-center hover-bounce">
-                      <div className="font-display text-[10px] font-bold uppercase tracking-wider text-foreground">{lvl.name}</div>
-                      <div className="font-body text-xs text-primary font-semibold">{lvl.min} pts</div>
-                    </div>
-                  ))}
-                </div>
+              {/* Elevation Bonus */}
+              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">Elevation Bonus</p>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <Target className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span><strong>+2 pts</strong> for 50–149m elevation</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Target className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span><strong>+5 pts</strong> for 150–299m elevation</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Target className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span><strong>+10 pts</strong> for 300m+ elevation</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Speed Bonus */}
+              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-accent">Speed Bonus</p>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                    <span><strong>+2 pts</strong> for 20–24 km/h average</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                    <span><strong>+5 pts</strong> for 25–29 km/h average</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                    <span><strong>+10 pts</strong> for 30+ km/h average</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Track Variety Bonus */}
+              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">Track Variety Bonus</p>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <Bike className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span><strong>+3 pts</strong> for each unique track/course you ride for the first time</span>
+                  </li>
+                </ul>
+                <p className="mt-2 text-xs text-foreground/60">
+                  The more tracks you try, the more points you earn!
+                </p>
               </div>
             </div>
           </div>
@@ -448,30 +479,21 @@ const TeacherInfo = () => {
                   </li>
                   <li className="flex items-start gap-3">
                     <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                    <span><strong>+10 bonus</strong> when a student rides on 5 different days in a week</span>
+                    <span><strong>Elevation bonus</strong>: +2 pts (50-149m), +5 pts (150-299m), +10 pts (300m+)</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                    <span><strong>Speed bonus</strong>: +2 pts (20-24 km/h), +5 pts (25-29 km/h), +10 pts (30+ km/h)</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Bike className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span><strong>+3 pts</strong> for each unique track/course ridden</span>
                   </li>
                 </ul>
               </div>
               <p className="text-sm text-foreground/60">
-                A full week of riding earns up to <strong>65 points</strong> (5x10 + 5 + 10). Points are tracked on the student dashboard and leaderboards.
+                Points are tracked on the student dashboard and leaderboards.
               </p>
-              <div className="border-[3px] border-secondary bg-card p-4 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-primary">Level Thresholds</p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                  {[
-                    { name: "Kickstand", pts: "0" },
-                    { name: "Pedal Pusher", pts: "50" },
-                    { name: "Gear Shifter", pts: "150" },
-                    { name: "Chain Breaker", pts: "300" },
-                    { name: "Freewheeler", pts: "500" },
-                  ].map((lvl) => (
-                    <div key={lvl.name} className="bg-muted px-2 py-2 text-center hover-bounce">
-                      <div className="font-display text-[10px] font-bold uppercase tracking-wider text-foreground">{lvl.name}</div>
-                      <div className="font-body text-xs text-primary font-semibold">{lvl.pts} pts</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>
