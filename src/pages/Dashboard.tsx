@@ -32,6 +32,7 @@ import { formatFriendlyDate } from "@/lib/dateFormat";
 import artEliteRider from "@/assets/art-elite-rider.jpeg";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getMilestoneBadgeImage } from "@/lib/milestoneBadges";
+import MtRuapehuTracker from "@/components/MtRuapehuTracker";
 import {
   calculateSessionPoints, parseDurationToMinutes, isValidSession,
   computeStreaks, getStreakBonusPoints, computeRiderTotals,
