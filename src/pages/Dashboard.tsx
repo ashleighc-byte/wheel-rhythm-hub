@@ -244,40 +244,16 @@ const Dashboard = () => {
       const rec = studentsRes.records[0];
       const f = rec.fields;
       const rawSchool = f["School"];
-      // School can be a linked record array ["recXXX"] or a plain string "School Name"
-      const schoolIsLinked = Array.isArray(rawSchool) && rawSchool.length > 0 && typeof rawSchool[0] === "string" && rawSchool[0].startsWith("rec");
-      const schoolIds = schoolIsLinked ? (rawSchool as string[]) : undefined;
-      const schoolNameDirect = !schoolIsLinked && rawSchool ? String(rawSchool) : "";
+      // School is a plain text field like "Sport Waikato"
+      const mySchoolName = rawSchool ? String(Array.isArray(rawSchool) ? rawSchool[0] : rawSchool) : "";
       const sessionIds = f["Session Reflections"] as string[] | undefined;
 
-      // Fetch only this student's school org + their own sessions in parallel
-      const schoolOrgFilter = schoolIds?.length
-        ? { filterByFormula: `RECORD_ID()='${schoolIds[0]}'`, maxRecords: 1 }
-        : schoolNameDirect
-        ? { filterByFormula: `{Organisation Name}='${schoolNameDirect}'`, maxRecords: 1 }
-        : undefined;
-      const [orgsRes, sessionsRes] = await Promise.all([
-        schoolOrgFilter ? callAirtable("Organisations", "GET", schoolOrgFilter) : Promise.resolve({ records: [] }),
-        fetchSessionReflections(sessionIds),
-      ]);
+      // Fetch sessions (skip Organisations table — use school name directly)
+      const sessionsRes = await fetchSessionReflections(sessionIds);
 
-      // Resolve school name and school student IDs
-      let localSchoolId = "";
-      let mySchoolName = schoolNameDirect;
-      let schoolStudentIds: string[] = [];
-      if (orgsRes.records.length > 0) {
-        const org = orgsRes.records[0];
-        localSchoolId = org.id;
-        mySchoolName = String(org.fields["Organisation Name"] ?? mySchoolName);
-        const orgRec = orgsRes.records[0];
-        schoolStudentIds = Array.isArray(orgRec?.fields["Student Registration"])
-          ? (orgRec.fields["Student Registration"] as string[])
-          : [];
-        setSchoolName(mySchoolName);
-        setMySchoolId(localSchoolId);
-      } else if (mySchoolName) {
-        setSchoolName(mySchoolName);
-      }
+      let localSchoolId = mySchoolName; // use school name as ID
+      setSchoolName(mySchoolName);
+      setMySchoolId(mySchoolName);
 
       const riderName = String(f["Full Name"] ?? nfcSession?.fullName ?? "Rider");
 
