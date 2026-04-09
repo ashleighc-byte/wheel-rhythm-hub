@@ -469,7 +469,7 @@ const Dashboard = () => {
             transition={{ repeat: Infinity, duration: 1.5 }}
             className="flex items-center gap-3 font-display text-xl uppercase tracking-wider text-foreground"
           >
-            <BrandBikeIcon className="h-6 w-6 animate-pulse text-primary" />
+            <BrandBikeIcon variant="black" className="h-8 w-8 animate-pulse" />
             Loading your dashboard...
           </motion.div>
         </div>
@@ -504,7 +504,7 @@ const Dashboard = () => {
                   transition={{ type: "spring", stiffness: 300 }}
                   className="flex h-14 w-14 items-center justify-center border-[3px] border-accent bg-secondary shadow-[0_0_16px_hsl(var(--brand-neon)/0.3)] md:h-16 md:w-16"
                 >
-                  <BrandBikeIcon className="h-9 w-9 text-accent md:h-10 md:w-10" />
+                  <BrandBikeIcon className="h-12 w-12 md:h-14 md:w-14" />
                 </motion.div>
                 <div>
                   <h1 className="text-3xl text-secondary-foreground md:text-4xl lg:text-5xl">

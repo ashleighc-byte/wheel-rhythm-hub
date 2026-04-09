@@ -4,6 +4,7 @@ import { Bike, Clock, Zap, MapPin, Mountain, ChevronDown, ChevronUp, Trophy, Map
 import brandGoHard from "@/assets/brand-go-hard.png";
 import brandPedalPath from "@/assets/brand-pedal-path.png";
 import Navbar from "@/components/Navbar";
+import BrandBikeIcon from "@/components/BrandBikeIcon";
 import StatsBar from "@/components/StatsBar";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, callAirtable } from "@/lib/airtable";
@@ -271,7 +272,7 @@ const Leaderboards = () => {
         <div className="container mx-auto px-4">
           {loading ? (
             <div className="flex min-h-[200px] items-center justify-center">
-              <Bike className="h-6 w-6 animate-pulse text-primary" />
+              <BrandBikeIcon variant="black" className="h-8 w-8 animate-pulse" />
               <span className="ml-2 font-display text-lg uppercase text-foreground">Loading...</span>
             </div>
           ) : (
