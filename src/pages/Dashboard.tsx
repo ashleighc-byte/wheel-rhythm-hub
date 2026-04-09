@@ -792,6 +792,9 @@ const Dashboard = () => {
           </motion.div>
         )}
 
+        {/* ═══ MT RUAPEHU ELEVATION TRACKER ═══ */}
+        <MtRuapehuTracker totalElevation={rideSessions.reduce((sum, s) => sum + (s.elevation_m || 0), 0)} />
+
         {/* ═══ MILESTONES (only incomplete ones) ═══ */}
         {challenges.filter(c => !c.completed).length > 0 && (
           <motion.div
