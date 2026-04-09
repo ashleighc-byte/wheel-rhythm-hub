@@ -270,7 +270,11 @@ const Dashboard = () => {
           const duration_minutes = parseDurationToMinutes(s.fields["Rollup Minutes"] ?? durationStr);
           const distance_km = Number(s.fields["Total km "] ?? parsed?.distance_km ?? 0);
           const elevation_m = Number(parsed?.elevation_m ?? 0);
-          const avg_speed_kmh = Number(parsed?.speed_kmh ?? 0);
+          const avg_speed_kmh = Number(s.fields["Avg Speed"] ?? parsed?.speed_kmh ?? 0);
+
+          // Parse course/track from "Combined Course and Track" field (format: "Course | Track")
+          const combinedCourseTrack = String(s.fields["Combined Course and Track"] ?? "");
+          const courseMap = combinedCourseTrack || (parsed ? `${(parsed as any).course_map ?? ""} | ${(parsed as any).track_name ?? ""}`.replace(/^ \| $/, "") : "");
 
           const sessionInput = { duration_minutes, distance_km, elevation_m, avg_speed_kmh };
           const points = calculateSessionPoints(sessionInput);
@@ -291,6 +295,7 @@ const Dashboard = () => {
             reflection: String(s.fields["What did you enjoy or not enjoy about today's session?"] ?? ""),
             screenshotUrl: undefined,
             points,
+            courseMap,
           } satisfies RideSession;
         })
         .sort((a, b) => b.date.localeCompare(a.date));
@@ -317,7 +322,7 @@ const Dashboard = () => {
       setChallenges(ch);
       setGrandTotal(grand);
 
-      // School leaderboard preview — only fetch school students and their sessions
+      // School leaderboard preview — use computeAllRiderPoints for consistent ranking
       if (mySchoolName) {
         try {
           const schoolStudentsRes = await callAirtable("Student Registration", "GET", {
@@ -334,7 +339,7 @@ const Dashboard = () => {
                 id: s.id,
                 name: String(s.fields["Full Name"] ?? ""),
                 sessions: computed?.sessions ?? 0,
-                totalPoints: s.id === rec.id ? grand : (computed?.totalPoints ?? 0),
+                totalPoints: computed?.totalPoints ?? 0,
               };
             })
             .sort((a: any, b: any) => b.totalPoints - a.totalPoints);
@@ -506,7 +511,7 @@ const Dashboard = () => {
 
 
         {/* ═══ GAMIFICATION QUICK STATS ═══ */}
-        <div className="mb-6 grid grid-cols-3 gap-3">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
           <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
             <Zap className="mx-auto mb-1 h-5 w-5 text-primary" />
             <p className="font-display text-2xl font-bold text-accent">{grandTotal}</p>
@@ -518,6 +523,20 @@ const Dashboard = () => {
               {rideSessions.reduce((sum, s) => sum + (s.distance_km || 0), 0).toFixed(1)}
             </p>
             <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total km</p>
+          </div>
+          <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
+            <Clock className="mx-auto mb-1 h-5 w-5 text-primary" />
+            <p className="font-display text-2xl font-bold text-accent">
+              {Math.floor(rideSessions.reduce((sum, s) => sum + (s.duration_minutes || 0), 0) / 60)}
+            </p>
+            <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Hours</p>
+          </div>
+          <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
+            <Mountain className="mx-auto mb-1 h-5 w-5 text-primary" />
+            <p className="font-display text-2xl font-bold text-accent">
+              {Math.round(rideSessions.reduce((sum, s) => sum + (s.elevation_m || 0), 0))}
+            </p>
+            <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Elevation</p>
           </div>
           <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
             <Bike className="mx-auto mb-1 h-5 w-5 text-primary" />
@@ -597,7 +616,7 @@ const Dashboard = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-display text-sm font-bold uppercase text-foreground">
+                             <span className="font-display text-sm font-bold uppercase text-foreground">
                               {formatFriendlyDate(session.date)}
                             </span>
                             {session.points > 0 && (
@@ -606,7 +625,13 @@ const Dashboard = () => {
                               </span>
                             )}
                           </div>
-                          {/* All metrics with icons, no mood faces */}
+                          {/* Course / Track name */}
+                          {session.courseMap && (
+                            <p className="font-display text-[10px] uppercase tracking-wider text-primary/80 truncate">
+                              {session.courseMap}
+                            </p>
+                          )}
+                          {/* Metrics row */}
                           <div className="mt-1 flex flex-wrap items-center gap-3 font-body text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Timer className="h-3 w-3" /> {Math.round(session.duration_minutes)} min
@@ -614,14 +639,14 @@ const Dashboard = () => {
                             <span className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" /> {session.distance_km} km
                             </span>
-                            {session.elevation_m > 0 && (
-                              <span className="flex items-center gap-1">
-                                <Mountain className="h-3 w-3" /> {session.elevation_m} m
-                              </span>
-                            )}
                             {session.avg_speed_kmh > 0 && (
                               <span className="flex items-center gap-1">
                                 <Gauge className="h-3 w-3" /> {session.avg_speed_kmh} km/h
+                              </span>
+                            )}
+                            {session.elevation_m > 0 && (
+                              <span className="flex items-center gap-1">
+                                <Mountain className="h-3 w-3" /> {session.elevation_m} m
                               </span>
                             )}
                           </div>
