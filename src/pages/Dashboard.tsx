@@ -31,6 +31,7 @@ import {
 import { formatFriendlyDate } from "@/lib/dateFormat";
 import artEliteRider from "@/assets/art-elite-rider.jpeg";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
+import { getMilestoneBadgeImage } from "@/lib/milestoneBadges";
 import {
   calculateSessionPoints, parseDurationToMinutes, isValidSession,
   computeStreaks, getStreakBonusPoints, computeRiderTotals,
@@ -327,7 +328,7 @@ const Dashboard = () => {
       if (mySchoolName) {
         try {
           const schoolStudentsRes = await callAirtable("Student Registration", "GET", {
-            filterByFormula: `{School}='${mySchoolName}'`,
+            filterByFormula: `AND({School}='${mySchoolName}',{NFC Status}='Bracelet Received')`,
           });
           const schoolStudentIds = schoolStudentsRes.records.map((s: any) => s.id);
           const riderPointsMap = await computeAllRiderPoints(schoolStudentIds);
@@ -549,9 +550,8 @@ const Dashboard = () => {
             });
           }
           const chartData = Array.from(dateMap.entries())
-            .map(([date, d]) => ({ date: date.slice(5), distance: Math.round(d.distance * 10) / 10, points: d.points, rides: d.rides }))
-            .sort((a, b) => a.date.localeCompare(b.date))
-            .slice(-14); // last 14 days
+            .map(([date, d]) => ({ date: date.slice(5), rides: d.rides }))
+            .sort((a, b) => a.date.localeCompare(b.date));
 
           return (
             <motion.div
@@ -566,10 +566,10 @@ const Dashboard = () => {
               </div>
               <div className="px-4 py-4" style={{ height: 220 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} barSize={20}>
+                  <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                    <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} unit=" km" width={50} />
+                    <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} width={30} />
                     <Tooltip
                       contentStyle={{
                         background: "hsl(var(--card))",
@@ -578,12 +578,9 @@ const Dashboard = () => {
                         fontFamily: "var(--font-display)",
                         fontSize: 12,
                       }}
-                      formatter={(value: number, name: string) => [
-                        name === "distance" ? `${value} km` : `${value} pts`,
-                        name === "distance" ? "Distance" : "Points"
-                      ]}
+                      formatter={(value: number) => [`${value} ride${value !== 1 ? 's' : ''}`, "Rides"]}
                     />
-                    <Bar dataKey="distance" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="rides" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -762,11 +759,7 @@ const Dashboard = () => {
             </div>
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
               {challenges.filter(c => c.completed).map((c, i) => {
-                // Badge style inspired by the uploaded reference
-                const badgeColors = [
-                  "from-[hsl(var(--primary))] to-[hsl(var(--accent))]",
-                  "from-[hsl(var(--accent))] to-[hsl(var(--primary))]",
-                ];
+                const badgeImg = getMilestoneBadgeImage(c.id);
                 return (
                   <motion.div
                     key={c.id}
@@ -775,13 +768,15 @@ const Dashboard = () => {
                     transition={{ delay: 0.2 + i * 0.08, type: "spring", stiffness: 200 }}
                     className="group relative flex flex-col items-center"
                   >
-                    <div className="relative flex h-20 w-20 items-center justify-center rounded-lg border-[3px] border-primary bg-gradient-to-br from-secondary to-muted shadow-[3px_3px_0px_hsl(var(--brand-dark))] transition-transform group-hover:scale-105 md:h-24 md:w-24">
-                      <div className="absolute inset-1 rounded-md border border-primary/20 bg-secondary/60" />
-                      <div className="relative flex flex-col items-center gap-1">
-                        <Sparkles className="h-6 w-6 text-primary md:h-7 md:w-7" />
-                        <Bike className="h-4 w-4 text-accent" />
-                      </div>
-                      {/* Completed checkmark */}
+                    <div className="relative flex h-20 w-20 items-center justify-center rounded-lg border-[3px] border-primary bg-secondary shadow-[3px_3px_0px_hsl(var(--brand-dark))] transition-transform group-hover:scale-105 md:h-24 md:w-24 overflow-hidden">
+                      {badgeImg ? (
+                        <img src={badgeImg} alt={c.title} className="h-full w-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="relative flex flex-col items-center gap-1">
+                          <Sparkles className="h-6 w-6 text-primary md:h-7 md:w-7" />
+                          <Bike className="h-4 w-4 text-accent" />
+                        </div>
+                      )}
                       <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary shadow-sm">
                         <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
                       </div>
@@ -796,66 +791,62 @@ const Dashboard = () => {
           </motion.div>
         )}
 
-        {/* ═══ MILESTONES ═══ */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mb-6"
-        >
-          <div className="mb-4 flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
-            <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
-              Milestones
-            </h3>
-            <span className="ml-auto font-display text-xs text-muted-foreground">
-              {challenges.filter(c => c.completed).length}/{challenges.length} completed
-            </span>
-          </div>
-          <div className="space-y-3">
-            {challenges.map((c, i) => {
-              const pct = Math.min((c.current / c.goal) * 100, 100);
-              return (
-                <motion.div
-                  key={c.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + i * 0.04 }}
-                  className={`border-[3px] bg-card p-3 shadow-[4px_4px_0px_hsl(var(--brand-dark))] ${
-                    c.completed ? "border-primary" : "border-secondary"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {c.completed ? (
-                        <Sparkles className="h-4 w-4 text-primary" />
-                      ) : (
+        {/* ═══ MILESTONES (only incomplete ones) ═══ */}
+        {challenges.filter(c => !c.completed).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mb-6"
+          >
+            <div className="mb-4 flex items-center gap-2">
+              <Target className="h-5 w-5 text-primary" />
+              <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
+                Milestones
+              </h3>
+              <span className="ml-auto font-display text-xs text-muted-foreground">
+                {challenges.filter(c => c.completed).length}/{challenges.length} completed
+              </span>
+            </div>
+            <div className="space-y-3">
+              {challenges.filter(c => !c.completed).map((c, i) => {
+                const pct = Math.min((c.current / c.goal) * 100, 100);
+                return (
+                  <motion.div
+                    key={c.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.04 }}
+                    className="border-[3px] bg-card p-3 shadow-[4px_4px_0px_hsl(var(--brand-dark))] border-secondary"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
                         <Target className="h-4 w-4 text-accent" />
-                      )}
-                      <span className="font-display text-xs font-bold uppercase tracking-wider text-foreground">{c.title}</span>
+                        <span className="font-display text-xs font-bold uppercase tracking-wider text-foreground">{c.title}</span>
+                      </div>
+                      <span className="font-display text-xs font-bold text-primary flex items-center gap-0.5">
+                        <Zap className="h-3 w-3" /> +{c.reward} pts
+                      </span>
                     </div>
-                    <span className="font-display text-xs font-bold text-primary flex items-center gap-0.5">
-                      <Zap className="h-3 w-3" /> +{c.reward} pts
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-4 border-[2px] border-secondary bg-muted overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.8, delay: 0.4 + i * 0.04 }}
-                        className={`h-full ${c.completed ? "bg-primary" : "bg-accent"}`}
-                      />
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-4 border-[2px] border-secondary bg-muted overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.8, delay: 0.4 + i * 0.04 }}
+                          className="h-full bg-accent"
+                        />
+                      </div>
+                      <span className="font-display text-xs font-bold text-muted-foreground whitespace-nowrap min-w-[4rem] text-right">
+                        {c.current}/{c.goal}
+                      </span>
                     </div>
-                    <span className="font-display text-xs font-bold text-muted-foreground whitespace-nowrap min-w-[4rem] text-right">
-                      {c.current}/{c.goal}
-                    </span>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
 
       </div>
 
