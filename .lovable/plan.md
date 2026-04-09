@@ -1,69 +1,32 @@
 
 
-# Fix Registration Form, Auth Redirect, and Terms Page
+# Fix Book a Bike Page for Both Authenticated and Public Users
 
-## Issues Identified
+## Problem
+The BookBike page always renders its own public-style header (with "SIGN IN" link) regardless of whether the user is logged in. When a signed-in student clicks "BOOK A BIKE" from the navbar, they lose the app navigation and see the public landing header instead.
 
-1. **Registration form visibility**: The form uses `text-secondary-foreground` (neon green) and `bg-secondary-foreground/10` styling designed for a dark background. Inside the white Dialog, labels and inputs are nearly invisible green-on-white.
+## Solution
 
-2. **Authenticated users see old homepage**: `Index.tsx` shows `AuthenticatedHome` (with `HeroSection`, `CTASection`) when logged in. User should go straight to `/dashboard`. NFC bracelet users should go to the session log form.
+### File: `src/pages/BookBike.tsx`
 
-3. **Terms page**: Has basic placeholder content. Needs to be rebuilt using the actual MoU document content.
+1. **Import `useAuth`** and check for `session` / `loading` state
+2. **Conditional header rendering:**
+   - If authenticated → render `<Navbar />` (the standard app navigation bar)
+   - If not authenticated → keep the existing public header with logo + "SIGN IN" link
+3. **Pre-fill school** for authenticated users if their school is known (from the user's Airtable student record)
+4. Add a loading state while auth is resolving to prevent flash of wrong header
 
-4. **Runtime error**: `Cannot read properties of null (reading 'useState')` in `useAuth.tsx` — likely a React import issue or StrictMode problem. Will investigate during implementation.
+### Schools Not Appearing
 
----
+The `registration-count` edge function fetches schools from Airtable's "Student Registration" table. If no students are registered yet for a school, it won't appear. This is working as designed — schools only show once they have at least one registered student. No change needed here unless the list should include schools with zero registrations.
 
-## 1. Fix Registration Form Visibility
+### No Route Change Needed
 
-**File:** `src/components/StudentRegistrationForm.tsx`
+`/book` is already a public route (no wrapper in App.tsx), which is correct since unauthenticated users should also be able to book.
 
-- Replace all `text-secondary-foreground` classes with `text-foreground` (dark brown, readable on white)
-- Replace all `bg-secondary-foreground/10` input backgrounds with `bg-muted` or standard input styling
-- Replace `border-secondary-foreground/20` with `border-border`
-- Replace `placeholder:text-secondary-foreground/40` with `placeholder:text-muted-foreground`
-- The "or" divider and Google button similarly need updated colors
+## Summary of Changes
 
-## 2. Redirect Authenticated Users to Dashboard
-
-**File:** `src/pages/Index.tsx`
-
-- When `user` is authenticated, redirect to `/dashboard` using `<Navigate to="/dashboard" replace />`
-- Remove the `AuthenticatedHome` component entirely (it duplicates dashboard functionality)
-- The NFC redirect already works via `NfcTap.tsx` which opens the session form directly
-
-**File:** `src/App.tsx`  
-- `AuthRoute` already redirects logged-in users from `/auth` to `/` → this will now chain to `/dashboard`
-- Alternatively, change `AuthRoute` redirect to `/dashboard` directly
-
-## 3. Rebuild Terms Page from MoU
-
-**File:** `src/pages/Terms.tsx`
-
-Replace the placeholder with comprehensive terms based on the MoU document:
-
-1. **Programme Overview** — Free Wheeler Bike League description, Proton Wattbike + MyWhoosh
-2. **Objectives** — inclusive cycling, wellbeing, positive movement
-3. **Participant Responsibilities** — use equipment responsibly, follow school policies, NFC bracelet care
-4. **School Responsibilities** — space, supervision, consent collection
-5. **Sport Waikato Responsibilities** — equipment, digital platforms, technical guidance, user packs
-6. **Data Management & Privacy** — anonymisation, secure storage, authorised access only, aggregated reporting to Sport NZ
-7. **Consent** — checkbox = consent for data collection; under-16 requires parent/guardian; withdraw by contacting coordinator
-8. **Duration** — programme runs for the agreed pilot period
-9. **Contact** — programme coordinator or Sport Waikato team
-
-## 4. Fix Runtime Error
-
-**File:** `src/main.tsx`
-
-- Wrap `<App />` in `<React.StrictMode>` (or remove if already wrapped incorrectly)
-- The `useState` null error often indicates duplicate React instances — check if this resolves after the other changes
-
----
-
-## Files to Modify
-1. `src/components/StudentRegistrationForm.tsx` — Fix all color classes for white background
-2. `src/pages/Index.tsx` — Replace `AuthenticatedHome` with `Navigate` to `/dashboard`
-3. `src/pages/Terms.tsx` — Full rewrite with MoU-based content
-4. `src/main.tsx` — Fix React rendering if needed
+| File | Change |
+|------|--------|
+| `src/pages/BookBike.tsx` | Import `useAuth`, conditionally render `Navbar` vs public header based on auth state |
 
