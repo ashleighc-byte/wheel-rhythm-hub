@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Oswald", "sans-serif"],
-        body: ["Inter", "sans-serif"],
+        display: ['"Marsden Narrow"', "Helvetica", "Arial", "sans-serif"],
+        body: ["Helvetica", "Arial", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
