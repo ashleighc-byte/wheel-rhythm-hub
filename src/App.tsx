@@ -95,6 +95,7 @@ const App = () => (
               <Route path="/og-download" element={<ProtectedRoute><OgImageDownload /></ProtectedRoute>} />
                <Route path="/reset-password" element={<ResetPassword />} />
                <Route path="/webinar" element={<Webinar />} />
+               <Route path="/terms" element={<Terms />} />
                <Route path="/studentregistration" element={<StudentRegistration />} />
              <Route path="/race" element={<ProtectedRoute><RaceGame /></ProtectedRoute>} />
              <Route path="/tap/:token" element={<NfcTap />} />
