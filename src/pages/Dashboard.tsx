@@ -495,7 +495,7 @@ const Dashboard = () => {
                 </motion.div>
                 <div>
                   <h1 className="text-3xl text-secondary-foreground md:text-4xl lg:text-5xl">
-                    Hey, {firstName}!
+                    Hey, {firstName}!</h1>
                   </h1>
                   <div className="mt-1 flex flex-wrap items-center gap-3">
                     <span className="font-body text-sm text-secondary-foreground/70">
@@ -531,9 +531,11 @@ const Dashboard = () => {
             <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Points</p>
           </div>
           <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
-            <Flame className="mx-auto mb-1 h-5 w-5 text-primary" />
-            <p className="font-display text-2xl font-bold text-accent">{streak}</p>
-            <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Day Streak</p>
+            <MapPin className="mx-auto mb-1 h-5 w-5 text-primary" />
+            <p className="font-display text-2xl font-bold text-accent">
+              {rideSessions.reduce((sum, s) => sum + (s.distance_km || 0), 0).toFixed(1)}
+            </p>
+            <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total km</p>
           </div>
           <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
             <Bike className="mx-auto mb-1 h-5 w-5 text-primary" />
@@ -541,38 +543,6 @@ const Dashboard = () => {
             <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Rides</p>
           </div>
         </div>
-
-        {/* ═══ LOG A RIDE CTA ═══ */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mb-6"
-        >
-          <div className="flex gap-3">
-            <button
-              onClick={() => setLogOpen(true)}
-              className="tape-element-green flex flex-1 items-center justify-center gap-3 py-5 text-xl md:text-2xl"
-            >
-              <Bike className="h-7 w-7" />
-              LOG A RIDE
-            </button>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="border-[2px] border-secondary bg-card p-3 text-center hover-bounce">
-              <Target className="mx-auto mb-1 h-4 w-4 text-primary" />
-              <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Next Milestone</p>
-              <p className="font-display text-xs font-bold text-foreground">
-                {challenges.find(c => !c.completed)?.title ?? "All done!"}
-              </p>
-            </div>
-            <div className="border-[2px] border-secondary bg-card p-3 text-center hover-bounce">
-              <Calendar className="mx-auto mb-1 h-4 w-4 text-primary" />
-              <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">This Week</p>
-              <p className="font-display text-lg font-bold text-accent">{thisWeekSessions.length} rides</p>
-            </div>
-          </div>
-        </motion.div>
 
         {/* ═══ FIRST RIDE WELCOME BANNER ═══ */}
         {rideSessions.length === 0 && (
