@@ -335,7 +335,7 @@ const Dashboard = () => {
             String(Array.isArray(value) ? value[0] ?? "" : value ?? "").trim().toLowerCase();
 
           const activeStudentsRes = await callAirtable("Student Registration", "GET", {
-            filterByFormula: `OR({NFC Bracelet}='Bracelet Received',{NFC Bracelet}='bracelet received')`,
+            filterByFormula: `OR({NFC Status}='Bracelet Received',{NFC Status}='bracelet received')`,
           });
 
           const schoolmates = activeStudentsRes.records.filter(

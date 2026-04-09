@@ -5,6 +5,7 @@ import brandGoHard from "@/assets/brand-go-hard.png";
 import brandPedalPath from "@/assets/brand-pedal-path.png";
 import Navbar from "@/components/Navbar";
 import BrandBikeIcon from "@/components/BrandBikeIcon";
+import brandPowerLegs from "@/assets/brand-power-legs.png";
 import StatsBar from "@/components/StatsBar";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, callAirtable } from "@/lib/airtable";
@@ -320,8 +321,21 @@ const Leaderboards = () => {
 
               {/* Right: School Rankings sidebar */}
               <div className="w-full lg:w-72 xl:w-80 flex-shrink-0">
-                <div className="lg:sticky lg:top-4">
+                <div className="lg:sticky lg:top-4 space-y-6">
                   <SchoolRankingsTable />
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="flex items-center justify-center"
+                  >
+                    <img
+                      src={brandPowerLegs}
+                      alt="The Power's In Your Legs"
+                      className="w-full max-w-[280px] object-contain"
+                    />
+                  </motion.div>
                 </div>
               </div>
             </div>
