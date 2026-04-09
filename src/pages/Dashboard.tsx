@@ -32,6 +32,7 @@ import { formatFriendlyDate } from "@/lib/dateFormat";
 import artEliteRider from "@/assets/art-elite-rider.jpeg";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getMilestoneBadgeImage } from "@/lib/milestoneBadges";
+import MtRuapehuTracker from "@/components/MtRuapehuTracker";
 import {
   calculateSessionPoints, parseDurationToMinutes, isValidSession,
   computeStreaks, getStreakBonusPoints, computeRiderTotals,
@@ -790,6 +791,9 @@ const Dashboard = () => {
             </div>
           </motion.div>
         )}
+
+        {/* ═══ MT RUAPEHU ELEVATION TRACKER ═══ */}
+        <MtRuapehuTracker totalElevation={rideSessions.reduce((sum, s) => sum + (s.elevation_m || 0), 0)} />
 
         {/* ═══ MILESTONES (only incomplete ones) ═══ */}
         {challenges.filter(c => !c.completed).length > 0 && (
