@@ -146,12 +146,19 @@ Deno.serve(async (req) => {
       fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Global Dashboard', { maxRecords: '1' }),
     ]);
 
-    // Compute rider points with new formula
+    // Filter active students: NFC Bracelet = "Bracelet Received"
+    const activeStudents = students.filter((s: any) => {
+      const nfc = String(s.fields['NFC Bracelet'] ?? '').trim();
+      return nfc === 'Bracelet Received';
+    });
+    const activeStudentIds = new Set(activeStudents.map((s: any) => s.id));
+
+    // Compute rider points with new formula (only active students)
     const studentSessions = new Map<string, any[]>();
     for (const rec of sessions) {
       const links = rec.fields?.['Student Registration'] as string[] | undefined;
       const sid = links?.[0];
-      if (!sid) continue;
+      if (!sid || !activeStudentIds.has(sid)) continue;
       if (!studentSessions.has(sid)) studentSessions.set(sid, []);
       studentSessions.get(sid)!.push(rec);
     }
@@ -197,27 +204,25 @@ Deno.serve(async (req) => {
     const orgMap = new Map<string, string>();
     for (const o of orgs) orgMap.set(o.id, String(o.fields['Organisation Name'] ?? 'Unknown'));
 
-    // School rankings
-    const schoolData = new Map<string, { riders: number; points: number }>();
-    for (const s of students) {
+    // School rankings — only schools with active students, deduplicated by name
+    const schoolDataByName = new Map<string, { riders: number; points: number }>();
+    for (const s of activeStudents) {
       const schoolIds = s.fields['School'] as string[] | undefined;
       if (!schoolIds?.length) continue;
       const sid = schoolIds[0];
-      const prev = schoolData.get(sid) ?? { riders: 0, points: 0 };
+      const sName = orgMap.get(sid) ?? sid;
+      const prev = schoolDataByName.get(sName) ?? { riders: 0, points: 0 };
       const computed = riderPoints.get(s.id);
-      schoolData.set(sid, { riders: prev.riders + 1, points: prev.points + (computed?.totalPoints ?? 0) });
-    }
-    for (const [id] of orgMap) {
-      if (!schoolData.has(id)) schoolData.set(id, { riders: 0, points: 0 });
+      schoolDataByName.set(sName, { riders: prev.riders + 1, points: prev.points + (computed?.totalPoints ?? 0) });
     }
 
-    const schoolRankings = Array.from(schoolData.entries())
-      .map(([id, data]) => ({ name: orgMap.get(id) ?? id, riders: data.riders, totalPoints: data.points }))
+    const schoolRankings = Array.from(schoolDataByName.entries())
+      .map(([name, data]) => ({ name, riders: data.riders, totalPoints: data.points }))
       .sort((a, b) => b.totalPoints - a.totalPoints || b.riders - a.riders)
       .map((r, i) => ({ ...r, rank: i + 1 }));
 
-    // Top riders with gender
-    const topRiders = students
+    // Top riders with gender — only active students with sessions
+    const topRiders = activeStudents
       .map((s: any) => {
         const computed = riderPoints.get(s.id);
         const schoolId = (s.fields['School'] as string[])?.[0] ?? '';
@@ -230,11 +235,11 @@ Deno.serve(async (req) => {
           totalMinutes: computed?.totalMinutes ?? 0,
           totalDistance: computed?.totalDistance ?? 0,
           totalElevation: computed?.totalElevation ?? 0,
-          level: '', // levels removed from display
+          level: '',
           streak: computed?.streak ?? 0,
           totalTime: String(s.fields['Total Time (h:mm)'] ?? '0:00'),
           airtableId: s.id,
-          gender: String(s.fields['Gender'] ?? ''),
+          gender: String(s.fields['Gender'] ?? s.fields['Gender (optional)'] ?? ''),
         };
       })
       .filter((r: any) => r.sessions > 0);
