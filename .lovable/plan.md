@@ -1,70 +1,174 @@
 
 
-# Rebuild Public Landing Page with Inline Registration Form
+# Leaderboard, Dashboard, Points & Navigation Overhaul
 
 ## Overview
-Replace the external "Join the League" link with a built-in student registration form on the homepage. The form creates a Supabase auth account and writes registration data to Airtable. After registration, students can sign in immediately.
+Major restructuring of navigation, leaderboard page, dashboard, points system, and about page to simplify the experience for 13–16 year olds.
 
-## Changes
+---
 
-### 1. New Component: `StudentRegistrationForm`
-Create `src/components/StudentRegistrationForm.tsx` — an inline registration form embedded in the landing page hero section, replacing the "JOIN THE LEAGUE" external link.
+## 1. Landing Page — "Join the League" Button → Modal Form
 
-**Fields:**
-- First Name (required)
-- Last Name (required)
-- Gender (optional — dropdown: Male, Female, Non-binary, Prefer not to say)
-- Year Level (required — dropdown: Year 9, Year 10, Year 11, Year 12, Year 13)
-- School (required — combobox with pre-populated school names from the `registration-count` edge function; auto-capitalises free-text input using title case)
-- School Email (required — used as login email)
-- Password (required, min 6 chars)
-- Confirm Password (required)
-- Terms & Conditions checkbox (required — links to `/terms` page)
+**File:** `src/pages/Index.tsx`
 
-**On submit:**
-1. Create Supabase auth account via `supabase.auth.signUp({ email, password })`
-2. Write student record to Airtable "Student Registration" table via `callAirtable('Student Registration', 'POST', { body: { fields: { ... } } })`
-3. Show success message: "You're registered! Sign in above to get started."
-4. Auto-confirm email signups (use `cloud--configure_auth` to enable) since user explicitly said no email verification needed
+- Replace the inline `StudentRegistrationForm` in the hero section with centered tagline text + a large "JOIN THE LEAGUE" button
+- On click, open a `Dialog` containing the `StudentRegistrationForm`
+- Keep the "Sign In" link in the top-right header
 
-**Google Sign Up integration:** Add a "Sign up with Google" button that:
-1. Triggers `lovable.auth.signInWithOAuth("google")`
-2. On return, if no Airtable record exists for the email, shows the remaining fields (name, gender, year level, school, T&C checkbox) to complete registration before proceeding
+---
 
-### 2. Update `PublicLanding` in `src/pages/Index.tsx`
-- **Hero section:** Move "Sign In" to top-right corner as a small link/button. Replace "JOIN THE LEAGUE" + "SIGN IN" buttons with the inline `StudentRegistrationForm`
-- **How It Works:** Keep section but update copy placeholder text noting it will be updated later
-- **Remove:** "Ready to Ride?" QR section entirely
-- **Remove:** "Are you a teacher?" section entirely
-- **Footer:** Add "Terms & Conditions" link
+## 2. Navigation Update
 
-### 3. Create Terms & Conditions page
-Create `src/pages/Terms.tsx` — a simple page with placeholder text for MoU (bike use, data collection terms). Add route `/terms` in `App.tsx`.
-Add "Terms & Conditions" link in the footer.
+**File:** `src/components/Navbar.tsx`
 
-### 4. Update `src/pages/Auth.tsx`
-- Remove the "Sign Up" mode entirely — registration now happens on the homepage
-- Keep only Sign In + Forgot Password modes
-- Remove "Don't have an account? Sign Up" link
-- Remove "Teachers: your email must be registered" note
+- Student nav links change from `HOME | ABOUT THE PILOT | LEADERBOARDS | MY DASHBOARD` to:
+  `ABOUT | LEADERBOARD | MY DASHBOARD | LOG A RIDE`
+- Remove HOME link; keep logo as home link
+- "LOG A RIDE" moves into the nav bar as a regular link (opens the session feedback form)
 
-### 5. Update `src/App.tsx`
-- Add `/terms` route (public)
-- Enable auto-confirm for email signups via `cloud--configure_auth`
+---
 
-### 6. Update `registration-count` Edge Function
-The existing function already returns school names from Airtable Organisations table. The form will call this to populate the school combobox. No changes needed to the function itself.
+## 3. Leaderboard Page Rebuild
 
-### 7. School Name Handling
-- Fetch school list from `registration-count` endpoint on form mount
-- Show as a searchable combobox (using existing `Command` + `Popover` components)
-- If user types a new school name, auto-apply title case (e.g., "hamilton boys" → "Hamilton Boys")
-- This prevents duplicate school name variations
+**File:** `src/pages/Leaderboards.tsx` (major rewrite)
+
+### Header Stats
+- Pull from Airtable Global Dashboard (via leaderboard cache): **Total Schools, Total Riders, Total Sessions, Total Hours** (rounded to whole hours, no minutes)
+
+### User Rank Banner
+- Show the logged-in student's rank across all riders: e.g. "You are ranked **#4** out of **17 riders**"
+- Computed from cached `top_riders` data — find user's position by points
+
+### Remove
+- Live Activity Feed (ImpactStats component)
+- Engagement Stats sidebar (SchoolLeaderboard component — duplicate of header)
+- Levels from all leaderboard tables
+
+### Top Riders Table (school-only)
+- Title: "Top Riders – {School Name}"
+- Columns: Rank #, Name, Sessions, Points, Distance (km), Time, Elevation (m)
+- Show ALL riders from the user's school (not capped at 10)
+- Paginate with "Show next 10" toggle if >10 riders
+- Data source: cached `top_riders` filtered by user's school
+
+### Top Female Riders Table
+- Same columns as Top Riders
+- Filter by gender from Airtable student records (requires gender data in cache)
+- Only show riders from user's school
+
+### Top Male Riders Table
+- Same as above, filtered for male
+
+### Popular Tracks/Course Maps Table
+- New table: "Most Popular Tracks"
+- Aggregate `Course Map` field from Session Reflections (fetched via Airtable or cached)
+- Show track name + ride count, sorted by popularity
+
+### Data Changes
+- **sync-leaderboard edge function**: Add `gender` field to each rider in the `top_riders` cache (read from Student Registration's Gender field)
+- **sync-leaderboard edge function**: Add a new cache key `popular_tracks` — aggregate Session Reflections' `Course Map` field
+- **leaderboardCache.ts**: Add `gender` to `CachedRider` interface, add `getCachedPopularTracks()` function
+
+---
+
+## 4. Dashboard Simplification
+
+**File:** `src/pages/Dashboard.tsx`
+
+### Remove
+- Levels completely (LevelProgress component, level badges, level references)
+- Level badge from hero panel
+- Level badge from school riders table
+
+### Keep
+- Hero panel (name, school, rank, streak)
+- Gamification quick stats (Total Points, Day Streak, Total Rides)
+- Log a Ride CTA
+- First ride welcome banner
+- Recent Rides section
+- Top Riders school preview
+- Challenges section
+- Achievements (unlocked only)
+- How Points Work (collapsible)
+
+---
+
+## 5. New Points System
+
+**File:** `src/lib/gamification.ts`
+
+Update `calculateSessionPoints` and related functions:
+
+### Base Points
+- **10 points** per ride logged (keep existing)
+
+### Streak Bonus (simplified)
+- **+5 bonus** for 3 days in a row
+- **Remove** 5-day streak bonus (currently +10 for 5 sessions/week)
+- Keep weekly bonus for 3 sessions only
+
+### Elevation Bonus (NEW)
+- +2 pts for rides with 50–149m elevation
+- +5 pts for rides with 150–299m elevation  
+- +10 pts for rides with 300m+ elevation
+
+### Track Variety Bonus (NEW)
+- +3 pts for each unique track/course ridden (first time on a new track)
+- Track from Session Reflections `Course Map` field
+
+### Speed Bonus (NEW)
+- +2 pts for rides averaging 20–24 km/h
+- +5 pts for rides averaging 25–29 km/h
+- +10 pts for rides averaging 30+ km/h
+
+### Update `computeGrandTotalPoints` 
+- Include elevation, variety, and speed bonuses in total
+
+### Update `calculateWeeklyBonus`
+- Only award +5 for 3 sessions/week (remove the +10/+15 for 5 sessions)
+
+### Update sync-leaderboard edge function
+- Mirror the same points formula server-side
+
+---
+
+## 6. About Page — Points Section Update
+
+**File:** `src/pages/Info.tsx`
+
+Update the "How Points Work" section to reflect the new formula:
+- 10 pts per ride
+- +5 bonus for 3 days in a row
+- Elevation bonuses
+- Track variety bonuses  
+- Speed bonuses
+- Remove the "5 sessions in a week" bonus
+- Remove Level Up section entirely
+
+---
 
 ## Technical Details
 
-- **Auth flow:** `supabase.auth.signUp()` creates the account. Auto-confirm enabled so no email verification step. Student can immediately sign in.
-- **Airtable sync:** POST to "Student Registration" table with fields: `Full Name`, `School Email`, `Gender`, `Year Level`, `School` (linked record or text depending on table schema)
-- **Validation:** Zod schema for all fields. Email must end in `.school.nz` or similar school domain pattern (or just basic email validation if schools use various domains).
-- **No teacher flow:** Teacher sign-in remains at `/auth` but is not linked from the public landing page.
+### Files to create:
+- None (all modifications to existing files)
+
+### Files to modify:
+1. `src/pages/Index.tsx` — Dialog-based registration form
+2. `src/components/Navbar.tsx` — Updated nav links
+3. `src/pages/Leaderboards.tsx` — Full rebuild with gender tables, tracks, pagination
+4. `src/pages/Dashboard.tsx` — Remove levels
+5. `src/lib/gamification.ts` — New points formula
+6. `src/lib/leaderboardCache.ts` — Add gender, popular tracks cache
+7. `src/components/LevelProgress.tsx` — Remove or repurpose (points progress without levels)
+8. `src/pages/Info.tsx` — Updated points documentation
+9. `supabase/functions/sync-leaderboard/index.ts` — Add gender to rider cache, popular tracks cache, updated points formula
+10. `src/components/TopRiders.tsx` — May be removed (functionality moves into Leaderboards page)
+11. `src/components/SchoolLeaderboard.tsx` — Remove (duplicate of header stats)
+12. `src/components/StatsBar.tsx` — Modify to show hours as whole number
+
+### Edge function changes:
+- `sync-leaderboard`: Include `gender` per rider, add `popular_tracks` cache key, update points formula to match new structure
+
+### Database:
+- No schema changes needed — all data flows through existing `leaderboard_cache` table
 
