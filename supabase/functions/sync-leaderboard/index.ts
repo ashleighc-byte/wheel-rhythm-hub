@@ -145,9 +145,9 @@ Deno.serve(async (req) => {
       fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Global Dashboard', { maxRecords: '1' }),
     ]);
 
-    // Filter active students: NFC Bracelet = "Bracelet Received"
+    // Filter active students: NFC Status = "Bracelet Received"
     const activeStudents = students.filter((s: any) => {
-      const nfc = String(s.fields['NFC Bracelet'] ?? '').trim();
+      const nfc = String(s.fields['NFC Status'] ?? '').trim();
       return nfc === 'Bracelet Received';
     });
     const activeStudentIds = new Set(activeStudents.map((s: any) => s.id));
