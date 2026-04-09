@@ -336,6 +336,16 @@ const StudentRegistrationForm = () => {
               </Command>
             </PopoverContent>
           </Popover>
+          {school && (() => {
+            const selected = schools.find(s => s.name === school);
+            if (selected && selected.spots_remaining !== undefined) {
+              if (selected.spots_remaining <= 0) {
+                return <p className="mt-1 font-display text-xs text-destructive">❌ Registration closed — all 24 spots are taken.</p>;
+              }
+              return <p className="mt-1 font-display text-xs text-muted-foreground">🎯 {selected.spots_remaining} of 24 spots remaining</p>;
+            }
+            return null;
+          })()}
         </div>
 
         {/* Email */}
