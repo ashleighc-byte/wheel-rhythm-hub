@@ -423,7 +423,6 @@ const Dashboard = () => {
 
   // ── Derived values ──
   const firstName = riderTotals?.riderName.split(" ")[0] ?? nfcSession?.firstName ?? "Rider";
-  const streak = riderTotals?.currentStreak ?? 0;
 
   // This-week sessions
   const now = new Date();
