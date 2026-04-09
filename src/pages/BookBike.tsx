@@ -28,6 +28,8 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import logoSrc from "@/assets/fw-logo-new.png";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import Navbar from "@/components/Navbar";
 
 const TIME_SLOTS: string[] = [];
 for (let h = 8; h < 16; h++) {
