@@ -325,15 +325,26 @@ const Dashboard = () => {
       setChallenges(ch);
       setGrandTotal(grand);
 
-      // School leaderboard preview — use computeAllRiderPoints for consistent ranking
+      // School leaderboard preview — rank within the current school using active riders only
       if (mySchoolName) {
         try {
-          const schoolStudentsRes = await callAirtable("Student Registration", "GET", {
-            filterByFormula: `AND({School}='${mySchoolName}',{NFC Status}='Bracelet Received')`,
+          const normaliseSchool = (value: unknown) =>
+            String(Array.isArray(value) ? value[0] ?? "" : value ?? "").trim().toLowerCase();
+
+          const activeStudentsRes = await callAirtable("Student Registration", "GET", {
+            filterByFormula: `OR({NFC Bracelet}='Bracelet Received',{NFC Status}='Bracelet Received')`,
           });
-          const schoolStudentIds = schoolStudentsRes.records.map((s: any) => s.id);
+
+          const schoolmates = activeStudentsRes.records.filter(
+            (s: any) => normaliseSchool(s.fields["School"]) === normaliseSchool(mySchoolName)
+          );
+
+          if (!schoolmates.some((s: any) => s.id === rec.id)) {
+            schoolmates.push(rec as any);
+          }
+
+          const schoolStudentIds = schoolmates.map((s: any) => s.id);
           const riderPointsMap = await computeAllRiderPoints(schoolStudentIds);
-          const schoolmates = schoolStudentsRes.records;
 
           const ranked = schoolmates
             .map((s: any) => {
@@ -343,12 +354,20 @@ const Dashboard = () => {
                 name: String(s.fields["Full Name"] ?? ""),
                 sessions: computed?.sessions ?? 0,
                 totalPoints: computed?.totalPoints ?? 0,
+                totalDistance: computed?.totalDistance ?? 0,
               };
             })
-            .sort((a: any, b: any) => b.totalPoints - a.totalPoints);
+            .filter((s: any) => s.sessions > 0 || s.id === rec.id)
+            .sort(
+              (a: any, b: any) =>
+                b.totalPoints - a.totalPoints ||
+                b.totalDistance - a.totalDistance ||
+                b.sessions - a.sessions ||
+                a.name.localeCompare(b.name)
+            );
 
-          const rank = ranked.findIndex((s: any) => s.id === rec.id) + 1;
-          setSchoolRank(rank > 0 ? rank : null);
+          const localSchoolRank = ranked.findIndex((s: any) => s.id === rec.id) + 1;
+          setSchoolRank(localSchoolRank > 0 ? localSchoolRank : null);
 
           setSchoolRiders(
             ranked.slice(0, 5).map((s: any, i: number) => ({
