@@ -59,7 +59,7 @@ const moodColors = [
 ];
 
 const ACHIEVEMENT_ICONS: Record<string, any> = {
-  Bike, Flame, Clock, Trophy, TrendingUp, Target, MapPin, Mountain, Repeat, Gauge,
+  Flame, Clock, Trophy, TrendingUp, Target, MapPin, Mountain, Repeat, Gauge,
 };
 
 function parseSessionData(raw: any): { distance_km: number; duration_hh_mm_ss: string; speed_kmh: number; elevation_m: number } | null {
@@ -467,7 +467,7 @@ const Dashboard = () => {
             transition={{ repeat: Infinity, duration: 1.5 }}
             className="flex items-center gap-3 font-display text-xl uppercase tracking-wider text-foreground"
           >
-            <Bike className="h-6 w-6 animate-pulse text-primary" />
+            <BrandBikeIcon className="h-6 w-6 animate-pulse text-primary" />
             Loading your dashboard...
           </motion.div>
         </div>
@@ -554,7 +554,7 @@ const Dashboard = () => {
             <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Elevation</p>
           </div>
           <div className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
-            <Bike className="mx-auto mb-1 h-5 w-5 text-primary" />
+            <BrandBikeIcon className="mx-auto mb-1 h-5 w-5 text-primary" />
             <p className="font-display text-2xl font-bold text-accent">{riderTotals?.totalSessions ?? 0}</p>
             <p className="font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Rides</p>
           </div>
@@ -617,7 +617,7 @@ const Dashboard = () => {
             transition={{ delay: 0.4 }}
             className="mb-6 border-[3px] border-primary bg-card p-6 text-center shadow-[6px_6px_0px_hsl(var(--brand-dark))]"
           >
-            <Bike className="mx-auto mb-3 h-12 w-12 text-primary" />
+            <BrandBikeIcon className="mx-auto mb-3 h-12 w-12 text-primary" />
             <h2 className="font-display text-xl font-bold uppercase tracking-wider text-foreground">
               Ready to Ride?
             </h2>
@@ -628,7 +628,7 @@ const Dashboard = () => {
               onClick={() => setLogOpen(true)}
               className="tape-element-green mt-5 inline-flex items-center gap-2 text-base"
             >
-              <Bike className="h-5 w-5" /> LOG YOUR FIRST RIDE
+              <BrandBikeIcon className="h-5 w-5" /> LOG YOUR FIRST RIDE
             </button>
           </motion.div>
         )}
@@ -655,7 +655,7 @@ const Dashboard = () => {
             </div>
             {rideSessions.length === 0 ? (
               <div className="px-6 py-12 text-center">
-                <Bike className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
+                <BrandBikeIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
                 <p className="font-display text-lg uppercase text-muted-foreground">No rides yet</p>
                 <p className="mt-2 font-body text-sm text-muted-foreground">
                   Log your first ride to start tracking!
@@ -676,7 +676,7 @@ const Dashboard = () => {
                     >
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-secondary">
-                          <Bike className="h-5 w-5 text-accent" />
+                          <BrandBikeIcon className="h-5 w-5 text-accent" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -797,7 +797,7 @@ const Dashboard = () => {
                       ) : (
                         <div className="relative flex flex-col items-center gap-1">
                           <Sparkles className="h-6 w-6 text-primary md:h-7 md:w-7" />
-                          <Bike className="h-4 w-4 text-accent" />
+                          <BrandBikeIcon className="h-4 w-4 text-accent" />
                         </div>
                       )}
                       <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary shadow-sm">
