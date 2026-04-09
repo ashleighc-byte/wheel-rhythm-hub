@@ -115,7 +115,7 @@ const Leaderboards = () => {
   const [schoolName, setSchoolName] = useState("");
   const [userAirtableId, setUserAirtableId] = useState("");
   const [popularTracks, setPopularTracks] = useState<CachedPopularTrack[]>([]);
-  const [genderMap, setGenderMap] = useState<Map<string, string>>(new Map());
+  const [genderMap, setGenderMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
