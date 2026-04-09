@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import artRaceModeHero from "@/assets/art-race-mode-hero.png";
+import brandHeroPower from "@/assets/brand-hero-power.png";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -19,7 +19,7 @@ const HeroSection = () => {
       {/* Hero image */}
       <div className="absolute inset-0">
         <img
-          src={artRaceModeHero}
+          src={brandHeroPower}
           alt="Free Wheeler Bike League – Race Mode"
           className="h-full w-full object-cover opacity-30"
         />

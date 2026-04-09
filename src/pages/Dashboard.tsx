@@ -29,7 +29,7 @@ import {
   isValidRecordId, fetchStudentsByIds
 } from "@/lib/airtable";
 import { formatFriendlyDate } from "@/lib/dateFormat";
-import artEliteRider from "@/assets/art-elite-rider.jpeg";
+import brandHeroChain from "@/assets/brand-hero-chain.png";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getMilestoneBadgeImage } from "@/lib/milestoneBadges";
 import MtRuapehuTracker from "@/components/MtRuapehuTracker";
@@ -487,7 +487,7 @@ const Dashboard = () => {
           className="mb-6 relative overflow-hidden border-[3px] border-secondary bg-secondary p-5 shadow-[6px_6px_0px_hsl(var(--brand-dark))] md:p-7"
         >
           <div className="absolute inset-0">
-            <img src={artEliteRider} alt="" className="h-full w-full object-cover opacity-15" />
+            <img src={brandHeroChain} alt="" className="h-full w-full object-cover opacity-15" />
             <div className="absolute inset-0 bg-secondary/75" />
           </div>
           <div className="relative">
