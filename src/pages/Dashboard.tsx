@@ -495,7 +495,7 @@ const Dashboard = () => {
                 </motion.div>
                 <div>
                   <h1 className="text-3xl text-secondary-foreground md:text-4xl lg:text-5xl">
-                    Hey, {firstName}!</h1>
+                    Hey, {firstName}!
                   </h1>
                   <div className="mt-1 flex flex-wrap items-center gap-3">
                     <span className="font-body text-sm text-secondary-foreground/70">
