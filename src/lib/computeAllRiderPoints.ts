@@ -32,12 +32,24 @@ export interface RiderPointsSummary {
 }
 
 export async function computeAllRiderPoints(studentIds?: string[]): Promise<Map<string, RiderPointsSummary>> {
-  const options: { filterByFormula?: string } = {};
+  // Batch student IDs into groups to avoid Airtable formula length limits
+  const BATCH_SIZE = 15;
+  let allRecords: any[] = [];
+
   if (studentIds?.length) {
-    const clauses = studentIds.map(id => `FIND("${id}", ARRAYJOIN({Student Registration}))`).join(',');
-    options.filterByFormula = `OR(${clauses})`;
+    for (let i = 0; i < studentIds.length; i += BATCH_SIZE) {
+      const batch = studentIds.slice(i, i + BATCH_SIZE);
+      const clauses = batch.map(id => `FIND("${id}", ARRAYJOIN({Student Registration}))`).join(',');
+      const batchRes = await callAirtable("Session Reflections", "GET", {
+        filterByFormula: `OR(${clauses})`,
+      });
+      allRecords = allRecords.concat(batchRes.records);
+    }
+  } else {
+    const res = await callAirtable("Session Reflections", "GET", {});
+    allRecords = res.records;
   }
-  const sessionsRes = await callAirtable("Session Reflections", "GET", options);
+  const sessionsRes = { records: allRecords };
 
   // Group sessions by student airtable ID
   const studentSessions = new Map<string, any[]>();
