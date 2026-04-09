@@ -28,6 +28,8 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import logoSrc from "@/assets/fw-logo-new.png";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import Navbar from "@/components/Navbar";
 
 const TIME_SLOTS: string[] = [];
 for (let h = 8; h < 16; h++) {
@@ -47,6 +49,7 @@ interface Booking {
 }
 
 const BookBike = () => {
+  const { session, loading: authLoading } = useAuth();
   const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
   const [selectedSchool, setSelectedSchool] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -140,16 +143,20 @@ const BookBike = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-secondary border-b-4 border-primary">
-        <div className="container mx-auto flex items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logoSrc} alt="Free Wheeler" className="h-10 object-contain md:h-12" />
-          </Link>
-          <Link to="/auth" className="tape-element text-sm md:text-base">
-            SIGN IN
-          </Link>
-        </div>
-      </header>
+      {session ? (
+        <Navbar />
+      ) : (
+        <header className="bg-secondary border-b-4 border-primary">
+          <div className="container mx-auto flex items-center justify-between px-4 py-3">
+            <Link to="/" className="flex items-center gap-2">
+              <img src={logoSrc} alt="Free Wheeler" className="h-10 object-contain md:h-12" />
+            </Link>
+            <Link to="/auth" className="tape-element text-sm md:text-base">
+              SIGN IN
+            </Link>
+          </div>
+        </header>
+      )}
 
       <div className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-4xl">
