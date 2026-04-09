@@ -235,63 +235,64 @@ const Leaderboards = () => {
         </section>
       )}
 
-      {/* School Rankings Table */}
-      <section className="bg-muted py-8">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-4xl">
-            <SchoolRankingsTable />
-          </div>
-        </div>
-      </section>
-
-      {/* Rider Tables */}
+      {/* Rider Tables + School Rankings side by side */}
       <section className="bg-background pb-20 pt-8">
-        <div className="container mx-auto space-y-8 px-4">
+        <div className="container mx-auto px-4">
           {loading ? (
             <div className="flex min-h-[200px] items-center justify-center">
               <Bike className="h-6 w-6 animate-pulse text-primary" />
               <span className="ml-2 font-display text-lg uppercase text-foreground">Loading...</span>
             </div>
           ) : (
-            <>
-              <RiderTable
-                title={schoolName ? `Top Riders – ${schoolName}` : "Top Riders – Your School"}
-                riders={schoolRiders}
-                icon={<Trophy className="h-5 w-5" />}
-              />
-              <RiderTable title="Top Riders – Female" riders={femaleRiders} />
-              <RiderTable title="Top Riders – Male" riders={maleRiders} />
+            <div className="flex flex-col gap-8 lg:flex-row">
+              {/* Left: stacked rider tables */}
+              <div className="flex-1 space-y-8 min-w-0">
+                <RiderTable
+                  title={schoolName ? `Top Riders – ${schoolName}` : "Top Riders – Your School"}
+                  riders={schoolRiders}
+                  icon={<Trophy className="h-5 w-5" />}
+                />
+                <RiderTable title="Top Riders – Female" riders={femaleRiders} />
+                <RiderTable title="Top Riders – Male" riders={maleRiders} />
 
-              {/* Popular Tracks */}
-              {popularTracks.length > 0 && (
-                <div className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
-                  <div className="leaderboard-header flex items-center gap-2 px-6 py-4">
-                    <Map className="h-5 w-5" />
-                    <h3 className="text-lg tracking-wider md:text-xl">Most Popular Tracks</h3>
+                {/* Popular Tracks */}
+                {popularTracks.length > 0 && (
+                  <div className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
+                    <div className="leaderboard-header flex items-center gap-2 px-6 py-4">
+                      <Map className="h-5 w-5" />
+                      <h3 className="text-lg tracking-wider md:text-xl">Most Popular Tracks</h3>
+                    </div>
+                    <div className="divide-y divide-muted">
+                      {popularTracks.slice(0, 10).map((track, i) => (
+                        <motion.div
+                          key={track.name}
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: i * 0.05 }}
+                          className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-muted"
+                        >
+                          <div className="rank-badge flex-shrink-0 text-xs">{i + 1}</div>
+                          <div className="flex-1">
+                            <span className="font-display text-sm font-bold uppercase text-foreground">{track.name}</span>
+                          </div>
+                          <span className="flex items-center gap-1 font-display text-sm text-muted-foreground">
+                            <Bike className="h-3 w-3" /> {track.rides} rides
+                          </span>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="divide-y divide-muted">
-                    {popularTracks.slice(0, 10).map((track, i) => (
-                      <motion.div
-                        key={track.name}
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: i * 0.05 }}
-                        className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-muted"
-                      >
-                        <div className="rank-badge flex-shrink-0 text-xs">{i + 1}</div>
-                        <div className="flex-1">
-                          <span className="font-display text-sm font-bold uppercase text-foreground">{track.name}</span>
-                        </div>
-                        <span className="flex items-center gap-1 font-display text-sm text-muted-foreground">
-                          <Bike className="h-3 w-3" /> {track.rides} rides
-                        </span>
-                      </motion.div>
-                    ))}
-                  </div>
+                )}
+              </div>
+
+              {/* Right: School Rankings sidebar */}
+              <div className="w-full lg:w-72 xl:w-80 flex-shrink-0">
+                <div className="lg:sticky lg:top-4">
+                  <SchoolRankingsTable />
                 </div>
-              )}
-            </>
+              </div>
+            </div>
           )}
         </div>
       </section>
