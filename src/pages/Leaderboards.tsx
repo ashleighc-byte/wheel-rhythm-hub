@@ -4,6 +4,7 @@ import { Bike, Clock, Zap, MapPin, Mountain, ChevronDown, ChevronUp, Trophy, Map
 import brandGoHard from "@/assets/brand-go-hard.png";
 import brandPedalPath from "@/assets/brand-pedal-path.png";
 import Navbar from "@/components/Navbar";
+import BrandBikeIcon from "@/components/BrandBikeIcon";
 import StatsBar from "@/components/StatsBar";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, callAirtable } from "@/lib/airtable";
