@@ -318,38 +318,42 @@ const Dashboard = () => {
       setGrandTotal(grand);
 
       // School leaderboard preview — only fetch school students and their sessions
-      if (schoolIds?.length && schoolStudentIds.length) {
-        const [schoolStudentsRes, riderPointsMap] = await Promise.all([
-          fetchStudentsByIds(schoolStudentIds),
-          computeAllRiderPoints(schoolStudentIds),
-        ]);
-        const schoolmates = schoolStudentsRes.records;
+      if (mySchoolName) {
+        try {
+          const schoolStudentsRes = await callAirtable("Student Registration", "GET", {
+            filterByFormula: `{School}='${mySchoolName}'`,
+          });
+          const schoolStudentIds = schoolStudentsRes.records.map((s: any) => s.id);
+          const riderPointsMap = await computeAllRiderPoints(schoolStudentIds);
+          const schoolmates = schoolStudentsRes.records;
 
-        const ranked = schoolmates
-          .map((s) => {
-            const computed = riderPointsMap.get(s.id);
-            return {
-              id: s.id,
-              name: String(s.fields["Full Name"] ?? ""),
-              sessions: computed?.sessions ?? 0,
-              // Use the current user's grand total (includes challenges/streaks), computed points for others
-              totalPoints: s.id === rec.id ? grand : (computed?.totalPoints ?? 0),
-            };
-          })
-          .sort((a, b) => b.totalPoints - a.totalPoints);
+          const ranked = schoolmates
+            .map((s: any) => {
+              const computed = riderPointsMap.get(s.id);
+              return {
+                id: s.id,
+                name: String(s.fields["Full Name"] ?? ""),
+                sessions: computed?.sessions ?? 0,
+                totalPoints: s.id === rec.id ? grand : (computed?.totalPoints ?? 0),
+              };
+            })
+            .sort((a: any, b: any) => b.totalPoints - a.totalPoints);
 
-        const rank = ranked.findIndex((s) => s.id === rec.id) + 1;
-        setSchoolRank(rank > 0 ? rank : null);
+          const rank = ranked.findIndex((s: any) => s.id === rec.id) + 1;
+          setSchoolRank(rank > 0 ? rank : null);
 
-        setSchoolRiders(
-          ranked.slice(0, 5).map((s, i) => ({
-            rank: i + 1,
-            name: s.name,
-            points: s.totalPoints,
-            sessions: s.sessions,
-            isCurrentUser: s.id === rec.id,
-          }))
-        );
+          setSchoolRiders(
+            ranked.slice(0, 5).map((s: any, i: number) => ({
+              rank: i + 1,
+              name: s.name,
+              points: s.totalPoints,
+              sessions: s.sessions,
+              isCurrentUser: s.id === rec.id,
+            }))
+          );
+        } catch (err) {
+          console.error("School leaderboard error:", err);
+        }
       }
 
       // Achievements
