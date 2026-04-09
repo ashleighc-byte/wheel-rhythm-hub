@@ -817,7 +817,15 @@ const Dashboard = () => {
         )}
 
         {/* ═══ MT RUAPEHU ELEVATION TRACKER ═══ */}
-        <MtRuapehuTracker totalElevation={rideSessions.reduce((sum, s) => sum + (s.elevation_m || 0), 0)} />
+        <div className="relative">
+          <img
+            src={brandGoHard}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-8 top-1/2 -translate-y-1/2 w-24 opacity-[0.06] md:w-36"
+          />
+          <MtRuapehuTracker totalElevation={rideSessions.reduce((sum, s) => sum + (s.elevation_m || 0), 0)} />
+        </div>
 
         {/* ═══ MILESTONES (only incomplete ones) ═══ */}
         {challenges.filter(c => !c.completed).length > 0 && (
