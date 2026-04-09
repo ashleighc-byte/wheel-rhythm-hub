@@ -9,13 +9,12 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import brandLogo from "@/assets/fw-logo.png";
 
-type AuthMode = "signin" | "signup" | "forgot";
+type AuthMode = "signin" | "forgot";
 
 const Auth = () => {
   const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [cachedName] = useState<string | null>(() => localStorage.getItem("fw_display_name"));
@@ -27,13 +26,11 @@ const Auth = () => {
         await supabase.auth.signOut();
         toast({
           title: "Not registered yet",
-          description:
-            "Your email isn't registered. Students need teacher approval first. Teachers: ask your Sport Waikato contact to add your school.",
+          description: "Your email isn't registered. Head to the homepage to sign up first.",
           variant: "destructive",
         });
         return false;
       }
-      // Cache first name so the welcome message is personalised on return visits
       const rawName = studentName ?? userEmail.split("@")[0].replace(/[._]/g, " ");
       const firstName = rawName.split(" ")[0];
       const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
@@ -93,49 +90,6 @@ const Auth = () => {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      toast({ title: "Passwords don't match", description: "Please make sure both passwords are the same.", variant: "destructive" });
-      return;
-    }
-    setLoading(true);
-    try {
-      // Check Airtable approval before creating account
-      const { approved } = await validateUserApproval(email);
-      if (!approved) {
-        toast({
-          title: "Not registered yet",
-          description:
-            "Your email isn't registered. Students need teacher approval first. Teachers: ask your Sport Waikato contact to add your school.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: window.location.origin },
-      });
-      if (error) throw error;
-
-      toast({
-        title: "Check your email",
-        description: "We've sent you a verification link. Please verify your email then come back to sign in.",
-      });
-      setMode("signin");
-      setPassword("");
-      setConfirmPassword("");
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Shared wrapper
   const PageWrapper = ({ children }: { children: React.ReactNode }) => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-8">
@@ -164,40 +118,6 @@ const Auth = () => {
         </form>
         <p className="font-body text-sm text-muted-foreground">
           <button onClick={() => setMode("signin")} className="font-display font-bold uppercase text-primary underline">Back to Sign In</button>
-        </p>
-      </PageWrapper>
-    );
-  }
-
-  // ---------- SIGN UP ----------
-  if (mode === "signup") {
-    return (
-      <PageWrapper>
-        <h1 className="font-display text-3xl uppercase tracking-wider text-foreground">Sign Up</h1>
-        <p className="mt-2 font-body text-sm text-muted-foreground">Create your Free Wheeler account</p>
-        <form onSubmit={handleSignUp} className="space-y-6 text-left">
-          <div className="tape-element inline-flex w-full flex-col gap-1 rotate-[-2deg]">
-            <Label htmlFor="email" className="font-display text-xs uppercase tracking-wider text-accent-foreground">School Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@school.nz" required className="border-2 border-secondary bg-accent/30 font-display text-accent-foreground placeholder:text-accent-foreground/50 focus-visible:ring-secondary" />
-          </div>
-          <div className="tape-element inline-flex w-full flex-col gap-1 rotate-[1deg]">
-            <Label htmlFor="password" className="font-display text-xs uppercase tracking-wider text-accent-foreground">Password</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="border-2 border-secondary bg-accent/30 font-display text-accent-foreground placeholder:text-accent-foreground/50 focus-visible:ring-secondary" />
-          </div>
-          <div className="tape-element inline-flex w-full flex-col gap-1 rotate-[-1deg]">
-            <Label htmlFor="confirmPassword" className="font-display text-xs uppercase tracking-wider text-accent-foreground">Confirm Password</Label>
-            <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="border-2 border-secondary bg-accent/30 font-display text-accent-foreground placeholder:text-accent-foreground/50 focus-visible:ring-secondary" />
-          </div>
-          <Button type="submit" disabled={loading} className="tape-element-green w-full text-lg transition-transform hover:rotate-0 hover:scale-105">
-            {loading ? <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Creating account...</span> : "Sign Up"}
-          </Button>
-        </form>
-        <p className="font-body text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <button onClick={() => setMode("signin")} className="font-display font-bold uppercase text-primary underline">Sign In</button>
-        </p>
-        <p className="font-body text-xs text-muted-foreground">
-          Your school email must be registered in our system before you can sign up.
         </p>
       </PageWrapper>
     );
@@ -249,13 +169,9 @@ const Auth = () => {
         Sign in with Google
       </Button>
 
-      <p className="font-body text-sm text-muted-foreground">
-        Don't have an account?{" "}
-        <button onClick={() => setMode("signup")} className="font-display font-bold uppercase text-primary underline">Sign Up</button>
-      </p>
-
       <p className="font-body text-xs text-muted-foreground">
-        Teachers: your email must be registered in the system to sign in.
+        Don't have an account?{" "}
+        <a href="/" className="font-display font-bold uppercase text-primary underline">Register here</a>
       </p>
     </PageWrapper>
   );

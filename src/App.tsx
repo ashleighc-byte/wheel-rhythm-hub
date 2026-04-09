@@ -22,6 +22,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Webinar from "./pages/Webinar";
 import StudentRegistration from "./pages/StudentRegistration";
 import RaceGame from "./pages/RaceGame";
+import Terms from "./pages/Terms";
 
 
 const queryClient = new QueryClient();
