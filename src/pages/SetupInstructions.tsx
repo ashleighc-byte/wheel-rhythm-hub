@@ -222,25 +222,21 @@ const steps = [
   {
     num: "05",
     icon: ClipboardList,
-    title: "Pre Phase Survey",
+    title: "User Pack Delivery",
     colour: "bg-secondary",
     textColour: "text-secondary-foreground",
     content: (
       <div className="space-y-3 font-body text-sm leading-relaxed text-foreground/85">
         <p>
-          When a student signs in for the first time, they'll be prompted to complete the{" "}
-          <span className="font-bold text-foreground">Pre Phase Survey</span> before accessing the
-          main website.
+          Once a student registers, Sport Waikato will receive their information and create a{" "}
+          <span className="font-bold text-foreground">user pack</span> — including an NFC bracelet and stickers.
         </p>
         <p>
-          This survey captures their baseline attitudes towards sport, physical activity, confidence,
-          and wellbeing — which we'll compare with the Post Phase survey at the end of the pilot to
-          measure impact.
+          The pack will be delivered to your school. Allow a few days after registration for delivery.
         </p>
         <div className="border-l-4 border-primary bg-card px-4 py-3">
           <p className="text-foreground/70">
-            Once they submit the survey, they'll be taken straight to the home page and can start
-            using the platform. The survey questions are managed dynamically from the backend.
+            Once students have their bracelet, they can tap it on the iPad to log rides — no passwords needed.
           </p>
         </div>
       </div>
@@ -300,16 +296,16 @@ const studentInstructions = [
 
 const ongoingItems = [
   {
-    icon: ClipboardList,
-    label: "Mid Phase Survey",
+    icon: Calendar,
+    label: "Bike Booking System",
     description:
-      "After 4 weeks the Mid Phase Survey will automatically pop up for students. It only needs to be submitted once — after that it's marked as completed on their checklist. If it hasn't appeared yet, students can find it on their Info page checklist.",
+      "Use the built-in booking system at freewheeler.lovable.app/book to help students schedule 15-minute bike slots. Office staff can also book on behalf of students.",
   },
   {
     icon: BarChart3,
-    label: "Post Phase Survey",
+    label: "Monitor Participation",
     description:
-      "At the end of the pilot, students complete the Post Phase Survey. This is available from their student checklist on the Info page. It's how we measure the impact of the programme.",
+      "Check the teacher dashboard to see which students are actively riding and who might need encouragement.",
   },
   {
     icon: MessageSquare,
