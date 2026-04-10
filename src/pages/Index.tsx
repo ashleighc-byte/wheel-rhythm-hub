@@ -38,10 +38,8 @@ const PublicLanding = () => {
 
       {/* Hero with centered text + JOIN THE LEAGUE button */}
       <section className="relative overflow-hidden bg-secondary">
-        <div className="absolute inset-0 speed-lines" />
         <div className="absolute inset-0">
-          <img src={stripeBg} alt="" className="h-full w-full object-cover opacity-15" />
-          <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary/90 to-secondary/70" />
+          <img src={stripeBg} alt="" className="h-full w-full object-cover opacity-40" />
         </div>
 
         <div className="container relative mx-auto px-4 py-16 md:py-28">
@@ -95,17 +93,20 @@ const PublicLanding = () => {
 
       {/* How it Works */}
       <section className="bg-background py-14 relative overflow-hidden">
-        {/* Decorative "Pedal Your Own Path" overlay */}
-        <motion.img
-          src={brandPedalPath}
-          alt=""
-          aria-hidden="true"
-          initial={{ opacity: 0, x: 80 }}
-          whileInView={{ opacity: 0.08, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="pointer-events-none absolute -right-16 top-1/2 -translate-y-1/2 w-64 md:w-96"
-        />
+        {/* Decorative "Pedal Your Own Path" graphic */}
+        <div className="container relative mx-auto px-4 mb-8">
+          <div className="flex justify-center">
+            <motion.img
+              src={brandPedalPath}
+              alt="Pedal Your Own Path"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="w-48 md:w-64 h-auto"
+            />
+          </div>
+        </div>
         <div className="container relative mx-auto px-4">
           <h2 className="mb-10 text-center text-2xl text-foreground md:text-3xl">
             HOW IT WORKS
