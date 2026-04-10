@@ -819,7 +819,7 @@ const Dashboard = () => {
         {/* ═══ MT RUAPEHU ELEVATION TRACKER ═══ */}
         <div className="relative">
           <img
-            src={brandGoHard}
+            src={brandPedalPath}
             alt=""
             aria-hidden="true"
             className="pointer-events-none absolute -left-8 top-1/2 -translate-y-1/2 w-24 opacity-[0.06] md:w-36"

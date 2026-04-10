@@ -234,7 +234,7 @@ const Leaderboards = () => {
             className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-48 md:w-72"
           />
           <motion.img
-            src={brandGoHard}
+            src={brandPedalPath}
             alt=""
             aria-hidden="true"
             initial={{ opacity: 0, x: 30 }}
@@ -330,8 +330,8 @@ const Leaderboards = () => {
                     className="flex items-center justify-center"
                   >
                     <img
-                      src={brandPowerLegs}
-                      alt="The Power's In Your Legs"
+                      src={brandPedalPath}
+                      alt="Pedal Your Own Path"
                       className="w-full max-w-[280px] object-contain"
                     />
                   </motion.div>

@@ -386,7 +386,7 @@ const TeacherInfo = () => {
               </p>
             </div>
             <div className="flex-shrink-0 w-64 md:w-80">
-              <img src={brandHeroPower} alt="The Power's In Your Legs" className="w-full h-auto rounded-sm border-[3px] border-accent shadow-[6px_6px_0px_hsl(var(--brand-neon)/0.3)]" />
+              <img src={brandWordmark} alt="Freewheeler" className="w-full h-auto rounded-sm drop-shadow-lg" />
             </div>
           </div>
         </div>
@@ -434,17 +434,20 @@ const TeacherInfo = () => {
         </div>
       </section>
 
-      {/* Decorative brand divider – Go Hard chain */}
+      {/* Decorative brand divider – stripe pattern with wordmark */}
       <div className="relative bg-background py-8 overflow-hidden">
-        <div className="container mx-auto flex items-center justify-center px-4">
+        <div className="absolute inset-0">
+          <img src={stripeBg} alt="" className="h-full w-full object-cover opacity-15" />
+        </div>
+        <div className="container relative mx-auto flex items-center justify-center px-4">
           <motion.img
-            src={brandGoHard}
-            alt="Go hard without having to go anywhere"
-            initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-            whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+            src={brandWordmark}
+            alt="Freewheeler"
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, type: "spring" }}
-            className="h-28 w-28 object-contain md:h-40 md:w-40"
+            className="h-16 w-auto object-contain md:h-24 drop-shadow-lg"
           />
         </div>
       </div>
@@ -453,7 +456,7 @@ const TeacherInfo = () => {
       <section className="bg-secondary py-16 relative overflow-hidden">
         {/* Decorative overlay */}
         <motion.img
-          src={brandPowerLegs}
+          src={brandPedalPath}
           alt=""
           aria-hidden="true"
           initial={{ opacity: 0 }}
