@@ -51,6 +51,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const checkApprovalAndAssignRole = async (userSession: Session | null) => {
     if (!userSession?.user?.email) return;
     const email = userSession.user.email;
+    if (email === "demo@freewheeler.nz") {
+      const userRole = await fetchUserRole(userSession);
+      setRole(userRole);
+      return;
+    }
     if (checkedEmails.current.has(email)) return;
     checkedEmails.current.add(email);
 
