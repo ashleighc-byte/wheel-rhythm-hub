@@ -112,9 +112,9 @@ const PublicLanding = () => {
           </h2>
           <div className="mx-auto grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
             {[
-              { icon: Bike, title: "Ride", desc: "Jump on a smart bike at school and ride in MyWhoosh. No equipment needed — just show up." },
+              { icon: Bike, title: "Ride", desc: "Jump on a smart bike at school and ride in MyWhoosh — on your own schedule. No travel, no equipment needed." },
               { icon: Trophy, title: "Earn Points", desc: "10 points per ride plus bonuses for streaks, elevation, speed, and trying new tracks." },
-              { icon: Users, title: "Compete", desc: "Climb the leaderboard, hit milestones, and push your school to the top." },
+              { icon: Users, title: "Compete", desc: "Climb the leaderboard, hit milestones, and push your school to the top. 7 Waikato schools competing." },
             ].map((item, i) => (
               <motion.div
                 key={item.title}
