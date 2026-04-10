@@ -63,9 +63,9 @@ const PublicLanding = () => {
               transition={{ delay: 0.5, duration: 0.5 }}
               className="mt-6 max-w-lg font-body text-base leading-relaxed text-secondary-foreground/80 md:text-lg"
             >
-              Free Wheeler Bike League is indoor cycling for secondary school students.
-              Jump on a smart bike, race in MyWhoosh, log your rides, and compete with your school —
-              no trials, no pressure, just ride.
+              Freewheeler is a virtual cycling league for secondary school students, delivered through MyWhoosh.
+              Complete rides and challenges at school, on a schedule that works for you, with points accumulated across the season —
+              no travel, no trials, no pressure, just ride.
             </motion.p>
 
             <motion.button
@@ -133,7 +133,7 @@ const PublicLanding = () => {
             ))}
           </div>
           <p className="mt-6 text-center font-body text-xs text-muted-foreground">
-            Limited to 24 students per school — first in, first served. Once registered, Sport Waikato will deliver your NFC bracelet and user pack to your school.
+            Limited to the first 24 registrations per school — first in, first served. No participation fee. Once registered, Sport Waikato will deliver your NFC bracelet and user pack to your school.
           </p>
         </div>
       </section>
@@ -165,7 +165,13 @@ const PublicLanding = () => {
           <p className="mt-2 font-body text-sm text-secondary-foreground/60">
             Pedal Your Own Path · © 2026
           </p>
-          <div className="mt-3 flex items-center justify-center gap-4">
+          <div className="mt-3 flex items-center justify-center gap-4 flex-wrap">
+            <Link
+              to="/programme-overview"
+              className="font-display text-xs uppercase tracking-wider text-secondary-foreground/60 underline hover:text-secondary-foreground/80"
+            >
+              Programme Overview
+            </Link>
             <Link
               to="/book"
               className="font-display text-xs uppercase tracking-wider text-secondary-foreground/60 underline hover:text-secondary-foreground/80"

@@ -127,6 +127,17 @@ const StudentRegistrationForm = () => {
       return;
     }
 
+    // Block submission if all 24 spots are taken
+    const selectedSchool = schools.find(s => s.name === school);
+    if (selectedSchool && selectedSchool.spots_remaining !== undefined && selectedSchool.spots_remaining <= 0) {
+      toast({
+        title: "Registration closed",
+        description: "All 24 spots at this school have been taken.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // 1. Create Supabase auth account
