@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, FileDown, Trophy, BarChart3, Users, Bike, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import brandLogo from "@/assets/fw-logo-new.png";
+import brandLogo from "@/assets/fw-logo-oval.png";
 
 const TOTAL_SLIDES = 6;
 

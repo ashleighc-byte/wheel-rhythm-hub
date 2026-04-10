@@ -24,7 +24,6 @@ const teacherNavLinks = [
     ],
   },
   { label: "LEADERBOARD", path: "/leaderboards", tourId: "leaderboards" },
-  { label: "TEACHER DASHBOARD", path: "/teacher-dashboard", tourId: "teacher-dashboard" },
 ];
 
 type NavLink = {

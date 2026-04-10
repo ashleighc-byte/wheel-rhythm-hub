@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import logoSrc from "@/assets/fw-logo-new.png";
+import logoSrc from "@/assets/fw-logo-oval.png";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
