@@ -24,13 +24,15 @@ const Terms = () => (
             1. Programme Overview
           </h2>
           <p>
-            Free Wheeler Bike League is an indoor cycling programme for secondary
-            school students, delivered by Sport Waikato in partnership with your
-            school. The programme uses Proton Wattbike smart bikes paired with
-            the MyWhoosh virtual cycling app. By registering, you agree to
-            participate in programme activities including riding the bikes,
-            logging sessions via your NFC bracelet, and contributing to school
-            leaderboards.
+            Freewheeler is a virtual cycling league for secondary
+            school students, delivered through MyWhoosh, an online cycling platform.
+            It is developed in the Waikato by Sport Waikato to reimagine what school sport can look like,
+            purposefully designed to remove many traditional barriers facing school sports
+            administration and participation. Students complete rides and challenges at school,
+            on a schedule that works for them, with points accumulated across the season.
+            By registering, you agree to participate in programme activities including
+            riding the bikes, logging sessions via your NFC bracelet, and contributing
+            to school leaderboards.
           </p>
         </section>
 
@@ -70,8 +72,11 @@ const Terms = () => (
             <li>Provide a suitable space with access to power outlets for the two smart bikes.</li>
             <li>Ensure WiFi access is available for the MyWhoosh app on the provided iPad/tablet.</li>
             <li>Supervise the bike area during school hours and manage the booking timetable.</li>
+            <li>Commit to promoting the opportunity to students.</li>
+            <li>Adhere to the agreed MOU between the school and Sport Waikato.</li>
             <li>Collect and store participant consent forms as required by school policy.</li>
             <li>Communicate programme information to students and whānau.</li>
+            <li>Be willing to help test and learn from the pilot.</li>
           </ul>
         </section>
 
@@ -80,11 +85,12 @@ const Terms = () => (
             5. Sport Waikato Responsibilities
           </h2>
           <ul className="list-disc space-y-1 pl-5">
-            <li>Supply and maintain the Proton Wattbike smart bikes and associated equipment.</li>
+            <li>Supply and maintain the smart bikes and associated equipment (2 × smart bikes per school, provided free of charge for the duration of the pilot).</li>
             <li>Provide an iPad/tablet pre-loaded with MyWhoosh for each school.</li>
-            <li>Deliver the Free Wheeler digital platform (website, leaderboards, milestones, booking system).</li>
+            <li>Deliver the Freewheeler digital platform (website, leaderboards, milestones, booking system).</li>
             <li>Create and deliver student user packs (NFC bracelet, stickers) to participating schools.</li>
-            <li>Provide technical setup guidance and ongoing support throughout the pilot.</li>
+            <li>Deliver all league challenges and content digitally via student email.</li>
+            <li>Provide promotional material and ongoing technical support throughout the pilot.</li>
           </ul>
         </section>
 
@@ -131,9 +137,12 @@ const Terms = () => (
             8. Programme Duration
           </h2>
           <p>
-            The Free Wheeler Bike League operates for the agreed pilot period as
-            confirmed with your school. Equipment will be collected at the end
-            of the programme period unless an extension is agreed.
+            The Freewheeler pilot is planned as an 8-week season, targeted for
+            Term 2 and Term 3, 2026, across 7 Waikato schools. There is no
+            participation fee for schools or students. Registration is limited
+            to the first 24 students per school. Equipment will be collected at
+            the end of the programme period unless an extension is agreed, and
+            for longer if the league continues.
           </p>
         </section>
 
