@@ -127,6 +127,17 @@ const StudentRegistrationForm = () => {
       return;
     }
 
+    // Block submission if all 24 spots are taken
+    const selectedSchool = schools.find(s => s.name === school);
+    if (selectedSchool && selectedSchool.spots_remaining !== undefined && selectedSchool.spots_remaining <= 0) {
+      toast({
+        title: "Registration closed",
+        description: "All 24 spots at this school have been taken.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // 1. Create Supabase auth account
@@ -419,19 +430,27 @@ const StudentRegistrationForm = () => {
           </Label>
         </div>
 
-        <Button
-          type="submit"
-          disabled={loading}
-          className="tape-element-green w-full text-base transition-transform hover:rotate-0 hover:scale-105"
-        >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin" /> Creating account...
-            </span>
-          ) : (
-            "JOIN THE LEAGUE"
-          )}
-        </Button>
+        {(() => {
+          const sel = schools.find(s => s.name === school);
+          const isFull = sel && sel.spots_remaining !== undefined && sel.spots_remaining <= 0;
+          return (
+            <Button
+              type="submit"
+              disabled={loading || !!isFull}
+              className="tape-element-green w-full text-base transition-transform hover:rotate-0 hover:scale-105"
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" /> Creating account...
+                </span>
+              ) : isFull ? (
+                "REGISTRATION CLOSED"
+              ) : (
+                "JOIN THE LEAGUE"
+              )}
+            </Button>
+          );
+        })()}
       </form>
 
       <div className="mt-4 flex items-center gap-3">

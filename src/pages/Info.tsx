@@ -130,10 +130,10 @@ const StudentInfo = () => {
             {/* Text content - right side */}
             <div className="flex-1 space-y-6 font-body text-base leading-relaxed text-foreground/90">
               <p className="text-xl font-bold text-foreground">
-                Free Wheeler Bike League is a new way to do sport.
+                Freewheeler is a new way to do sport.
               </p>
               <p>
-                No teams. No trials. No pressure. Just jump on a bike and ride. Track your sessions, build your streak, and see how your school ranks on the leaderboard. Every ride counts.
+                A virtual cycling league developed in the Waikato to meet young people where they are. No teams. No trials. No pressure. Just jump on a bike and ride. Track your sessions, build your streak, and see how your school ranks on the leaderboard. Every ride counts.
               </p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {[
@@ -153,10 +153,10 @@ const StudentInfo = () => {
                 ))}
               </div>
               <p>
-                This is a pilot — meaning we're trialling it to see how it works and whether it should grow into more schools. Your participation, data, and feedback directly shapes what happens next.
+                This is a pilot across 7 Waikato schools — an 8-week season in Term 2 and Term 3, 2026. No participation fee. Your participation, data, and feedback directly shapes what happens next. If successful, Freewheeler could expand across the Waikato and beyond.
               </p>
               <p className="tape-element-green inline-block px-4 py-2 font-display text-lg font-bold uppercase">
-                Go hard — without having to go anywhere.
+                Pedal Your Own Path
               </p>
             </div>
           </div>
@@ -406,10 +406,10 @@ const TeacherInfo = () => {
             </div>
             <div className="space-y-5 font-body text-base leading-relaxed text-foreground/90">
               <p className="text-lg font-semibold">
-                Free Wheeler Bike League is reimagining how rangatahi experience sport.
+                Freewheeler is reimagining how rangatahi experience sport.
               </p>
               <p>
-                Traditional sport can feel rigid, rule-bound, and limited to certain students. Free Wheeler breaks away from those conventions and offers an option that works on their terms.
+                Freewheeler is a new virtual cycling league developed in the Waikato to meet young people where they are. Traditional sport can feel rigid, rule-bound, and limited to certain students. Freewheeler breaks away from those conventions and offers an option that works on their terms — one that lowers barriers for students, reduces the administration load on schools, and creates a sport experience that feels modern, engaging, and inclusive.
               </p>
               <p className="font-semibold">This pilot is designed to:</p>
               <ul className="space-y-2 pl-1">
@@ -427,7 +427,7 @@ const TeacherInfo = () => {
                 ))}
               </ul>
               <p className="tape-element-green inline-block px-4 py-2 font-display text-lg font-bold uppercase">
-                Go hard — without having to go anywhere.
+                Pedal Your Own Path
               </p>
             </div>
           </div>
@@ -475,8 +475,8 @@ const TeacherInfo = () => {
               </h2>
             </div>
             <div className="space-y-5 font-body text-base leading-relaxed text-secondary-foreground/90">
-              <p>Many rangatahi disengage from traditional sport due to structure, pressure, or lack of perceived ability.</p>
-              <p className="font-semibold text-accent">Free Wheeler offers:</p>
+              <p>Offering extra-curricular activities is more important than ever, but young people are increasingly drawn to activities that are flexible, social, and less structured. Traditional school sports are under pressure from rising transport costs, stretched staff capacity, busy calendars, and reduced volunteer support.</p>
+              <p className="font-semibold text-accent">Freewheeler offers:</p>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {["Low barrier to entry", "Self-paced challenge", "Individual progress tracking", "Inclusive participation", "A new pathway into physical activity"].map((item) => (
                   <div key={item} className="border-2 border-accent/30 bg-secondary px-4 py-3 font-display text-xs font-bold uppercase tracking-wider text-accent hover-bounce">
@@ -625,10 +625,10 @@ const TeacherInfo = () => {
               The Vision
             </h2>
             <p className="mx-auto mt-4 max-w-xl font-body text-base text-secondary-foreground/80">
-              Free Wheeler aims to create a scalable model for inclusive school sport — one that uses technology, data, and student voice to break barriers and build confidence.
+              This pilot will help us understand student interest, participation levels, and the potential for a wider rollout. If successful, Freewheeler could expand across the Waikato, opening opportunities for schools to compete regionally, nationally, and potentially internationally — all without leaving the school gates.
             </p>
             <p className="tape-element-green mt-6 inline-block px-4 py-2 font-display text-lg font-bold uppercase">
-              Go hard — without having to go anywhere.
+              Pedal Your Own Path
             </p>
           </div>
         </div>

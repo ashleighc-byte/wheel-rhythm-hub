@@ -25,6 +25,7 @@ import RaceGame from "./pages/RaceGame";
 import Terms from "./pages/Terms";
 import BookBike from "./pages/BookBike";
 import TeacherResources from "./pages/TeacherResources";
+import ProgrammeOverview from "./pages/ProgrammeOverview";
 
 
 const queryClient = new QueryClient();
@@ -98,6 +99,7 @@ const App = () => (
                <Route path="/reset-password" element={<ResetPassword />} />
                <Route path="/webinar" element={<Webinar />} />
                <Route path="/terms" element={<Terms />} />
+               <Route path="/programme-overview" element={<ProgrammeOverview />} />
                <Route path="/book" element={<BookBike />} />
                <Route path="/studentregistration" element={<StudentRegistration />} />
               <Route path="/race" element={<ProtectedRoute><RaceGame /></ProtectedRoute>} />
