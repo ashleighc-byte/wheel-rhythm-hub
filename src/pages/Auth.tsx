@@ -108,7 +108,7 @@ const Auth = () => {
         <h1 className="font-display text-3xl uppercase tracking-wider text-foreground">Reset Password</h1>
         <p className="mt-2 font-body text-sm text-muted-foreground">Enter your email and we'll send you a reset link</p>
         <form onSubmit={handleForgotPassword} className="space-y-6 text-left">
-          <div className="tape-element w-full space-y-1" style={{ display: "block" }}>
+          <div className="w-full space-y-1">
             <Label htmlFor="forgot-email" className="font-display text-xs uppercase tracking-wider text-accent-foreground">School Email</Label>
             <Input id="forgot-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@school.nz" required className="border-2 border-secondary bg-accent/30 font-display text-accent-foreground placeholder:text-accent-foreground/50 focus-visible:ring-secondary" />
           </div>
@@ -132,11 +132,11 @@ const Auth = () => {
       </p>
 
       <form onSubmit={handleSignIn} className="space-y-6 text-left">
-        <div className="tape-element w-full space-y-1" style={{ display: "block" }}>
+        <div className="w-full space-y-1">
           <Label htmlFor="email" className="font-display text-xs uppercase tracking-wider text-accent-foreground">School Email</Label>
           <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@school.nz" required className="border-2 border-secondary bg-accent/30 font-display text-accent-foreground placeholder:text-accent-foreground/50 focus-visible:ring-secondary" />
         </div>
-        <div className="tape-element w-full space-y-1" style={{ display: "block" }}>
+        <div className="w-full space-y-1">
           <Label htmlFor="password" className="font-display text-xs uppercase tracking-wider text-accent-foreground">Password</Label>
           <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} className="border-2 border-secondary bg-accent/30 font-display text-accent-foreground placeholder:text-accent-foreground/50 focus-visible:ring-secondary" />
         </div>
