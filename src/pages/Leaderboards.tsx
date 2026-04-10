@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Bike, Clock, Zap, MapPin, Mountain, ChevronDown, ChevronUp, Trophy, Map } from "lucide-react";
-import brandGoHard from "@/assets/brand-go-hard.png";
-import brandPedalPath from "@/assets/brand-pedal-path.png";
+import brandPedalPath from "@/assets/brand-pedal-your-path.png";
 import Navbar from "@/components/Navbar";
 import BrandBikeIcon from "@/components/BrandBikeIcon";
-import brandPowerLegs from "@/assets/brand-power-legs.png";
+import stripeBg from "@/assets/stripe-bg-2.png";
 import StatsBar from "@/components/StatsBar";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, callAirtable } from "@/lib/airtable";

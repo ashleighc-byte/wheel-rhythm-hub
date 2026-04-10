@@ -8,11 +8,10 @@ import { motion } from "framer-motion";
 import ReportIssueForm from "@/components/ReportIssueForm";
 import { fetchStudents } from "@/lib/airtable";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import brandHeroPedal from "@/assets/brand-hero-pedal.png";
-import brandHeroPower from "@/assets/brand-hero-power.png";
-import brandGoHard from "@/assets/brand-go-hard.png";
-import brandPedalPath from "@/assets/brand-pedal-path.png";
-import brandPowerLegs from "@/assets/brand-power-legs.png";
+import brandPedalPath from "@/assets/brand-pedal-your-path.png";
+import brandWordmark from "@/assets/fw-wordmark.png";
+import brandBikeIcon from "@/assets/brand-bike-icon.png";
+import stripeBg from "@/assets/stripe-bg-3.png";
 
 const timelinePhases = [
   {
@@ -106,7 +105,7 @@ const StudentInfo = () => {
               </p>
             </div>
             <div className="flex-shrink-0 w-64 md:w-96 relative z-20">
-              <img src={brandGoHard} alt="Go hard without having to go anywhere" className="w-full h-auto drop-shadow-lg" />
+              <img src={brandBikeIcon} alt="Free Wheeler bike icon" className="w-full h-auto drop-shadow-lg" />
             </div>
           </div>
         </div>
@@ -120,7 +119,7 @@ const StudentInfo = () => {
             <div className="flex-shrink-0 w-48 md:w-72 lg:w-80">
               <motion.img
                 src={brandPedalPath}
-                alt="Pedal your own path"
+                alt="Pedal Your Own Path"
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}

@@ -31,8 +31,8 @@ import {
 } from "@/lib/airtable";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 // Brand assets imported via BrandBikeIcon component
-import brandGoHard from "@/assets/brand-go-hard.png";
-import brandPedalPath from "@/assets/brand-pedal-path.png";
+import brandPedalPath from "@/assets/brand-pedal-your-path.png";
+import stripeBg from "@/assets/stripe-bg-2.png";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getMilestoneBadgeImage } from "@/lib/milestoneBadges";
 import MtRuapehuTracker from "@/components/MtRuapehuTracker";

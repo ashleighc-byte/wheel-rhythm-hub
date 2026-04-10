@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
-import brandBikeYellow from "@/assets/brand-bike-yellow.png";
-import brandBikeBlack from "@/assets/brand-bike-black.png";
+import brandBikeIcon from "@/assets/brand-bike-icon.png";
 
 interface BrandBikeIconProps {
   className?: string;
@@ -13,12 +12,11 @@ interface BrandBikeIconProps {
  * Other variants render an inline SVG for colour flexibility.
  */
 const BrandBikeIcon = ({ className, variant = "yellow" }: BrandBikeIconProps) => {
-  // PNG variants – use actual brand asset images
-  if (variant === "yellow" || variant === "black") {
-    const src = variant === "yellow" ? brandBikeYellow : brandBikeBlack;
+  // PNG variant – use the new brand bike icon
+  if (variant === "yellow" || variant === "black" || variant === "default") {
     return (
       <img
-        src={src}
+        src={brandBikeIcon}
         alt=""
         aria-hidden="true"
         className={cn("inline-block object-contain", className)}
