@@ -1,0 +1,23 @@
+{
+  "name": "Free Wheeler Bike League",
+  "short_name": "Free Wheeler",
+  "description": "Pedal Your Own Path — indoor cycling for secondary school students",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2B220D",
+  "theme_color": "#84A914",
+  "icons": [
+    {
+      "src": "/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
