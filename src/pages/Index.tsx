@@ -4,11 +4,11 @@ import { motion } from "framer-motion";
 import { Bike, Users, Trophy } from "lucide-react";
 import StudentRegistrationForm from "@/components/StudentRegistrationForm";
 import { useAuth } from "@/hooks/useAuth";
-import logoSrc from "@/assets/fw-logo-new.png";
-import brandHeroPedal from "@/assets/brand-hero-pedal.png";
-import brandGoHard from "@/assets/brand-go-hard.png";
-import brandPowerLegs from "@/assets/brand-power-legs.png";
-import brandPedalPath from "@/assets/brand-pedal-path.png";
+import logoSrc from "@/assets/fw-logo-oval.png";
+import brandPedalPath from "@/assets/brand-pedal-your-path.png";
+import brandBikeIcon from "@/assets/brand-bike-icon.png";
+import brandWordmark from "@/assets/fw-wordmark.png";
+import stripeBg from "@/assets/stripe-bg-1.png";
 import {
   Dialog,
   DialogContent,
@@ -40,7 +40,7 @@ const PublicLanding = () => {
       <section className="relative overflow-hidden bg-secondary">
         <div className="absolute inset-0 speed-lines" />
         <div className="absolute inset-0">
-          <img src={brandHeroPedal} alt="" className="h-full w-full object-cover opacity-25" />
+          <img src={stripeBg} alt="" className="h-full w-full object-cover opacity-15" />
           <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary/90 to-secondary/70" />
         </div>
 
@@ -95,13 +95,13 @@ const PublicLanding = () => {
 
       {/* How it Works */}
       <section className="bg-background py-14 relative overflow-hidden">
-        {/* Decorative "Power's In Your Legs" overlay */}
+        {/* Decorative "Pedal Your Own Path" overlay */}
         <motion.img
-          src={brandPowerLegs}
+          src={brandPedalPath}
           alt=""
           aria-hidden="true"
           initial={{ opacity: 0, x: 80 }}
-          whileInView={{ opacity: 0.06, x: 0 }}
+          whileInView={{ opacity: 0.08, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
           className="pointer-events-none absolute -right-16 top-1/2 -translate-y-1/2 w-64 md:w-96"
@@ -138,17 +138,20 @@ const PublicLanding = () => {
         </div>
       </section>
 
-      {/* Brand divider – Go Hard chain */}
+      {/* Brand divider – stripe pattern with wordmark */}
       <div className="relative bg-secondary py-10 overflow-hidden">
-        <div className="container mx-auto flex items-center justify-center px-4">
+        <div className="absolute inset-0">
+          <img src={stripeBg} alt="" className="h-full w-full object-cover opacity-20" />
+        </div>
+        <div className="container relative mx-auto flex items-center justify-center px-4">
           <motion.img
-            src={brandGoHard}
-            alt="Go hard without having to go anywhere"
-            initial={{ opacity: 0, rotate: -5, scale: 0.8 }}
-            whileInView={{ opacity: 1, rotate: 0, scale: 1 }}
+            src={brandWordmark}
+            alt="Freewheeler"
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, type: "spring" }}
-            className="h-32 w-32 object-contain md:h-48 md:w-48"
+            className="h-16 w-auto object-contain md:h-24 drop-shadow-lg"
           />
         </div>
       </div>

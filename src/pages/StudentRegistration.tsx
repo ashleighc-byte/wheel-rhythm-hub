@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Users, ExternalLink, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import brandLogo from "@/assets/fw-logo-new.png";
+import brandLogo from "@/assets/fw-logo-oval.png";
 import artDynamic from "@/assets/art-dynamic-bg.jpeg";
 
 const PERMISSION_LINK = "https://bit.ly/GameFITPermission";

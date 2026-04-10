@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
-import logoSrc from "@/assets/fw-logo-new.png";
+import logoSrc from "@/assets/fw-logo-oval.png";
 
 interface SessionFeedbackFormProps {
   open: boolean;

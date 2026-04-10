@@ -7,7 +7,7 @@ import { callAirtable, escapeFormulaValue } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import NfcOnboardingTour from "@/components/NfcOnboardingTour";
-import logoSrc from "@/assets/fw-logo-new.png";
+import logoSrc from "@/assets/fw-logo-oval.png";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getLevel } from "@/lib/gamification";
 

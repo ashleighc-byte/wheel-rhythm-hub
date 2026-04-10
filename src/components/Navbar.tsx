@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, LogOut, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import brandLogo from "@/assets/logo-top-left.png";
+import brandLogo from "@/assets/fw-logo-oval.png";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 
 const studentNavLinks = [
@@ -24,7 +24,6 @@ const teacherNavLinks = [
     ],
   },
   { label: "LEADERBOARD", path: "/leaderboards", tourId: "leaderboards" },
-  { label: "TEACHER DASHBOARD", path: "/teacher-dashboard", tourId: "teacher-dashboard" },
 ];
 
 type NavLink = {

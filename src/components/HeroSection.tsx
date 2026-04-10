@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import brandHeroPower from "@/assets/brand-hero-power.png";
-import brandPedalPath from "@/assets/brand-pedal-path.png";
+import brandPedalPath from "@/assets/brand-pedal-your-path.png";
+import stripeBg from "@/assets/stripe-bg-1.png";
 import SessionFeedbackForm from "./SessionFeedbackForm";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -68,10 +68,10 @@ const HeroSection = () => {
             >
               {isAdmin ? (
                 <button
-                  onClick={() => navigate("/teacher-dashboard")}
+                  onClick={() => navigate("/leaderboards")}
                   className="tape-element-green text-base md:text-lg"
                 >
-                  TRACK YOUR STUDENTS
+                  VIEW LEADERBOARDS
                 </button>
               ) : (
                 <>
@@ -100,9 +100,9 @@ const HeroSection = () => {
             className="flex-shrink-0 w-72 md:w-96 hidden sm:block"
           >
             <img
-              src={brandHeroPower}
-              alt="The Power's In Your Legs – Free Wheeler Bike League"
-              className="w-full h-auto border-[3px] border-accent shadow-[8px_8px_0px_hsl(var(--brand-neon)/0.4)]"
+              src={brandPedalPath}
+              alt="Pedal Your Own Path – Free Wheeler Bike League"
+              className="w-full h-auto drop-shadow-lg"
             />
           </motion.div>
         </div>

@@ -13,7 +13,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Leaderboards from "./pages/Leaderboards";
 import Info from "./pages/Info";
-import TeacherDashboard from "./pages/TeacherDashboard";
+// TeacherDashboard removed
 import OgImageDownload from "./pages/OgImageDownload";
 import SetupInstructions from "./pages/SetupInstructions";
 import SetupInstructionsPrint from "./pages/SetupInstructionsPrint";
@@ -91,7 +91,7 @@ const App = () => (
             <Route path="/leaderboards" element={<ProtectedRoute><Leaderboards /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/info" element={<ProtectedRoute><Info /></ProtectedRoute>} />
-             <Route path="/teacher-dashboard" element={<AdminRoute><TeacherDashboard /></AdminRoute>} />
+             {/* TeacherDashboard route removed */}
              <Route path="/setup-instructions" element={<AdminRoute><SetupInstructions /></AdminRoute>} />
              <Route path="/setup-instructions/print" element={<AdminRoute><SetupInstructionsPrint /></AdminRoute>} />
               <Route path="/og-download" element={<ProtectedRoute><OgImageDownload /></ProtectedRoute>} />

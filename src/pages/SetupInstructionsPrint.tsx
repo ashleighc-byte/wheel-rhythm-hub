@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import fwLogo from "@/assets/fw-logo-new.png";
+import fwLogo from "@/assets/fw-logo-oval.png";
 
 const PERMISSION_LINK = "https://bit.ly/GameFITPermission";
 const WEBSITE_LINK = "https://freewheeler.lovable.app/auth";

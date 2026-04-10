@@ -31,8 +31,8 @@ import {
 } from "@/lib/airtable";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 // Brand assets imported via BrandBikeIcon component
-import brandGoHard from "@/assets/brand-go-hard.png";
-import brandPedalPath from "@/assets/brand-pedal-path.png";
+import brandPedalPath from "@/assets/brand-pedal-your-path.png";
+import stripeBg from "@/assets/stripe-bg-2.png";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getMilestoneBadgeImage } from "@/lib/milestoneBadges";
 import MtRuapehuTracker from "@/components/MtRuapehuTracker";
@@ -819,7 +819,7 @@ const Dashboard = () => {
         {/* ═══ MT RUAPEHU ELEVATION TRACKER ═══ */}
         <div className="relative">
           <img
-            src={brandGoHard}
+            src={brandPedalPath}
             alt=""
             aria-hidden="true"
             className="pointer-events-none absolute -left-8 top-1/2 -translate-y-1/2 w-24 opacity-[0.06] md:w-36"

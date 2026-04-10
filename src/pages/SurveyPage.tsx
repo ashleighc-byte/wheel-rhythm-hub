@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import DynamicSurvey, { type SurveyQuestion } from "@/components/DynamicSurvey";
 import { fetchSurveyQuestions, submitSurveyResponses, fetchStudents, markSurveyCompleted } from "@/lib/airtable";
 import { clearSurveyDismissal, dismissSurvey } from "@/lib/surveyDismissals";
-import logoSrc from "@/assets/fw-logo-new.png";
+import logoSrc from "@/assets/fw-logo-oval.png";
 
 const SurveyPage = () => {
   const { user } = useAuth();
