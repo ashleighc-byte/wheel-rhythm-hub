@@ -68,10 +68,10 @@ const HeroSection = () => {
             >
               {isAdmin ? (
                 <button
-                  onClick={() => navigate("/teacher-dashboard")}
+                  onClick={() => navigate("/leaderboards")}
                   className="tape-element-green text-base md:text-lg"
                 >
-                  TRACK YOUR STUDENTS
+                  VIEW LEADERBOARDS
                 </button>
               ) : (
                 <>
