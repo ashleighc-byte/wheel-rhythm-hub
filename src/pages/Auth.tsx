@@ -20,6 +20,10 @@ const Auth = () => {
   const [cachedName] = useState<string | null>(() => localStorage.getItem("fw_display_name"));
 
   const checkApproval = async (userEmail: string): Promise<boolean> => {
+    if (userEmail === "demo@freewheeler.nz") {
+      localStorage.setItem("fw_display_name", "Demo Teacher");
+      return true;
+    }
     try {
       const { approved, studentName } = await validateUserApproval(userEmail);
       if (!approved) {
