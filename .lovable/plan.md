@@ -1,42 +1,37 @@
 
-# Brand Visual Redesign – Professional Audit & Fix
 
-## Problems Identified
-1. **Brand graphics used as dark, barely-visible background textures** – the "Pedal Your Own Path" and "Chain" graphics are crammed into `object-cover` backgrounds with 15-25% opacity, making them unrecognizable
-2. **Dashboard hero section** is a dark brown bar with the chain graphic invisible behind it
-3. **About/Info page hero** has the "Pedal Your Own Path" graphic as an unrecognizable dark smear
-4. **Generic Lucide icons** used for bike icon on dashboard instead of the brand bike icon from the logo
-5. **No use of the brand's neon (#DBFE66) "tape device" energy** in section transitions or decorative elements
-6. **Large empty spaces** between sections with no visual interest
+## Swapping Airtable Credentials
 
-## Proposed Changes
+### Will it break everything?
 
-### 1. Create a Brand Bike SVG Icon Component
-- Extract the cyclist icon from the logo as a reusable SVG component
-- Use it in the dashboard greeting, stat cards, and anywhere a bike icon appears
-- Replace the generic Lucide `Bike` icon throughout
+**No, it should work seamlessly** — as long as the copied base has the same table names, field names, and record IDs. Since you said the data was copied, the record IDs (like `reci1yUz0iOkalz5K`) should be preserved, meaning NFC bracelets will continue working.
 
-### 2. Dashboard Hero Redesign
-- Remove the barely-visible background image
-- Use the brand's dark brown + neon green pattern: bold "HEY, NAME" with the brand cyclist icon
-- Add a subtle speed-lines pattern (from the brand tape device) as decoration
+### What needs to change
 
-### 3. About/Info Page Hero Redesign  
-- Remove the background image approach entirely
-- Use the "Pedal Your Own Path" graphic as a **visible featured image** alongside the hero text (side-by-side layout), not hidden behind an overlay
-- Or use the neon/olive color-block approach from the brand landing page mockup
+Only **two secrets** need updating in Lovable Cloud:
 
-### 4. Add Brand Graphics as Visible Section Dividers
-- Use the "Power's In Your Legs" and "Chain" graphics as **visible, properly sized decorative images** between content sections
-- Scale them to fit without cropping, with proper aspect ratios
+1. **AIRTABLE_API_KEY** → your new API token from the living-lab@sportwaikato.nz account
+2. **AIRTABLE_BASE_ID** → `app4IEpE10xJPsLxT`
 
-### 5. Fix the Airtable Filter Error (runtime fix)
-- The `NFC Bracelet` field filter is failing – fix the field name casing
+These are already configured as edge function secrets. Updating them will immediately affect all edge functions (airtable-proxy, sync-leaderboard, backfill-points, assign-role, registration-count) without any code changes.
 
-## Files to Modify
-- `src/components/BrandBikeIcon.tsx` (new) – SVG brand cyclist icon
-- `src/pages/Dashboard.tsx` – hero section, replace Lucide bike icons
-- `src/pages/Info.tsx` – hero section, add visible brand graphics between sections
-- `src/components/HeroSection.tsx` – landing page hero with proper brand image usage
-- `src/components/Navbar.tsx` – use brand icon if needed
-- `src/pages/Dashboard.tsx` – fix Airtable field name for NFC filter
+### What stays the same
+
+- All code references use `Deno.env.get('AIRTABLE_API_KEY')` and `Deno.env.get('AIRTABLE_BASE_ID')` — no hardcoded values
+- Table names (Student Registration, Session Reflections, Organisations, etc.) remain the same
+- Record IDs are preserved in the copy, so NFC tap URLs still resolve
+- Leaderboard cache will refresh on the next sync cycle with data from the new base
+
+### Risk check
+
+The only risk is if Airtable's "duplicate base" changed record IDs. You can verify by checking that `reci1yUz0iOkalz5K` exists in the new base's Student Registration table. If it does, everything will work.
+
+### Steps
+
+1. I will update the **AIRTABLE_BASE_ID** secret to `app4IEpE10xJPsLxT`
+2. I will update the **AIRTABLE_API_KEY** secret with your new token (you will be prompted to enter it)
+3. Redeploy edge functions so the new secrets take effect
+4. Trigger a leaderboard sync to refresh cached data from the new base
+
+No code changes are needed.
+
