@@ -207,14 +207,6 @@ const Leaderboards = () => {
       }));
   }, [sortedAll, schoolName, userAirtableId, genderMap]);
 
-  const femaleRiders = useMemo(() =>
-    allSchoolRiders.filter(r => r.gender === "F").map((r, i) => ({ ...r, rank: i + 1 })),
-  [allSchoolRiders]);
-
-  const maleRiders = useMemo(() =>
-    allSchoolRiders.filter(r => r.gender === "M").map((r, i) => ({ ...r, rank: i + 1 })),
-  [allSchoolRiders]);
-
   // All Schools league-wide riders (mask names from other schools for privacy)
   const allSchoolRiders = useMemo(() =>
     sortedAll.map((r, i): RiderRow => ({
@@ -231,6 +223,14 @@ const Leaderboards = () => {
       gender: genderMap[r.airtableId] ?? "",
     })),
   [sortedAll, schoolName, userAirtableId, genderMap]);
+
+  const femaleRiders = useMemo(() =>
+    allSchoolRiders.filter(r => r.gender === "F").map((r, i) => ({ ...r, rank: i + 1 })),
+  [allSchoolRiders]);
+
+  const maleRiders = useMemo(() =>
+    allSchoolRiders.filter(r => r.gender === "M").map((r, i) => ({ ...r, rank: i + 1 })),
+  [allSchoolRiders]);
 
   return (
     <div className="min-h-screen bg-background">
