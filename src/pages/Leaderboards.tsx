@@ -208,12 +208,12 @@ const Leaderboards = () => {
   }, [sortedAll, schoolName, userAirtableId, genderMap]);
 
   const femaleRiders = useMemo(() =>
-    schoolRiders.filter(r => r.gender === "F").map((r, i) => ({ ...r, rank: i + 1 })),
-  [schoolRiders]);
+    allSchoolRiders.filter(r => r.gender === "F").map((r, i) => ({ ...r, rank: i + 1 })),
+  [allSchoolRiders]);
 
   const maleRiders = useMemo(() =>
-    schoolRiders.filter(r => r.gender === "M").map((r, i) => ({ ...r, rank: i + 1 })),
-  [schoolRiders]);
+    allSchoolRiders.filter(r => r.gender === "M").map((r, i) => ({ ...r, rank: i + 1 })),
+  [allSchoolRiders]);
 
   // All Schools league-wide riders (mask names from other schools for privacy)
   const allSchoolRiders = useMemo(() =>
