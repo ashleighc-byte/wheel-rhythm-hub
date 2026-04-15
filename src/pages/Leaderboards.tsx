@@ -215,6 +215,23 @@ const Leaderboards = () => {
     schoolRiders.filter(r => r.gender === "M").map((r, i) => ({ ...r, rank: i + 1 })),
   [schoolRiders]);
 
+  // All Schools league-wide riders (mask names from other schools for privacy)
+  const allSchoolRiders = useMemo(() =>
+    sortedAll.map((r, i): RiderRow => ({
+      rank: i + 1,
+      name: r.school === schoolName ? r.name : `Rider ${i + 1}`,
+      sessions: r.sessions,
+      totalPoints: r.totalPoints,
+      totalDistance: Math.round((r.totalDistance ?? 0) * 10) / 10,
+      avgSpeed: r.totalMinutes > 0 && r.totalDistance > 0
+        ? Math.round(((r.totalDistance ?? 0) / ((r.totalMinutes ?? 1) / 60)) * 10) / 10
+        : 0,
+      totalElevation: Math.round(r.totalElevation ?? 0),
+      isCurrentUser: r.airtableId === userAirtableId,
+      gender: genderMap[r.airtableId] ?? "",
+    })),
+  [sortedAll, schoolName, userAirtableId, genderMap]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -280,9 +297,13 @@ const Leaderboards = () => {
               {/* Left: stacked rider tables */}
               <div className="flex-1 space-y-8 min-w-0">
                 <RiderTable
+                  title="Top Riders – All Schools"
+                  riders={allSchoolRiders}
+                  icon={<Trophy className="h-5 w-5" />}
+                />
+                <RiderTable
                   title={schoolName ? `Top Riders – ${schoolName}` : "Top Riders – Your School"}
                   riders={schoolRiders}
-                  icon={<Trophy className="h-5 w-5" />}
                 />
                 <RiderTable title="Top Riders – Female" riders={femaleRiders} />
                 <RiderTable title="Top Riders – Male" riders={maleRiders} />

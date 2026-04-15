@@ -575,7 +575,11 @@ const Dashboard = () => {
             });
           }
           const chartData = Array.from(dateMap.entries())
-            .map(([date, d]) => ({ date: date.slice(5), rides: d.rides }))
+            .map(([date, d]) => {
+              const parts = date.split("-");
+              const formatted = parts.length === 3 ? `${parts[2]}/${parts[1]}` : date;
+              return { date: formatted, rides: d.rides };
+            })
             .sort((a, b) => a.date.localeCompare(b.date));
 
           return (
