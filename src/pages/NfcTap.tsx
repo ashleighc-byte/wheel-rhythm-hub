@@ -47,7 +47,8 @@ const NfcTap = () => {
         const f = rec.fields;
 
         const nfcStatus = String(f["NFC Status"] ?? "").toLowerCase();
-        if (nfcStatus !== "active") {
+        const validNfcStatuses = ["active", "bracelet received"];
+        if (!validNfcStatuses.includes(nfcStatus)) {
           setPhase("invalid");
           return;
         }
