@@ -215,6 +215,23 @@ const Leaderboards = () => {
     schoolRiders.filter(r => r.gender === "M").map((r, i) => ({ ...r, rank: i + 1 })),
   [schoolRiders]);
 
+  // All Schools league-wide riders (mask names from other schools for privacy)
+  const allSchoolRiders = useMemo(() =>
+    sortedAll.map((r, i): RiderRow => ({
+      rank: i + 1,
+      name: r.school === schoolName ? r.name : `Rider ${i + 1}`,
+      sessions: r.sessions,
+      totalPoints: r.totalPoints,
+      totalDistance: Math.round((r.totalDistance ?? 0) * 10) / 10,
+      avgSpeed: r.totalMinutes > 0 && r.totalDistance > 0
+        ? Math.round(((r.totalDistance ?? 0) / ((r.totalMinutes ?? 1) / 60)) * 10) / 10
+        : 0,
+      totalElevation: Math.round(r.totalElevation ?? 0),
+      isCurrentUser: r.airtableId === userAirtableId,
+      gender: genderMap[r.airtableId] ?? "",
+    })),
+  [sortedAll, schoolName, userAirtableId, genderMap]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
