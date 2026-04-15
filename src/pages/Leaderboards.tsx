@@ -297,9 +297,13 @@ const Leaderboards = () => {
               {/* Left: stacked rider tables */}
               <div className="flex-1 space-y-8 min-w-0">
                 <RiderTable
+                  title="Top Riders – All Schools"
+                  riders={allSchoolRiders}
+                  icon={<Trophy className="h-5 w-5" />}
+                />
+                <RiderTable
                   title={schoolName ? `Top Riders – ${schoolName}` : "Top Riders – Your School"}
                   riders={schoolRiders}
-                  icon={<Trophy className="h-5 w-5" />}
                 />
                 <RiderTable title="Top Riders – Female" riders={femaleRiders} />
                 <RiderTable title="Top Riders – Male" riders={maleRiders} />
