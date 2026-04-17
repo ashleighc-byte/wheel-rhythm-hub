@@ -396,13 +396,27 @@ const BookBike = () => {
               </div>
               <div>
                 <Label className="font-display text-xs uppercase tracking-wider">Student Name *</Label>
-                <Input
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="Enter student name"
-                  className="border-2 border-secondary"
-                  onKeyDown={(e) => e.key === "Enter" && handleBook()}
-                />
+                <Select value={studentName} onValueChange={setStudentName} disabled={loadingStudents || students.length === 0}>
+                  <SelectTrigger className="border-2 border-secondary">
+                    <SelectValue
+                      placeholder={
+                        loadingStudents
+                          ? "Loading students…"
+                          : students.length === 0
+                          ? "No registered students with bracelets at this school"
+                          : "Select your name"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {students.map((s) => (
+                      <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Only students who have received their bracelet appear here.
+                </p>
               </div>
               <Button
                 onClick={handleBook}
