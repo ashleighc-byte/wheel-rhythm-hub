@@ -59,7 +59,6 @@ const BikeInstructions = () => {
         }
       `}</style>
 
-      {/* Screen-only controls */}
       <div className="no-print container mx-auto max-w-4xl px-4 py-6 flex items-center justify-between">
         <Link
           to="/resources"
@@ -75,10 +74,8 @@ const BikeInstructions = () => {
         </button>
       </div>
 
-      {/* A3 Poster */}
       <div className="flex justify-center pb-12 print:pb-0">
         <div className="a3-poster bg-card border-[6px] border-secondary shadow-[8px_8px_0px_hsl(var(--brand-dark))] flex flex-col px-10 py-8">
-          {/* Header */}
           <div className="flex flex-col items-center">
             <img src={logo} alt="Freewheeler" className="h-28 w-auto object-contain" />
             <h1
@@ -92,7 +89,6 @@ const BikeInstructions = () => {
             </p>
           </div>
 
-          {/* Steps grid */}
           <div className="grid grid-cols-2 gap-6 mt-8 flex-1">
             {steps.map((s) => (
               <div
@@ -128,7 +124,6 @@ const BikeInstructions = () => {
             ))}
           </div>
 
-          {/* Points strip */}
           <div className="mt-6 bg-primary text-primary-foreground border-[4px] border-secondary shadow-[6px_6px_0px_hsl(var(--brand-dark))] py-4 px-4 text-center">
             <p
               className="font-display font-black uppercase tracking-wider"
@@ -138,7 +133,6 @@ const BikeInstructions = () => {
             </p>
           </div>
 
-          {/* Footer */}
           <div className="mt-4 text-center">
             <p
               className="font-display uppercase tracking-widest text-foreground/80"

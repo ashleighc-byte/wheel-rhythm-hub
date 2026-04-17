@@ -43,6 +43,7 @@ const MouTemplate = () => {
         }
       `}</style>
 
+      {/* Screen-only controls */}
       <div className="no-print container mx-auto max-w-4xl px-4 py-6 flex items-center justify-between">
         <Link
           to="/resources"
@@ -58,8 +59,10 @@ const MouTemplate = () => {
         </button>
       </div>
 
+      {/* Page */}
       <div className="flex justify-center pb-12 print:pb-0">
         <div className="mou-page bg-white text-black p-12 shadow-lg font-body text-[11pt] leading-relaxed">
+          {/* Header */}
           <header className="flex items-start gap-4 border-b-2 border-black pb-4">
             <img src={logo} alt="Freewheeler" className="h-20 w-auto object-contain" />
             <div className="flex-1">
@@ -70,6 +73,7 @@ const MouTemplate = () => {
             </div>
           </header>
 
+          {/* Parties */}
           <section className="mt-5">
             <h2 className="font-display font-bold uppercase tracking-wide text-base border-b border-black pb-1 mb-2">
               Parties
@@ -128,6 +132,7 @@ const MouTemplate = () => {
             </p>
           </Clause>
 
+          {/* Signatures */}
           <section className="mt-8 break-inside-avoid">
             <h2 className="font-display font-bold uppercase tracking-wide text-base border-b border-black pb-1 mb-4">
               Signatures
@@ -151,6 +156,7 @@ const MouTemplate = () => {
             </div>
           </section>
 
+          {/* Footer */}
           <footer className="mt-10 pt-3 border-t border-black text-center text-[9pt]">
             Freewheeler Cycling League · freewheelerleague.com · Sport Waikato · Season 2026
           </footer>
