@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, Printer } from "lucide-react";
-import logo from "@/assets/fw-logo-oval.png";
+import logo from "@/assets/fw-logo-oval-large.png";
 import {
   Accordion,
   AccordionContent,
@@ -31,11 +31,11 @@ const faqs: { q: string; a: string }[] = [
   },
   {
     q: "How does my child log in to the platform?",
-    a: "Students receive an NFC bracelet. They tap it on a small reader near the bikes and their session is logged automatically. A QR code backup card is also provided in case the bracelet is lost or forgotten.",
+    a: "They tap their bracelet on the iPad which is secured to the bike. A QR code backup card is also provided in case the bracelet is lost or forgotten.",
   },
   {
     q: "What happens at the end of the season?",
-    a: "Sport Waikato will share an anonymised participation report with your school. All personal student data will be permanently deleted by 4 February 2027 (within 90 days of the season ending on 6 November 2026).",
+    a: "Sport Waikato will share an anonymised participation report with your school. A prize will be awarded to the Top Female Rider and the Top Male Rider. All personal student data will be permanently deleted by 4 February 2027 (within 90 days of the season ending on 6 November 2026).",
   },
   {
     q: "How do I give consent?",
@@ -95,7 +95,7 @@ const ParentFaq = () => {
         <div className="faq-page bg-white text-black p-12 shadow-lg font-body text-[11pt] leading-relaxed">
           {/* Header */}
           <header className="flex items-start gap-4 border-b-2 border-black pb-4">
-            <img src={logo} alt="Freewheeler" className="h-20 w-auto object-contain" />
+            <img src={logo} alt="Freewheeler" className="h-32 w-auto object-contain" />
             <div className="flex-1">
               <h1 className="font-display font-black uppercase tracking-wider text-2xl text-black leading-tight">
                 Parent &amp; Caregiver FAQ
