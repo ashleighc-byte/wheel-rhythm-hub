@@ -31,7 +31,6 @@ const Help = () => {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [onBehalf, setOnBehalf] = useState("");
   const [feedbackType, setFeedbackType] = useState("");
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState("");
@@ -78,7 +77,6 @@ const Help = () => {
       };
 
       if (email.trim()) fields["Email"] = email.trim();
-      if (onBehalf.trim()) fields["Submitted By admin"] = onBehalf.trim();
 
       // Linked record — only when Hardware Issue + a bike is picked
       if (feedbackType === "Hardware Issue" && selectedBikeId) {
@@ -123,7 +121,6 @@ const Help = () => {
   const resetAll = () => {
     setName("");
     setEmail("");
-    setOnBehalf("");
     setFeedbackType("");
     setDescription("");
     setSeverity("");
@@ -208,19 +205,6 @@ const Help = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="So we can follow up if needed"
-                className="mt-1 border-2 border-secondary bg-background font-body"
-                maxLength={200}
-              />
-            </div>
-
-            <div>
-              <Label className="font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                Submitting on behalf of someone else?
-              </Label>
-              <Input
-                value={onBehalf}
-                onChange={(e) => setOnBehalf(e.target.value)}
-                placeholder="Their name and email (optional)"
                 className="mt-1 border-2 border-secondary bg-background font-body"
                 maxLength={200}
               />
