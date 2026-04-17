@@ -81,21 +81,33 @@ const BookBike = () => {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Load schools from Hardware Assets — any school that has a bike assigned
+  // Load schools from the Airtable Schools table — only those that ALSO have a bike assigned in Hardware Assets
   useEffect(() => {
     const fetchSchools = async () => {
       try {
-        const res = await callAirtable("Hardware Assets", "GET", {
-          filterByFormula: `AND({Asset Type} = 'Bike', {School Location} != '')`,
+        const [hwRes, schoolsRes] = await Promise.all([
+          callAirtable("Hardware Assets", "GET", {
+            filterByFormula: `AND({Asset Type} = 'Bike', {School Location} != '')`,
+          }),
+          callAirtable("Schools", "GET"),
+        ]);
+        const schoolsWithBikes = new Set<string>();
+        (hwRes.records as HardwareAsset[]).forEach((r) => {
+          const s = String(r.fields["School Location"] ?? "").trim();
+          if (s) schoolsWithBikes.add(s);
         });
-        const unique = new Set<string>();
-        (res.records as HardwareAsset[]).forEach((r) => {
-          const school = String(r.fields["School Location"] ?? "").trim();
-          if (school) unique.add(school);
-        });
-        const list = Array.from(unique)
-          .sort((a, b) => a.localeCompare(b))
-          .map((name) => ({ id: name, name }));
+        const list: SchoolRecord[] = (schoolsRes.records as HardwareAsset[])
+          .map((r) => {
+            // Schools table may have a BOM-prefixed key on the first column
+            const nameKey = Object.keys(r.fields).find((k) => k.replace(/^\uFEFF/, "") === "School Name");
+            const name = nameKey ? String(r.fields[nameKey] ?? "").trim() : "";
+            const studentIds = Array.isArray(r.fields["Student Registration"])
+              ? (r.fields["Student Registration"] as string[])
+              : [];
+            return { id: r.id, name, studentIds };
+          })
+          .filter((s) => s.name && schoolsWithBikes.has(s.name))
+          .sort((a, b) => a.name.localeCompare(b.name));
         setSchools(list);
       } catch (err) {
         console.error("Failed to load schools:", err);
@@ -127,6 +139,40 @@ const BookBike = () => {
     };
     fetchBikes();
   }, [selectedSchool]);
+
+  // Load bracelet-received / active students for the selected school
+  useEffect(() => {
+    setStudents([]);
+    if (!selectedSchool) return;
+    const school = schools.find((s) => s.name === selectedSchool);
+    if (!school || school.studentIds.length === 0) return;
+    const fetchStudents = async () => {
+      setLoadingStudents(true);
+      try {
+        const idMatches = school.studentIds.map((id) => `RECORD_ID() = '${id}'`).join(", ");
+        const formula = `AND(OR(${idMatches}), OR(LOWER({NFC Status}) = 'bracelet received', LOWER({NFC Status}) = 'active'))`;
+        const res = await callAirtable("Student Registration", "GET", {
+          filterByFormula: formula,
+        });
+        const list: StudentOption[] = (res.records as HardwareAsset[])
+          .map((r) => {
+            const first = String(r.fields["First Name"] ?? "").trim();
+            const last = String(r.fields["Last Name"] ?? "").trim();
+            const full = String(r.fields["Full Name"] ?? `${first} ${last}`).trim();
+            return { id: r.id, name: full };
+          })
+          .filter((s) => s.name)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setStudents(list);
+      } catch (err) {
+        console.error("Failed to load students:", err);
+        setStudents([]);
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+    fetchStudents();
+  }, [selectedSchool, schools]);
 
   // Load bookings when school + date change
   useEffect(() => {
