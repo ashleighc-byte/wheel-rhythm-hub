@@ -32,6 +32,7 @@ import TeacherGuide from "./pages/TeacherGuide";
 import ParentFaq from "./pages/ParentFaq";
 import SocialGraphic from "./pages/SocialGraphic";
 import EmailInitialOutreach from "./pages/EmailInitialOutreach";
+import EmailMouFollowup from "./pages/EmailMouFollowup";
 
 
 const queryClient = new QueryClient();
@@ -118,6 +119,7 @@ const App = () => (
               <Route path="/print/social-graphic" element={<SocialGraphic />} />
               <Route path="/resources/newsletter-blurb" element={<NewsletterBlurb />} />
               <Route path="/resources/email-initial-outreach" element={<EmailInitialOutreach />} />
+              <Route path="/resources/email-mou-followup" element={<EmailMouFollowup />} />
               <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
           </Routes>
