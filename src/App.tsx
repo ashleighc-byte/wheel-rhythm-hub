@@ -28,7 +28,7 @@ import A3Poster from "./pages/A3Poster";
 import NewsletterBlurb from "./pages/NewsletterBlurb";
 import ConsentForm from "./pages/ConsentForm";
 import MouTemplate from "./pages/MouTemplate";
-import BikeInstructions from "./pages/BikeInstructions";
+import RideGuide from "./pages/RideGuide";
 import TeacherGuide from "./pages/TeacherGuide";
 import ParentFaq from "./pages/ParentFaq";
 import SocialGraphic from "./pages/SocialGraphic";
@@ -115,7 +115,8 @@ const App = () => (
             <Route path="/print/a3-poster" element={<A3Poster />} />
             <Route path="/print/consent-form" element={<ConsentForm />} />
             <Route path="/print/mou-template" element={<MouTemplate />} />
-            <Route path="/print/bike-instructions" element={<BikeInstructions />} />
+            <Route path="/print/ride-guide" element={<RideGuide />} />
+            <Route path="/print/bike-instructions" element={<RideGuide />} />
             <Route path="/print/teacher-guide" element={<TeacherGuide />} />
             <Route path="/print/parent-faq" element={<ParentFaq />} />
             <Route path="/print/social-graphic" element={<SocialGraphic />} />
