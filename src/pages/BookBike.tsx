@@ -55,9 +55,20 @@ interface HardwareAsset {
   fields: Record<string, unknown>;
 }
 
+interface SchoolRecord {
+  id: string; // Schools-table record id
+  name: string; // displayed school name (matches Hardware Assets {School Location})
+  studentIds: string[]; // linked Student Registration record IDs
+}
+
+interface StudentOption {
+  id: string;
+  name: string;
+}
+
 const BookBike = () => {
   const { session, loading: authLoading } = useAuth();
-  const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
+  const [schools, setSchools] = useState<SchoolRecord[]>([]);
   const [selectedSchool, setSelectedSchool] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -66,6 +77,8 @@ const BookBike = () => {
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [bookingSlot, setBookingSlot] = useState<{ bike: string; time: string } | null>(null);
   const [studentName, setStudentName] = useState("");
+  const [students, setStudents] = useState<StudentOption[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Load schools from Hardware Assets — any school that has a bike assigned
