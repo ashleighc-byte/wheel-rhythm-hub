@@ -13,7 +13,7 @@ interface NfcOnboardingTourProps {
 }
 
 type Step =
-  | { type: "text"; icon: React.ElementType; title: string; body: (name: string) => string }
+  | { type: "text"; icon: React.ElementType; title: string; body: string | ((name: string) => string) }
   | { type: "image"; icon: React.ElementType; title: string; body: string; image: string; imageAlt: string };
 
 const steps: Step[] = [
