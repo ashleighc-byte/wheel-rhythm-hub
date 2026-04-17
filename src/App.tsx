@@ -30,6 +30,7 @@ import MouTemplate from "./pages/MouTemplate";
 import BikeInstructions from "./pages/BikeInstructions";
 import TeacherGuide from "./pages/TeacherGuide";
 import ParentFaq from "./pages/ParentFaq";
+import SocialGraphic from "./pages/SocialGraphic";
 
 
 const queryClient = new QueryClient();
@@ -113,6 +114,7 @@ const App = () => (
               <Route path="/print/bike-instructions" element={<BikeInstructions />} />
               <Route path="/print/teacher-guide" element={<TeacherGuide />} />
               <Route path="/print/parent-faq" element={<ParentFaq />} />
+              <Route path="/print/social-graphic" element={<SocialGraphic />} />
               <Route path="/resources/newsletter-blurb" element={<NewsletterBlurb />} />
               <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
