@@ -68,29 +68,25 @@ const BookBike = () => {
   const [studentName, setStudentName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Only these schools have bikes assigned for the pilot
-  const SCHOOLS_WITH_BIKES = ["St Andrews", "Kelly's Place", "Sport Waikato"];
-
-  // Load schools (filtered to those with bikes assigned)
+  // Load schools from Hardware Assets — any school that has a bike assigned
   useEffect(() => {
     const fetchSchools = async () => {
       try {
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/registration-count`;
-        const res = await fetch(url, {
-          headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        const res = await callAirtable("Hardware Assets", "GET", {
+          filterByFormula: `AND({Asset Type} = 'Bike', {School Location} != '')`,
         });
-        if (res.ok) {
-          const data = await res.json();
-          const all = (data.schools || []) as { id: string; name: string }[];
-          const filtered = all.filter((s) =>
-            SCHOOLS_WITH_BIKES.some((allowed) => s.name.toLowerCase().includes(allowed.toLowerCase()))
-          );
-          setSchools(filtered.length ? filtered : SCHOOLS_WITH_BIKES.map((n) => ({ id: n, name: n })));
-        } else {
-          setSchools(SCHOOLS_WITH_BIKES.map((n) => ({ id: n, name: n })));
-        }
-      } catch {
-        setSchools(SCHOOLS_WITH_BIKES.map((n) => ({ id: n, name: n })));
+        const unique = new Set<string>();
+        (res.records as HardwareAsset[]).forEach((r) => {
+          const school = String(r.fields["School Location"] ?? "").trim();
+          if (school) unique.add(school);
+        });
+        const list = Array.from(unique)
+          .sort((a, b) => a.localeCompare(b))
+          .map((name) => ({ id: name, name }));
+        setSchools(list);
+      } catch (err) {
+        console.error("Failed to load schools:", err);
+        setSchools([]);
       }
     };
     fetchSchools();
