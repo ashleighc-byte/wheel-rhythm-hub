@@ -108,7 +108,7 @@ const NfcOnboardingTour = ({ firstName, onComplete }: NfcOnboardingTourProps) =>
                 {current.title}
               </h2>
               <p className="mt-3 whitespace-pre-line font-body text-sm leading-relaxed text-muted-foreground text-left">
-                {current.type === "text" ? current.body(firstName) : current.body}
+                {current.type === "text" && typeof current.body === "function" ? current.body(firstName) : (current.body as string)}
               </p>
             </div>
 
