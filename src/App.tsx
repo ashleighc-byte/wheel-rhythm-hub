@@ -23,6 +23,7 @@ import Resources from "./pages/Resources";
 import AdminFlowchart from "./pages/AdminFlowchart";
 import AdminRegistrations from "./pages/AdminRegistrations";
 import PrintBraceletCard from "./pages/PrintBraceletCard";
+import A3Poster from "./pages/A3Poster";
 
 
 const queryClient = new QueryClient();
@@ -100,6 +101,7 @@ const App = () => (
               <Route path="/admin/flowchart" element={<AdminRoute><AdminFlowchart /></AdminRoute>} />
               <Route path="/admin/registrations" element={<AdminRoute><AdminRegistrations /></AdminRoute>} />
               <Route path="/print/bracelet-card" element={<PrintBraceletCard />} />
+              <Route path="/print/a3-poster" element={<A3Poster />} />
               <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
           </Routes>
