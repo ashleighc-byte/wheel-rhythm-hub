@@ -25,6 +25,7 @@ import AdminRegistrations from "./pages/AdminRegistrations";
 import PrintBraceletCard from "./pages/PrintBraceletCard";
 import A3Poster from "./pages/A3Poster";
 import NewsletterBlurb from "./pages/NewsletterBlurb";
+import ConsentForm from "./pages/ConsentForm";
 
 
 const queryClient = new QueryClient();
@@ -103,6 +104,7 @@ const App = () => (
               <Route path="/admin/registrations" element={<AdminRoute><AdminRegistrations /></AdminRoute>} />
               <Route path="/print/bracelet-card" element={<PrintBraceletCard />} />
               <Route path="/print/a3-poster" element={<A3Poster />} />
+              <Route path="/print/consent-form" element={<ConsentForm />} />
               <Route path="/resources/newsletter-blurb" element={<NewsletterBlurb />} />
               <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
