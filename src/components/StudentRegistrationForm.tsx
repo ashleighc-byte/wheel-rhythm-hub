@@ -3,7 +3,6 @@ import { callAirtable } from "@/lib/airtable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -25,7 +24,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Check, ChevronsUpDown } from "lucide-react";
+import { Loader2, Check, ChevronsUpDown, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
@@ -47,7 +46,6 @@ const StudentRegistrationForm = () => {
   const [schoolSearch, setSchoolSearch] = useState("");
   const [schoolOpen, setSchoolOpen] = useState(false);
   const [schools, setSchools] = useState<{ id: string; name: string; spots_remaining?: number }[]>([]);
-  const [agreedConsent, setAgreedConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -61,7 +59,11 @@ const StudentRegistrationForm = () => {
         if (res.ok) {
           const data = await res.json();
           setSchools(
-            (data.schools || []).map((s: any) => ({ id: s.id, name: s.name, spots_remaining: s.spots_remaining }))
+            (data.schools || []).map((s: any) => ({
+              id: s.id,
+              name: s.name,
+              spots_remaining: s.spots_remaining,
+            }))
           );
         }
       } catch {
@@ -73,15 +75,6 @@ const StudentRegistrationForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!agreedConsent) {
-      toast({
-        title: "Consent required",
-        description: "Please confirm your school or caregiver has given permission.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     if (!school) {
       toast({
@@ -101,7 +94,15 @@ const StudentRegistrationForm = () => {
       return;
     }
 
-    // Block submission if all 24 spots are taken
+    if (!yearLevel) {
+      toast({
+        title: "Year level required",
+        description: "Please select your year level.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const selectedSchool = schools.find(s => s.name === school);
     if (selectedSchool && selectedSchool.spots_remaining !== undefined && selectedSchool.spots_remaining <= 0) {
       toast({
@@ -125,7 +126,6 @@ const StudentRegistrationForm = () => {
         "Registration Status": "Pending Consent",
       };
 
-      // Link school by org record ID if matched
       const matchingSchool = schools.find((s) => s.name === schoolName);
       if (matchingSchool) {
         fields["School"] = [matchingSchool.id];
@@ -138,7 +138,7 @@ const StudentRegistrationForm = () => {
       });
 
       setSuccess(true);
-    } catch (err: any) {
+    } catch {
       toast({
         title: "Registration failed",
         description: "Something went wrong — please try again or ask your teacher for help.",
@@ -149,17 +149,61 @@ const StudentRegistrationForm = () => {
     }
   };
 
+  // ── Success screen ──────────────────────────────────────────────────────────
   if (success) {
     return (
-      <div className="mx-auto max-w-md border-[3px] border-primary bg-card p-8 text-center shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
-        <h3 className="font-display text-xl font-bold uppercase text-foreground">
-          You're registered! 🚴
-        </h3>
-        <p className="mt-3 font-body text-sm text-muted-foreground">
-          Your registration is in. Once your school confirms consent and Sport Waikato processes your sign-up, your NFC bracelet and starter pack will be delivered to your school.
-        </p>
-        <p className="mt-3 font-body text-xs text-muted-foreground">
-          Questions? Ask your teacher or contact Sport Waikato.
+      <div className="mx-auto max-w-md space-y-4 text-center">
+        <div className="border-[3px] border-primary bg-card p-6 shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center bg-primary">
+            <Check className="h-7 w-7 text-primary-foreground" />
+          </div>
+          <h3 className="font-display text-xl font-bold uppercase tracking-wider text-foreground">
+            You're on the list!
+          </h3>
+          <p className="mt-3 font-body text-sm leading-relaxed text-foreground/80">
+            Your name has been added to the waitlist.
+          </p>
+        </div>
+
+        {/* What happens next */}
+        <div className="border-[3px] border-secondary bg-card p-5 text-left shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+          <p className="font-display text-xs font-bold uppercase tracking-wider text-foreground mb-3">
+            What happens next
+          </p>
+          <ol className="space-y-3">
+            {[
+              {
+                step: "1",
+                text: "Your school will send a permission form home for your caregiver to sign.",
+              },
+              {
+                step: "2",
+                text: "The league is limited to the first 24 students per school — check in with your parent or caregiver and make sure they return the form quickly.",
+              },
+              {
+                step: "3",
+                text: "Once your school receives your signed permission form and confirms you're in the first 24, your name gets passed to Sport Waikato.",
+              },
+              {
+                step: "4",
+                text: "Sport Waikato will put together your League Kit (NFC bracelet + starter pack) and deliver it to your school.",
+              },
+            ].map(({ step, text }) => (
+              <li key={step} className="flex items-start gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center border-2 border-primary font-display text-xs font-bold text-primary">
+                  {step}
+                </span>
+                <span className="font-body text-sm leading-snug text-foreground/80">{text}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <p className="font-body text-xs text-muted-foreground">
+          Questions? Ask your teacher or visit{" "}
+          <Link to="/programme-overview" className="underline text-primary">
+            freewheelerleague.com/programme-overview
+          </Link>
         </p>
       </div>
     );
@@ -169,9 +213,11 @@ const StudentRegistrationForm = () => {
     s.name.toLowerCase().includes(schoolSearch.toLowerCase())
   );
 
+  // ── Form ────────────────────────────────────────────────────────────────────
   return (
     <div className="mx-auto w-full max-w-md">
       <form onSubmit={handleSubmit} className="space-y-4">
+
         {/* Name row */}
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -192,7 +238,9 @@ const StudentRegistrationForm = () => {
             </Label>
             <Input
               value={lastInitial}
-              onChange={(e) => setLastInitial(e.target.value.replace(/[^a-zA-Z]/g, "").charAt(0))}
+              onChange={(e) =>
+                setLastInitial(e.target.value.replace(/[^a-zA-Z]/g, "").charAt(0))
+              }
               required
               maxLength={1}
               placeholder="e.g. S"
@@ -291,41 +339,44 @@ const StudentRegistrationForm = () => {
             const selected = schools.find(s => s.name === school);
             if (selected && selected.spots_remaining !== undefined) {
               if (selected.spots_remaining <= 0) {
-                return <p className="mt-1 font-display text-xs text-destructive">Registration closed — all 24 spots are taken.</p>;
+                return (
+                  <p className="mt-1 font-display text-xs text-destructive">
+                    Registration closed — all 24 spots are taken.
+                  </p>
+                );
               }
-              return <p className="mt-1 font-display text-xs text-muted-foreground">{selected.spots_remaining} of 24 spots remaining</p>;
+              return (
+                <p className="mt-1 font-display text-xs text-muted-foreground">
+                  {selected.spots_remaining} of 24 spots remaining at this school
+                </p>
+              );
             }
             return null;
           })()}
         </div>
 
-        {/* Consent checkbox */}
-        <div className="flex items-start gap-2">
-          <Checkbox
-            id="consent"
-            checked={agreedConsent}
-            onCheckedChange={(checked) => setAgreedConsent(checked === true)}
-            className="mt-0.5 border-secondary-foreground/40 data-[state=checked]:bg-primary"
-          />
-          <Label
-            htmlFor="consent"
-            className="font-body text-xs leading-snug text-foreground/80"
-          >
-            My school or caregiver has confirmed I have permission to participate in Freewheeler. I agree to the{" "}
+        {/* What happens after you register */}
+        <div className="flex items-start gap-2.5 rounded-none border-l-4 border-primary bg-primary/5 px-3 py-3">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <p className="font-body text-xs leading-relaxed text-foreground/80">
+            Tapping <strong>Join the League</strong> adds your name to the waitlist. Your school will
+            send a permission form home for your caregiver to sign — spots are first come, first served,
+            so make sure they get it back quickly.{" "}
             <Link
-              to="/terms"
+              to="/league-info"
               target="_blank"
-              className="font-bold text-primary underline"
+              className="font-semibold text-primary underline underline-offset-2"
             >
-              Terms & Conditions
+              What am I signing up for?
             </Link>
-            .
-          </Label>
+          </p>
         </div>
 
+        {/* Submit */}
         {(() => {
           const sel = schools.find(s => s.name === school);
-          const isFull = sel && sel.spots_remaining !== undefined && sel.spots_remaining <= 0;
+          const isFull =
+            sel && sel.spots_remaining !== undefined && sel.spots_remaining <= 0;
           return (
             <Button
               type="submit"
