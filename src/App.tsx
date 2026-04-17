@@ -27,6 +27,7 @@ import A3Poster from "./pages/A3Poster";
 import NewsletterBlurb from "./pages/NewsletterBlurb";
 import ConsentForm from "./pages/ConsentForm";
 import MouTemplate from "./pages/MouTemplate";
+import BikeInstructions from "./pages/BikeInstructions";
 
 
 const queryClient = new QueryClient();
@@ -107,6 +108,7 @@ const App = () => (
               <Route path="/print/a3-poster" element={<A3Poster />} />
               <Route path="/print/consent-form" element={<ConsentForm />} />
               <Route path="/print/mou-template" element={<MouTemplate />} />
+              <Route path="/print/bike-instructions" element={<BikeInstructions />} />
               <Route path="/resources/newsletter-blurb" element={<NewsletterBlurb />} />
               <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
