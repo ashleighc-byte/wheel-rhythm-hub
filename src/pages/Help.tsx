@@ -19,8 +19,6 @@ const FEEDBACK_TYPES = [
   "Other",
 ];
 
-const SEVERITY_OPTIONS = ["Low", "Medium", "High"];
-
 interface Bike {
   id: string;
   name: string;
@@ -33,7 +31,6 @@ const Help = () => {
   const [email, setEmail] = useState("");
   const [feedbackType, setFeedbackType] = useState("");
   const [description, setDescription] = useState("");
-  const [severity, setSeverity] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -64,7 +61,7 @@ const Help = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !feedbackType || !description.trim() || !severity) return;
+    if (!name.trim() || !feedbackType || !description.trim()) return;
     setSubmitting(true);
 
     try {
@@ -73,7 +70,6 @@ const Help = () => {
         "Submitted By": name.trim(),
         "Feedback Type": feedbackType,
         "Description": description.trim(),
-        "Severity": severity,
       };
 
       if (email.trim()) fields["Email"] = email.trim();
@@ -123,7 +119,6 @@ const Help = () => {
     setEmail("");
     setFeedbackType("");
     setDescription("");
-    setSeverity("");
     setPhoto(null);
     setSelectedBikeId("");
     setSubmitted(false);
@@ -294,27 +289,9 @@ const Help = () => {
               </div>
             </div>
 
-            <div>
-              <Label className="font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                Severity <span className="text-destructive">*</span>
-              </Label>
-              <Select value={severity} onValueChange={setSeverity} required>
-                <SelectTrigger className="mt-1 border-2 border-secondary bg-background font-body">
-                  <SelectValue placeholder="Select severity..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {SEVERITY_OPTIONS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <Button
               type="submit"
-              disabled={submitting || !name.trim() || !feedbackType || !description.trim() || !severity}
+              disabled={submitting || !name.trim() || !feedbackType || !description.trim()}
               className="tape-element-green flex w-full items-center justify-center gap-2 text-base"
             >
               <Send className="h-4 w-4" />
