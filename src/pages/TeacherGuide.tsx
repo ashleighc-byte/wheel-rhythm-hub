@@ -81,7 +81,7 @@ const TeacherGuide = () => {
           <Section number={1} title="What is Freewheeler?">
             <p>
               Freewheeler is a cycling league for secondary school students. Students ride
-              Wattbike Proton smart bikes at school using the MyWhoosh cycling app, logging
+              smart bikes at school using the MyWhoosh cycling app, logging
               each session via an NFC bracelet. Points accumulate over an 8-week season and
               schools compete on a leaderboard. No travel, no competition dates, no
               volunteering required — students ride on their own schedule.
@@ -91,25 +91,26 @@ const TeacherGuide = () => {
           <Section number={2} title="What Your School Receives">
             <ul className="list-disc pl-6 space-y-1">
               <li>2 x Wattbike Proton smart bikes (on loan for season duration)</li>
-              <li>2 x iPads, pre-loaded with MyWhoosh</li>
+              <li>2 x iPads + chargers, pre-loaded with MyWhoosh</li>
               <li>Power multibox + 5m extension lead</li>
               <li>NFC bracelets for each registered student</li>
               <li>QR backup cards (one per student)</li>
-              <li>This teacher guide and promotional resources</li>
+              <li>This teacher guide and promotional resources (freewheelerleague.com/resources)</li>
             </ul>
           </Section>
 
           <Section number={3} title="Your Pre-Season Checklist">
             <ul className="space-y-2">
               <li><Box /> Sign and return the MoU to Sport Waikato</li>
-              <li><Box /> Promote Freewheeler to Year 9-13 students</li>
+              <li><Box /> Promote Freewheeler to Year 9-13 students — put up posters and send out the flyer in the school newsletter (found at freewheelerleague.com/resources)</li>
+              <li><Box /> Tell students to register online at freewheelerleague.com</li>
+              <li><Box /> Sport Waikato will send you a list of the students who registered pending the return of their permission forms</li>
               <li><Box /> Send home the caregiver consent form</li>
               <li><Box /> Collect signed consent forms</li>
               <li><Box /> Email Sport Waikato a list: first name, last initial, year level (consented students only)</li>
-              <li><Box /> Set up bikes (needs power outlet, space for 2 bikes side by side)</li>
-              <li><Box /> Test MyWhoosh opens on each iPad</li>
-              <li><Box /> Confirm NFC reader works (bracelet tap opens freewheelerleague.com/tap)</li>
-              <li><Box /> Distribute NFC bracelets and QR backup cards to consented students</li>
+              <li><Box /> Sport Waikato to install and set up bikes including testing iPads, apps and bracelet readers</li>
+              <li><Box /> Sport Waikato will deliver the Starter Kits (NFC bracelets and student packs, QR codes for teachers) to school before the season starts</li>
+              <li><Box /> Teacher to hold on to the QR codes as a backup if a student loses their bracelet</li>
             </ul>
           </Section>
 
