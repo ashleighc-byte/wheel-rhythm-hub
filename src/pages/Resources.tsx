@@ -205,14 +205,12 @@ const Resources = () => {
             <Link to="/terms" className="font-display text-xs uppercase tracking-wider text-secondary-foreground/40 underline hover:text-secondary-foreground/60">
               Terms & Conditions
             </Link>
-            <a
-              href="https://airtable.com/app4IEpE10xJPsLxT/shr6ZnS0qQyFkxCHH"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/help"
               className="font-display text-xs uppercase tracking-wider text-secondary-foreground/40 underline hover:text-secondary-foreground/60"
             >
-              Report an Issue (Staff)
-            </a>
+              Report an Issue
+            </Link>
           </div>
         </div>
       </footer>
