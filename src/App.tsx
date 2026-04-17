@@ -105,6 +105,8 @@ const App = () => (
               <Route path="/print/bracelet-card" element={<PrintBraceletCard />} />
               <Route path="/print/a3-poster" element={<A3Poster />} />
               <Route path="/print/consent-form" element={<ConsentForm />} />
+              <Route path="/print/mou-template" element={<MouTemplate />} />
+              <Route path="/print/bike-instructions" element={<BikeInstructions />} />
               <Route path="/resources/newsletter-blurb" element={<NewsletterBlurb />} />
               <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
