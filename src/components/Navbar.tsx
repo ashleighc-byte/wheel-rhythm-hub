@@ -107,8 +107,8 @@ const Navbar = () => {
           <Link to="/" className="flex items-center gap-2">
             <img
               src={brandLogo}
-              alt="Free Wheeler Bike League"
-              className="h-10 w-auto object-contain rounded"
+              alt="Freewheeler Bike League"
+              className="h-12 w-auto object-contain rounded"
             />
           </Link>
 

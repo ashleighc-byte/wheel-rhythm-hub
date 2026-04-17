@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, ShieldX } from "lucide-react";
+import { Loader2, ShieldX, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { callAirtable, escapeFormulaValue } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +19,7 @@ const NfcTap = () => {
   const [totalPoints, setTotalPoints] = useState(0);
   const [showSessionForm, setShowSessionForm] = useState(false);
   const { setNfcSession, nfcSession } = useAuth();
+  const navigate = useNavigate();
 
   const firstName = nfcSession?.firstName ?? "Rider";
 
@@ -100,13 +101,12 @@ const NfcTap = () => {
           // Non-fatal — points will show as 0
         }
 
-        // Check if first tap — show onboarding
+        // Check if first tap — show onboarding (only ever on first scan)
         const tourKey = `nfc_onboarding_seen_${token}`;
         if (!localStorage.getItem(tourKey)) {
           setPhase("onboarding");
         } else {
           setPhase("ready");
-          setShowSessionForm(true);
         }
       } catch (err) {
         console.error("NFC lookup error:", err);
@@ -121,7 +121,7 @@ const NfcTap = () => {
 
   const Logo = () => (
     <Link to="/" className="mx-auto mb-4 block">
-      <img src={logoSrc} alt="Free Wheeler" className="h-14 object-contain" />
+      <img src={logoSrc} alt="Freewheeler Bike League" className="h-20 object-contain" />
     </Link>
   );
 
@@ -177,7 +177,6 @@ const NfcTap = () => {
                 localStorage.setItem(`nfc_onboarding_seen_${token}`, "true");
               }
               setPhase("ready");
-              setShowSessionForm(true);
             }}
           />
         )}
@@ -201,12 +200,22 @@ const NfcTap = () => {
                 <span>{totalPoints} pts</span>
               </div>
             </div>
-            <Button
-              onClick={() => setShowSessionForm(true)}
-              className="tape-element w-full font-display uppercase tracking-wider"
-            >
-              Log a Session
-            </Button>
+            <div className="flex w-full flex-col gap-3">
+              <Button
+                onClick={() => setShowSessionForm(true)}
+                className="tape-element-green w-full font-display text-lg uppercase tracking-wider py-4"
+              >
+                Log a Ride
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/dashboard")}
+                className="w-full border-2 border-secondary font-display uppercase tracking-wider gap-2"
+              >
+                <BarChart2 className="h-4 w-4" />
+                See My Dash
+              </Button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

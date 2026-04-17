@@ -47,7 +47,7 @@ const ResetPassword = () => {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <img src={brandLogo} alt="Free Wheeler Bike League" className="mx-auto mb-6 h-20 w-auto object-contain" />
+          <img src={brandLogo} alt="Freewheeler Bike League" className="mx-auto mb-6 h-24 w-auto object-contain" />
           <h1 className="font-display text-3xl uppercase tracking-wider text-foreground">New Password</h1>
           <p className="mt-2 font-body text-sm text-muted-foreground">Enter your new password below</p>
         </div>

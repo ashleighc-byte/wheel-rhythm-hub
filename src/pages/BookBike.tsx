@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { format, addDays, isWeekend, startOfDay } from "date-fns";
-import { CalendarIcon, Bike, X, Clock } from "lucide-react";
+import { format, isWeekend, startOfDay } from "date-fns";
+import { CalendarIcon, Bike, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,15 +30,17 @@ import logoSrc from "@/assets/fw-logo-oval.png";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
+import { callAirtable } from "@/lib/airtable";
 
+// 30-minute slots, 8:00 am – 4:30 pm (last slot starts at 16:30)
 const TIME_SLOTS: string[] = [];
-for (let h = 8; h < 16; h++) {
-  for (let m = 0; m < 60; m += 15) {
+for (let h = 8; h <= 16; h++) {
+  const minutes = h === 16 ? [0, 30] : [0, 30];
+  for (const m of minutes) {
+    if (h === 16 && m > 30) break;
     TIME_SLOTS.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
   }
 }
-
-const BIKES = ["Bike A", "Bike B"];
 
 interface Booking {
   id: string;
@@ -48,12 +50,18 @@ interface Booking {
   user_id: string | null;
 }
 
+interface HardwareAsset {
+  id: string;
+  fields: Record<string, unknown>;
+}
+
 const BookBike = () => {
   const { session, loading: authLoading } = useAuth();
   const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
   const [selectedSchool, setSelectedSchool] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bikes, setBikes] = useState<string[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [bookingSlot, setBookingSlot] = useState<{ bike: string; time: string } | null>(null);
@@ -70,7 +78,7 @@ const BookBike = () => {
         });
         if (res.ok) {
           const data = await res.json();
-          setSchools((data.schools || []).map((s: any) => ({ id: s.id, name: s.name })));
+          setSchools((data.schools || []).map((s: { id: string; name: string }) => ({ id: s.id, name: s.name })));
         }
       } catch {
         console.error("Failed to load schools");
@@ -78,6 +86,29 @@ const BookBike = () => {
     };
     fetchSchools();
   }, []);
+
+  // Load bikes from Airtable Hardware Assets when school changes
+  useEffect(() => {
+    if (!selectedSchool) {
+      setBikes([]);
+      return;
+    }
+    const fetchBikes = async () => {
+      try {
+        const res = await callAirtable("Hardware Assets", "GET", {
+          filterByFormula: `AND({School} = '${selectedSchool}', {Asset Type} = 'Wattbike Proton')`,
+        });
+        const names = (res.records as HardwareAsset[])
+          .map((r) => String(r.fields["Asset Name"] ?? ""))
+          .filter(Boolean);
+        setBikes(names.length ? names : ["Bike 1", "Bike 2"]);
+      } catch {
+        // Fall back to generic names if Airtable unavailable
+        setBikes(["Bike 1", "Bike 2"]);
+      }
+    };
+    fetchBikes();
+  }, [selectedSchool]);
 
   // Load bookings when school + date change
   useEffect(() => {
@@ -100,8 +131,7 @@ const BookBike = () => {
     bookings.find((b) => b.bike_label === bike && b.time_slot === time);
 
   const handleCellClick = (bike: string, time: string) => {
-    const existing = getBooking(bike, time);
-    if (existing) return; // already booked
+    if (getBooking(bike, time)) return;
     setBookingSlot({ bike, time });
     setStudentName("");
     setBookingDialogOpen(true);
@@ -125,8 +155,7 @@ const BookBike = () => {
         toast({ title: "Booking failed", description: error.message, variant: "destructive" });
       }
     } else {
-      toast({ title: "Booked! 🚴", description: `${bookingSlot.bike} at ${bookingSlot.time} for ${studentName.trim()}` });
-      // Refresh bookings
+      toast({ title: "Booked!", description: `${bookingSlot.bike} at ${bookingSlot.time} for ${studentName.trim()}` });
       const { data } = await supabase
         .from("bike_bookings")
         .select("id, bike_label, time_slot, booked_by_name, user_id")
@@ -149,7 +178,7 @@ const BookBike = () => {
         <header className="bg-secondary border-b-4 border-primary">
           <div className="container mx-auto flex items-center justify-between px-4 py-3">
             <Link to="/" className="flex items-center gap-2">
-              <img src={logoSrc} alt="Free Wheeler" className="h-10 object-contain md:h-12" />
+              <img src={logoSrc} alt="Freewheeler Bike League" className="h-12 object-contain md:h-16" />
             </Link>
             <Link to="/auth" className="tape-element text-sm md:text-base">
               SIGN IN
@@ -163,7 +192,7 @@ const BookBike = () => {
           <div className="mb-8 text-center">
             <h1 className="text-3xl text-foreground md:text-5xl">BOOK A BIKE</h1>
             <p className="mt-2 font-body text-base text-muted-foreground">
-              Reserve a 15-minute slot on a smart bike. Book two slots for a 30-minute ride.
+              Reserve a 30-minute slot on a smart bike. Book in advance to secure your ride time.
             </p>
           </div>
 
@@ -213,50 +242,58 @@ const BookBike = () => {
 
           {/* Timetable */}
           {selectedSchool && selectedDate ? (
-            <div className="overflow-x-auto border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-secondary">
-                    <th className="px-3 py-2 text-left font-display text-xs uppercase tracking-wider text-secondary-foreground">
-                      <Clock className="inline h-3 w-3 mr-1" /> Time
-                    </th>
-                    {BIKES.map((bike) => (
-                      <th key={bike} className="px-3 py-2 text-center font-display text-xs uppercase tracking-wider text-secondary-foreground">
-                        <Bike className="inline h-3 w-3 mr-1" /> {bike}
+            loadingBookings ? (
+              <div className="border-[3px] border-secondary bg-card p-12 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
+                <p className="font-display text-lg uppercase text-muted-foreground animate-pulse">
+                  Loading slots…
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-secondary">
+                      <th className="px-3 py-2 text-left font-display text-xs uppercase tracking-wider text-secondary-foreground">
+                        <Clock className="inline h-3 w-3 mr-1" /> Time
                       </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {TIME_SLOTS.map((time) => (
-                    <tr key={time} className="border-t border-muted">
-                      <td className="px-3 py-2 font-display text-xs font-bold text-foreground whitespace-nowrap">
-                        {time}
-                      </td>
-                      {BIKES.map((bike) => {
-                        const booking = getBooking(bike, time);
-                        return (
-                          <td key={bike} className="px-2 py-1 text-center">
-                            {booking ? (
-                              <div className="border-[2px] border-muted bg-muted/50 px-2 py-1.5 font-body text-xs text-muted-foreground">
-                                {booking.booked_by_name}
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => handleCellClick(bike, time)}
-                                className="w-full border-[2px] border-primary/30 bg-primary/5 px-2 py-1.5 font-display text-[10px] uppercase tracking-wider text-primary transition-colors hover:bg-primary/20 hover:border-primary"
-                              >
-                                Available
-                              </button>
-                            )}
-                          </td>
-                        );
-                      })}
+                      {bikes.map((bike) => (
+                        <th key={bike} className="px-3 py-2 text-center font-display text-xs uppercase tracking-wider text-secondary-foreground">
+                          <Bike className="inline h-3 w-3 mr-1" /> {bike}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {TIME_SLOTS.map((time) => (
+                      <tr key={time} className="border-t border-muted">
+                        <td className="px-3 py-2 font-display text-xs font-bold text-foreground whitespace-nowrap">
+                          {time}
+                        </td>
+                        {bikes.map((bike) => {
+                          const booking = getBooking(bike, time);
+                          return (
+                            <td key={bike} className="px-2 py-1 text-center">
+                              {booking ? (
+                                <div className="border-[2px] border-muted bg-muted/50 px-2 py-1.5 font-body text-xs text-muted-foreground">
+                                  {booking.booked_by_name}
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => handleCellClick(bike, time)}
+                                  className="w-full border-[2px] border-primary/30 bg-primary/5 px-2 py-1.5 font-display text-[10px] uppercase tracking-wider text-primary transition-colors hover:bg-primary/20 hover:border-primary"
+                                >
+                                  Available
+                                </button>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           ) : (
             <div className="border-[3px] border-secondary bg-card p-12 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
               <Bike className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
@@ -278,12 +315,16 @@ const BookBike = () => {
           </DialogHeader>
           {bookingSlot && (
             <div className="space-y-4">
-              <div className="flex gap-4 text-sm">
+              <div className="flex gap-4 text-sm flex-wrap">
                 <div className="border-[2px] border-secondary bg-muted px-3 py-2 font-display text-xs uppercase tracking-wider">
                   {bookingSlot.bike}
                 </div>
                 <div className="border-[2px] border-secondary bg-muted px-3 py-2 font-display text-xs uppercase tracking-wider">
-                  {bookingSlot.time}
+                  {bookingSlot.time} – {(() => {
+                    const [h, m] = bookingSlot.time.split(":").map(Number);
+                    const end = new Date(2000, 0, 1, h, m + 30);
+                    return `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`;
+                  })()}
                 </div>
                 <div className="border-[2px] border-secondary bg-muted px-3 py-2 font-display text-xs uppercase tracking-wider">
                   {selectedDate && format(selectedDate, "dd MMM")}
@@ -296,6 +337,7 @@ const BookBike = () => {
                   onChange={(e) => setStudentName(e.target.value)}
                   placeholder="Enter student name"
                   className="border-2 border-secondary"
+                  onKeyDown={(e) => e.key === "Enter" && handleBook()}
                 />
               </div>
               <Button
@@ -303,7 +345,7 @@ const BookBike = () => {
                 disabled={!studentName.trim() || submitting}
                 className="tape-element-green w-full text-base"
               >
-                {submitting ? "Booking..." : "CONFIRM BOOKING"}
+                {submitting ? "Booking…" : "CONFIRM BOOKING"}
               </Button>
             </div>
           )}
@@ -311,17 +353,30 @@ const BookBike = () => {
       </Dialog>
 
       {/* Footer */}
-      <footer className="border-t-4 border-primary bg-secondary px-4 py-10">
+      <footer className="border-t-4 border-primary bg-secondary px-4 py-10 mt-8">
         <div className="container mx-auto text-center">
           <div className="font-display text-lg font-bold uppercase text-accent">
-            Free Wheeler Bike League
+            Freewheeler Bike League
           </div>
           <p className="mt-2 font-body text-sm text-secondary-foreground/60">
             Pedal Your Own Path · © 2026
           </p>
-          <Link to="/terms" className="mt-2 inline-block font-body text-xs text-secondary-foreground/40 underline hover:text-secondary-foreground/60">
-            Terms & Conditions
-          </Link>
+          <div className="mt-3 flex items-center justify-center gap-4 flex-wrap">
+            <Link to="/programme-overview" className="font-display text-xs uppercase tracking-wider text-secondary-foreground/60 underline hover:text-secondary-foreground/80">
+              Programme Overview
+            </Link>
+            <Link to="/terms" className="font-display text-xs uppercase tracking-wider text-secondary-foreground/40 underline hover:text-secondary-foreground/60">
+              Terms & Conditions
+            </Link>
+            <a
+              href="https://airtable.com/app4IEpE10xJPsLxT/shr6ZnS0qQyFkxCHH"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-display text-xs uppercase tracking-wider text-secondary-foreground/40 underline hover:text-secondary-foreground/60"
+            >
+              Report an Issue (Staff)
+            </a>
+          </div>
         </div>
       </footer>
     </div>

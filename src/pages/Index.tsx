@@ -26,7 +26,7 @@ const PublicLanding = () => {
       {/* Top bar with Sign In */}
       <header className="relative z-10 bg-secondary">
         <div className="container mx-auto flex items-center justify-between px-4 py-3">
-          <img src={logoSrc} alt="Free Wheeler" className="h-10 object-contain md:h-12" />
+          <img src={logoSrc} alt="Freewheeler Bike League" className="h-12 object-contain md:h-16" />
           <Link
             to="/auth"
             className="tape-element text-sm md:text-base"
@@ -61,7 +61,7 @@ const PublicLanding = () => {
               transition={{ delay: 0.5, duration: 0.5 }}
               className="mt-6 max-w-lg font-body text-base leading-relaxed text-secondary-foreground/80 md:text-lg"
             >
-              Freewheeler is a virtual cycling league for secondary school students, delivered through MyWhoosh.
+              Freewheeler is a cycling league for secondary school students, delivered through MyWhoosh.
               Complete rides and challenges at school, on a schedule that works for you, with points accumulated across the season —
               no travel, no trials, no pressure, just ride.
             </motion.p>
@@ -161,10 +161,10 @@ const PublicLanding = () => {
       <footer className="border-t-4 border-primary bg-secondary px-4 py-10">
         <div className="container mx-auto text-center">
           <div className="font-display text-lg font-bold uppercase text-accent">
-            Free Wheeler Bike League
+            Freewheeler Bike League
           </div>
           <p className="mt-2 font-body text-sm text-secondary-foreground/60">
-            Pedal Your Own Path · © 2026
+            Pedal Your Own Path · Delivered by Sport Waikato · © 2026
           </p>
           <div className="mt-3 flex items-center justify-center gap-4 flex-wrap">
             <Link
@@ -172,6 +172,12 @@ const PublicLanding = () => {
               className="font-display text-xs uppercase tracking-wider text-secondary-foreground/60 underline hover:text-secondary-foreground/80"
             >
               Programme Overview
+            </Link>
+            <Link
+              to="/resources"
+              className="font-display text-xs uppercase tracking-wider text-secondary-foreground/60 underline hover:text-secondary-foreground/80"
+            >
+              Resources
             </Link>
             <Link
               to="/book"
@@ -185,6 +191,14 @@ const PublicLanding = () => {
             >
               Terms & Conditions
             </Link>
+            <a
+              href="https://airtable.com/app4IEpE10xJPsLxT/shr6ZnS0qQyFkxCHH"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-display text-xs uppercase tracking-wider text-secondary-foreground/40 underline hover:text-secondary-foreground/60"
+            >
+              Report an Issue (Staff)
+            </a>
           </div>
         </div>
       </footer>

@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { callAirtable } from "@/lib/airtable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +30,6 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
 const YEAR_LEVELS = ["Year 9", "Year 10", "Year 11", "Year 12", "Year 13"];
-const GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
 
 function toTitleCase(str: string): string {
   return str
@@ -44,19 +41,14 @@ function toTitleCase(str: string): string {
 
 const StudentRegistrationForm = () => {
   const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [gender, setGender] = useState("");
+  const [lastInitial, setLastInitial] = useState("");
   const [yearLevel, setYearLevel] = useState("");
   const [school, setSchool] = useState("");
   const [schoolSearch, setSchoolSearch] = useState("");
   const [schoolOpen, setSchoolOpen] = useState(false);
   const [schools, setSchools] = useState<{ id: string; name: string; spots_remaining?: number }[]>([]);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [agreedTerms, setAgreedTerms] = useState(false);
+  const [agreedConsent, setAgreedConsent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -79,40 +71,13 @@ const StudentRegistrationForm = () => {
     fetchSchools();
   }, []);
 
-  const handleGoogleSignUp = async () => {
-    setGoogleLoading(true);
-    try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (result.error) throw result.error;
-    } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
+    if (!agreedConsent) {
       toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!agreedTerms) {
-      toast({
-        title: "Terms required",
-        description: "Please agree to the terms and conditions.",
+        title: "Consent required",
+        description: "Please confirm your school or caregiver has given permission.",
         variant: "destructive",
       });
       return;
@@ -121,7 +86,16 @@ const StudentRegistrationForm = () => {
     if (!school) {
       toast({
         title: "School required",
-        description: "Please select or enter your school name.",
+        description: "Please select your school.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!lastInitial.trim()) {
+      toast({
+        title: "Last initial required",
+        description: "Please enter the first letter of your last name.",
         variant: "destructive",
       });
       return;
@@ -140,49 +114,34 @@ const StudentRegistrationForm = () => {
 
     setLoading(true);
     try {
-      // 1. Create Supabase auth account
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (signUpError) throw signUpError;
-
-      // 2. Write to Airtable
-      const fullName = `${firstName.trim()} ${lastName.trim()}`;
       const schoolName = schools.find((s) => s.name === school)
         ? school
         : toTitleCase(school);
 
       const fields: Record<string, any> = {
-        "Full Name": fullName,
-        "School Email": email.trim().toLowerCase(),
+        "First Name": firstName.trim(),
+        "Last Initial": lastInitial.trim().toUpperCase().charAt(0),
         "Year Level": yearLevel,
+        "Registration Status": "Pending Consent",
       };
-      if (gender) fields["Gender"] = gender;
 
-      // Try to link school by finding matching org record
+      // Link school by org record ID if matched
       const matchingSchool = schools.find((s) => s.name === schoolName);
       if (matchingSchool) {
         fields["School"] = [matchingSchool.id];
+      } else {
+        fields["School Name"] = schoolName;
       }
 
-      try {
-        await callAirtable("Student Registration", "POST", {
-          body: { records: [{ fields }] },
-        });
-      } catch (airtableErr) {
-        console.error("Airtable sync failed (account still created):", airtableErr);
-      }
+      await callAirtable("Student Registration", "POST", {
+        body: { records: [{ fields }] },
+      });
 
       setSuccess(true);
-      toast({
-        title: "You're registered! 🎉",
-        description: "Sign in above to get started.",
-      });
     } catch (err: any) {
       toast({
         title: "Registration failed",
-        description: err.message,
+        description: "Something went wrong — please try again or ask your teacher for help.",
         variant: "destructive",
       });
     } finally {
@@ -194,14 +153,13 @@ const StudentRegistrationForm = () => {
     return (
       <div className="mx-auto max-w-md border-[3px] border-primary bg-card p-8 text-center shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
         <h3 className="font-display text-xl font-bold uppercase text-foreground">
-          You're in! 🚴
+          You're registered! 🚴
         </h3>
         <p className="mt-3 font-body text-sm text-muted-foreground">
-          Your account has been created. Use the{" "}
-          <Link to="/auth" className="font-bold text-primary underline">
-            Sign In
-          </Link>{" "}
-          button above to log in and start riding.
+          Your registration is in. Once your school confirms consent and Sport Waikato processes your sign-up, your NFC bracelet and starter pack will be delivered to your school.
+        </p>
+        <p className="mt-3 font-body text-xs text-muted-foreground">
+          Questions? Ask your teacher or contact Sport Waikato.
         </p>
       </div>
     );
@@ -230,54 +188,36 @@ const StudentRegistrationForm = () => {
           </div>
           <div>
             <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
-              Last Name *
+              Last Initial *
             </Label>
             <Input
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              value={lastInitial}
+              onChange={(e) => setLastInitial(e.target.value.replace(/[^a-zA-Z]/g, "").charAt(0))}
               required
-              placeholder="Last name"
+              maxLength={1}
+              placeholder="e.g. S"
               className="border-2 border-border bg-muted text-foreground placeholder:text-muted-foreground"
             />
           </div>
         </div>
 
-        {/* Gender + Year Level */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
-              Gender
-            </Label>
-            <Select value={gender} onValueChange={setGender}>
-              <SelectTrigger className="border-2 border-border bg-muted text-foreground">
-                <SelectValue placeholder="Optional" />
-              </SelectTrigger>
-              <SelectContent>
-                {GENDERS.map((g) => (
-                  <SelectItem key={g} value={g}>
-                    {g}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
-              Year Level *
-            </Label>
-            <Select value={yearLevel} onValueChange={setYearLevel} required>
-              <SelectTrigger className="border-2 border-border bg-muted text-foreground">
-                <SelectValue placeholder="Select year" />
-              </SelectTrigger>
-              <SelectContent>
-                {YEAR_LEVELS.map((y) => (
-                  <SelectItem key={y} value={y}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Year Level */}
+        <div>
+          <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
+            Year Level *
+          </Label>
+          <Select value={yearLevel} onValueChange={setYearLevel} required>
+            <SelectTrigger className="border-2 border-border bg-muted text-foreground">
+              <SelectValue placeholder="Select year" />
+            </SelectTrigger>
+            <SelectContent>
+              {YEAR_LEVELS.map((y) => (
+                <SelectItem key={y} value={y}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* School combobox */}
@@ -293,7 +233,7 @@ const StudentRegistrationForm = () => {
                 aria-expanded={schoolOpen}
                 className="w-full justify-between border-2 border-border bg-muted text-foreground hover:bg-muted"
               >
-                {school || "Search or type school name..."}
+                {school || "Select your school..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -351,82 +291,35 @@ const StudentRegistrationForm = () => {
             const selected = schools.find(s => s.name === school);
             if (selected && selected.spots_remaining !== undefined) {
               if (selected.spots_remaining <= 0) {
-                return <p className="mt-1 font-display text-xs text-destructive">❌ Registration closed — all 24 spots are taken.</p>;
+                return <p className="mt-1 font-display text-xs text-destructive">Registration closed — all 24 spots are taken.</p>;
               }
-              return <p className="mt-1 font-display text-xs text-muted-foreground">🎯 {selected.spots_remaining} of 24 spots remaining</p>;
+              return <p className="mt-1 font-display text-xs text-muted-foreground">{selected.spots_remaining} of 24 spots remaining</p>;
             }
             return null;
           })()}
         </div>
 
-        {/* Email */}
-        <div>
-          <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
-            School Email *
-          </Label>
-          <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="you@school.nz"
-            className="border-2 border-border bg-muted text-foreground placeholder:text-muted-foreground"
-          />
-        </div>
-
-        {/* Password */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
-              Password *
-            </Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              placeholder="••••••••"
-              className="border-2 border-border bg-muted text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-          <div>
-            <Label className="font-display text-xs uppercase tracking-wider text-foreground/80">
-              Confirm *
-            </Label>
-            <Input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={6}
-              placeholder="••••••••"
-              className="border-2 border-border bg-muted text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-        </div>
-
-        {/* Terms */}
+        {/* Consent checkbox */}
         <div className="flex items-start gap-2">
           <Checkbox
-            id="terms"
-            checked={agreedTerms}
-            onCheckedChange={(checked) => setAgreedTerms(checked === true)}
+            id="consent"
+            checked={agreedConsent}
+            onCheckedChange={(checked) => setAgreedConsent(checked === true)}
             className="mt-0.5 border-secondary-foreground/40 data-[state=checked]:bg-primary"
           />
           <Label
-            htmlFor="terms"
+            htmlFor="consent"
             className="font-body text-xs leading-snug text-foreground/80"
           >
-            I agree to the{" "}
+            My school or caregiver has confirmed I have permission to participate in Freewheeler. I agree to the{" "}
             <Link
               to="/terms"
               target="_blank"
               className="font-bold text-primary underline"
             >
               Terms & Conditions
-            </Link>{" "}
-            including bike use and data collection policies.
+            </Link>
+            .
           </Label>
         </div>
 
@@ -441,7 +334,7 @@ const StudentRegistrationForm = () => {
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" /> Creating account...
+                  <Loader2 className="h-5 w-5 animate-spin" /> Registering...
                 </span>
               ) : isFull ? (
                 "REGISTRATION CLOSED"
@@ -452,7 +345,6 @@ const StudentRegistrationForm = () => {
           );
         })()}
       </form>
-
     </div>
   );
 };

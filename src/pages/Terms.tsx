@@ -24,7 +24,7 @@ const Terms = () => (
             1. Programme Overview
           </h2>
           <p>
-            Freewheeler is a virtual cycling league for secondary
+            Freewheeler is a cycling league for secondary
             school students, delivered through MyWhoosh, an online cycling platform.
             It is developed in the Waikato by Sport Waikato to reimagine what school sport can look like,
             purposefully designed to remove many traditional barriers facing school sports

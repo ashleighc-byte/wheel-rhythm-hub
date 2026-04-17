@@ -133,7 +133,7 @@ const StudentInfo = () => {
                 Freewheeler is a new way to do sport.
               </p>
               <p>
-                A virtual cycling league developed in the Waikato to meet young people where they are. No teams. No trials. No pressure. Just jump on a bike and ride. Track your sessions, build your streak, and see how your school ranks on the leaderboard. Every ride counts.
+                A cycling league developed in the Waikato to meet young people where they are. No teams. No trials. No pressure. Just jump on a bike and ride. Track your sessions, build your streak, and see how your school ranks on the leaderboard. Every ride counts.
               </p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {[
@@ -409,7 +409,7 @@ const TeacherInfo = () => {
                 Freewheeler is reimagining how rangatahi experience sport.
               </p>
               <p>
-                Freewheeler is a new virtual cycling league developed in the Waikato to meet young people where they are. Traditional sport can feel rigid, rule-bound, and limited to certain students. Freewheeler breaks away from those conventions and offers an option that works on their terms — one that lowers barriers for students, reduces the administration load on schools, and creates a sport experience that feels modern, engaging, and inclusive.
+                Freewheeler is a new cycling league developed in the Waikato to meet young people where they are. Traditional sport can feel rigid, rule-bound, and limited to certain students. Freewheeler breaks away from those conventions and offers an option that works on their terms — one that lowers barriers for students, reduces the administration load on schools, and creates a sport experience that feels modern, engaging, and inclusive.
               </p>
               <p className="font-semibold">This pilot is designed to:</p>
               <ul className="space-y-2 pl-1">

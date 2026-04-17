@@ -48,7 +48,7 @@ const StudentRegistration = () => {
           <img src={artDynamic} alt="" className="h-full w-full object-cover opacity-20" />
         </div>
         <div className="container relative mx-auto flex items-center gap-3 px-4 py-4">
-          <img src={brandLogo} alt="Free Wheeler" className="h-12 w-auto rounded" />
+          <img src={brandLogo} alt="Freewheeler Bike League" className="h-16 w-auto rounded" />
           <div>
             <h1 className="font-display text-2xl font-extrabold uppercase tracking-wider text-primary-foreground">
               Student Registration

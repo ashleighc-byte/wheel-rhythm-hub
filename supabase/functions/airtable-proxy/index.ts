@@ -29,8 +29,8 @@ Deno.serve(async (req) => {
   let isNfcAuth = false;
   let isPublicValidation = false;
 
-  // Allow unauthenticated GET to Organisations and Student Registration for email validation (signup/login approval check)
-  const PUBLIC_VALIDATION_TABLES = ['Organisations', 'Student Registration', 'Survey Questions'];
+  // Allow unauthenticated GET for public pages (validation, booking page bike lookup, resources page)
+  const PUBLIC_VALIDATION_TABLES = ['Organisations', 'Student Registration', 'Survey Questions', 'Hardware Assets', 'Resources Library'];
   if (!authHeader && !nfcToken && req.method === 'GET' && PUBLIC_VALIDATION_TABLES.includes(table)) {
     isPublicValidation = true;
   } else if (nfcToken) {

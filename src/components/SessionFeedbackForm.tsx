@@ -233,7 +233,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
               className="flex flex-col items-center gap-4 py-10 text-center"
             >
               <Link to="/" className="block">
-                <img src={logoSrc} alt="Free Wheeler" className="h-14 object-contain" />
+                <img src={logoSrc} alt="Freewheeler Bike League" className="h-20 object-contain" />
               </Link>
               <motion.div
                 initial={{ scale: 0 }}

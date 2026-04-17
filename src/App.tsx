@@ -9,23 +9,18 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
-
 import NotFound from "./pages/NotFound";
 import Leaderboards from "./pages/Leaderboards";
 import Info from "./pages/Info";
-// TeacherDashboard removed
 import OgImageDownload from "./pages/OgImageDownload";
-import SetupInstructions from "./pages/SetupInstructions";
-import SetupInstructionsPrint from "./pages/SetupInstructionsPrint";
 import NfcTap from "./pages/NfcTap";
 import ResetPassword from "./pages/ResetPassword";
-import Webinar from "./pages/Webinar";
 import StudentRegistration from "./pages/StudentRegistration";
-import RaceGame from "./pages/RaceGame";
 import Terms from "./pages/Terms";
 import BookBike from "./pages/BookBike";
-import TeacherResources from "./pages/TeacherResources";
 import ProgrammeOverview from "./pages/ProgrammeOverview";
+import Resources from "./pages/Resources";
+import AdminFlowchart from "./pages/AdminFlowchart";
 
 
 const queryClient = new QueryClient();
@@ -93,17 +88,14 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/info" element={<ProtectedRoute><Info /></ProtectedRoute>} />
              {/* TeacherDashboard route removed */}
-             <Route path="/setup-instructions" element={<AdminRoute><SetupInstructions /></AdminRoute>} />
-             <Route path="/setup-instructions/print" element={<AdminRoute><SetupInstructionsPrint /></AdminRoute>} />
               <Route path="/og-download" element={<ProtectedRoute><OgImageDownload /></ProtectedRoute>} />
-               <Route path="/reset-password" element={<ResetPassword />} />
-               <Route path="/webinar" element={<Webinar />} />
-               <Route path="/terms" element={<Terms />} />
-               <Route path="/programme-overview" element={<ProgrammeOverview />} />
-               <Route path="/book" element={<BookBike />} />
-               <Route path="/studentregistration" element={<StudentRegistration />} />
-              <Route path="/race" element={<ProtectedRoute><RaceGame /></ProtectedRoute>} />
-              <Route path="/teacher-resources" element={<AdminRoute><TeacherResources /></AdminRoute>} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/programme-overview" element={<ProgrammeOverview />} />
+              <Route path="/book" element={<BookBike />} />
+              <Route path="/resources" element={<Resources />} />
+              <Route path="/studentregistration" element={<StudentRegistration />} />
+              <Route path="/admin/flowchart" element={<AdminRoute><AdminFlowchart /></AdminRoute>} />
               <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
           </Routes>

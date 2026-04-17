@@ -34,13 +34,13 @@ const ProgrammeOverview = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary/90 to-secondary/70" />
         </div>
         <div className="container relative mx-auto flex flex-col items-center px-4 text-center">
-          <img src={logoSrc} alt="Free Wheeler" className="mb-4 h-20 object-contain print:h-16" />
+          <img src={logoSrc} alt="Freewheeler Bike League" className="mb-4 h-24 object-contain print:h-16" />
           <img src={brandWordmark} alt="Freewheeler" className="mb-4 h-12 object-contain print:h-10" />
           <h1 className="font-display text-3xl font-extrabold uppercase tracking-wider text-secondary-foreground md:text-4xl">
             Programme Overview
           </h1>
           <p className="mt-2 max-w-xl font-body text-base text-secondary-foreground/80">
-            A virtual cycling league for secondary school students — delivered in the Waikato by Sport Waikato.
+            A cycling league for secondary school students — delivered in the Waikato by Sport Waikato.
           </p>
         </div>
       </header>
@@ -58,7 +58,7 @@ const ProgrammeOverview = () => {
           </div>
           <div className="space-y-3 font-body text-sm leading-relaxed text-foreground/90">
             <p>
-              Freewheeler is a new virtual cycling league developed in the Waikato to meet young people where they are, and to reimagine what school sport can look like. It is purposefully designed to remove many traditional barriers facing school sports administration and participation.
+              Freewheeler is a new cycling league developed in the Waikato to meet young people where they are, and to reimagine what school sport can look like. It is purposefully designed to remove many traditional barriers facing school sports administration and participation.
             </p>
             <p>
               Delivered through <strong>MyWhoosh</strong>, an online cycling platform, students complete rides and challenges at school, on a schedule that works for them, with points accumulated across the season. Rather than requiring travel, large numbers of volunteers, burdensome paperwork and fixed competition times, Freewheeler offers a more flexible and accessible format that can work alongside the realities facing schools, sports coordinators, and students in modern life.
@@ -104,10 +104,13 @@ const ProgrammeOverview = () => {
           </p>
           <ul className="space-y-2 font-body text-sm text-foreground/90">
             {[
-              "2 × smart bikes, provided free of charge for the duration of the pilot, and for longer if the league continues",
-              "Access to the Freewheeler pilot season in 2026",
-              "All league challenges and content delivered digitally (via student email)",
-              "Promotional material and support from Sport Waikato",
+              "2 × Wattbike Proton smart bikes, provided free of charge for the duration of the pilot",
+              "1 × iPad per bike, pre-loaded with the MyWhoosh cycling platform",
+              "Power multibox and 5m extension lead per school",
+              "NFC bracelets for each registered student (their login to the platform)",
+              "Access to the Freewheeler 8-week pilot season in 2026",
+              "All league challenges and content delivered digitally via the platform",
+              "Promotional material, onboarding support, and guidance from Sport Waikato",
             ].map((item) => (
               <li key={item} className="flex gap-3">
                 <span className="mt-1.5 h-2.5 w-2.5 shrink-0 bg-primary" />
@@ -128,13 +131,16 @@ const ProgrammeOverview = () => {
             </h2>
           </div>
           <p className="mb-3 font-body text-sm text-foreground/90">
-            We are intentionally keeping the ask on schools light. We do not expect schools to run the league, provide volunteers, or take on a large amount of extra work. The main things we need are:
+            We are intentionally keeping the ask on schools light. The main things we need are:
           </p>
           <ul className="space-y-2 font-body text-sm text-foreground/90">
             {[
-              "Commitment and support in promoting the opportunity to students",
-              "Adherence to the agreed Memorandum of Understanding",
-              "A willingness to help us test and learn from the pilot",
+              "Promote the opportunity to students and encourage participation",
+              "Sign the Memorandum of Understanding (MoU) between your school and Sport Waikato",
+              "Collect and return signed Student & Caregiver Consent Forms before students participate",
+              "Send Sport Waikato a list of consented students (first name, last initial, year level only)",
+              "Store equipment securely and report any damage or faults promptly",
+              "Ensure students use the bikes and platform safely and respectfully",
             ].map((item) => (
               <li key={item} className="flex gap-3">
                 <span className="mt-1.5 h-2.5 w-2.5 shrink-0 bg-accent" />
@@ -142,6 +148,32 @@ const ProgrammeOverview = () => {
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* Consent and Privacy */}
+        <section className="mb-10">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center bg-primary print:border print:border-primary print:bg-transparent">
+              <CheckCircle2 className="h-5 w-5 text-primary-foreground print:text-primary" />
+            </div>
+            <h2 className="font-display text-2xl font-bold uppercase tracking-wider text-foreground">
+              Consent and Privacy
+            </h2>
+          </div>
+          <div className="space-y-3 font-body text-sm leading-relaxed text-foreground/90">
+            <p>
+              Freewheeler is designed with student safety and privacy in mind. Participation requires caregiver consent for students under 16, in line with the Privacy Act 2020.
+            </p>
+            <p>
+              <strong>How consent works:</strong> Schools send home the Free Wheeler Student &amp; Caregiver Consent Form — this can be included in the school newsletter or sent via your school app (e.g. Seesaw, Skool Loop). Once signed forms are collected, schools send Sport Waikato a simple list of consented students (first name, last initial, year level only). Signed consent forms remain with the school.
+            </p>
+            <p>
+              <strong>What data Sport Waikato holds:</strong> We store only what is necessary — first name, last initial, year level, and school. No full names, email addresses, or caregiver contact details are held by Sport Waikato. Ride data is linked to a random NFC token, not to a student&apos;s personal identity.
+            </p>
+            <p>
+              Students interact with MyWhoosh, a third-party platform. Schools are responsible for ensuring appropriate use. Students must not share personal information on the platform and must behave respectfully.
+            </p>
+          </div>
         </section>
 
         {/* Pilot League Overview */}
@@ -163,7 +195,7 @@ const ProgrammeOverview = () => {
               "An 8-week season, targeted for Term 2 and Term 3, 2026",
               "No participation fee for schools or students",
               "Students riding at school and competing on their own schedule",
-              "Points accumulated across the season through virtual challenges",
+              "Points accumulated across the season through challenges and milestones",
               "Registration limited to the first 24 students per school",
             ].map((item) => (
               <li key={item} className="flex gap-3">
@@ -219,15 +251,15 @@ const ProgrammeOverview = () => {
       {/* Footer */}
       <footer className="border-t-4 border-primary bg-secondary px-4 py-8 print:border-t print:py-4">
         <div className="container mx-auto text-center">
-          <img src={logoSrc} alt="Free Wheeler" className="mx-auto mb-3 h-12 object-contain print:h-10" />
+          <img src={logoSrc} alt="Freewheeler Bike League" className="mx-auto mb-3 h-14 object-contain print:h-10" />
           <div className="font-display text-lg font-bold uppercase text-accent">
-            Free Wheeler Bike League
+            Freewheeler Bike League
           </div>
           <p className="mt-1 font-body text-sm text-secondary-foreground/60">
             Pedal Your Own Path · Delivered by Sport Waikato · © 2026
           </p>
           <p className="mt-2 font-body text-xs text-secondary-foreground/40">
-            freewheeler.lovable.app
+            freewheelerleague.com
           </p>
         </div>
       </footer>

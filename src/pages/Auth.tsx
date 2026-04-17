@@ -98,7 +98,7 @@ const Auth = () => {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <img src={brandLogo} alt="Free Wheeler Bike League" className="mx-auto mb-6 h-24 w-auto object-contain" />
+          <img src={brandLogo} alt="Freewheeler Bike League" className="mx-auto mb-6 h-28 w-auto object-contain" />
           {children}
         </div>
       </div>
