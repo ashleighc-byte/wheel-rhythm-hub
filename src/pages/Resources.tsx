@@ -85,28 +85,8 @@ const Resources = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchResources = async () => {
-      try {
-        const res = await callAirtable("Resources Library", "GET", {
-          filterByFormula: `{Status} != 'Archived'`,
-        });
-        const mapped: Resource[] = (res.records ?? []).map((r: { id: string; fields: Record<string, unknown> }) => ({
-          id: r.id,
-          name: String(r.fields["Resource Name"] ?? ""),
-          type: String(r.fields["Type"] ?? ""),
-          audience: String(r.fields["Audience"] ?? ""),
-          description: String(r.fields["Description"] ?? ""),
-          url: String(r.fields["Link / URL"] ?? ""),
-          status: String(r.fields["Status"] ?? ""),
-        }));
-        setResources(mapped.filter((r) => r.name));
-      } catch {
-        // Show static fallback if Airtable unavailable
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchResources();
+    // Resources are hand-curated below; no Airtable fetch needed.
+    setLoading(false);
   }, []);
 
   const byAudience = (audience: string) =>
