@@ -28,6 +28,7 @@ import NewsletterBlurb from "./pages/NewsletterBlurb";
 import ConsentForm from "./pages/ConsentForm";
 import MouTemplate from "./pages/MouTemplate";
 import BikeInstructions from "./pages/BikeInstructions";
+import TeacherGuide from "./pages/TeacherGuide";
 
 
 const queryClient = new QueryClient();
@@ -109,6 +110,7 @@ const App = () => (
               <Route path="/print/consent-form" element={<ConsentForm />} />
               <Route path="/print/mou-template" element={<MouTemplate />} />
               <Route path="/print/bike-instructions" element={<BikeInstructions />} />
+              <Route path="/print/teacher-guide" element={<TeacherGuide />} />
               <Route path="/resources/newsletter-blurb" element={<NewsletterBlurb />} />
               <Route path="/tap/:token" element={<NfcTap />} />
              <Route path="*" element={<NotFound />} />
