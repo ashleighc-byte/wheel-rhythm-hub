@@ -105,7 +105,7 @@ const BookBike = () => {
     const fetchBikes = async () => {
       try {
         const res = await callAirtable("Hardware Assets", "GET", {
-          filterByFormula: `AND({School} = '${selectedSchool.replace(/'/g, "\\'")}', {Asset Type} = 'Bike')`,
+          filterByFormula: `AND({Status Location} = '${selectedSchool.replace(/'/g, "\\'")}', {Asset Type} = 'Bike')`,
         });
         const names = (res.records as HardwareAsset[])
           .map((r) => String(r.fields["Asset Name 1"] ?? r.fields["Asset Name"] ?? ""))
