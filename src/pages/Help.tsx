@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, AlertTriangle, Send, Upload, X, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,11 @@ const FEEDBACK_TYPES = [
 
 const SEVERITY_OPTIONS = ["Low", "Medium", "High"];
 
+interface Bike {
+  id: string;
+  name: string;
+}
+
 const Help = () => {
   const { toast } = useToast();
 
@@ -33,6 +38,30 @@ const Help = () => {
   const [photo, setPhoto] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [bikes, setBikes] = useState<Bike[]>([]);
+  const [selectedBikeId, setSelectedBikeId] = useState<string>("");
+
+  // Load all bikes (Asset Type = Bike) for the conditional Hardware Assets field
+  useEffect(() => {
+    if (feedbackType !== "Hardware Issue" || bikes.length > 0) return;
+    (async () => {
+      try {
+        const res = await callAirtable("Hardware Assets", "GET", {
+          filterByFormula: `{Asset Type} = 'Bike'`,
+        });
+        const list: Bike[] = (res.records as Array<{ id: string; fields: Record<string, unknown> }>)
+          .map((r) => ({
+            id: r.id,
+            name: String(r.fields["Asset Name 1"] ?? r.fields["Asset Name"] ?? ""),
+          }))
+          .filter((b) => b.name)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setBikes(list);
+      } catch (err) {
+        console.error("Failed to load bikes:", err);
+      }
+    })();
+  }, [feedbackType, bikes.length]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,17 +69,20 @@ const Help = () => {
     setSubmitting(true);
 
     try {
-      const submitterLabel = email.trim() ? `${name.trim()} (${email.trim()})` : name.trim();
+      // Match Airtable field names exactly (per Support Tickets table schema)
       const fields: Record<string, any> = {
-        "Name": submitterLabel,
+        "Submitted By": name.trim(),
         "Feedback Type": feedbackType,
         "Description": description.trim(),
         "Severity": severity,
       };
 
-      if (onBehalf.trim()) {
-        fields["If you are submitting this request on behalf of someone else, what is their name and email address?"] =
-          onBehalf.trim();
+      if (email.trim()) fields["Email"] = email.trim();
+      if (onBehalf.trim()) fields["Submitted By admin"] = onBehalf.trim();
+
+      // Linked record — only when Hardware Issue + a bike is picked
+      if (feedbackType === "Hardware Issue" && selectedBikeId) {
+        fields["Hardware Assets"] = [selectedBikeId];
       }
 
       if (photo) {
@@ -73,14 +105,14 @@ const Help = () => {
 
       toast({
         title: "Issue reported!",
-        description: "Thanks for letting us know. We’ll look into it.",
+        description: "Thanks for letting us know. We'll look into it.",
       });
       setSubmitted(true);
     } catch (err) {
       console.error("Help form error:", err);
       toast({
         title: "Something went wrong",
-        description: "Please try again later.",
+        description: err instanceof Error ? err.message : "Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -96,6 +128,7 @@ const Help = () => {
     setDescription("");
     setSeverity("");
     setPhoto(null);
+    setSelectedBikeId("");
     setSubmitted(false);
   };
 
@@ -136,7 +169,7 @@ const Help = () => {
               Thanks!
             </h2>
             <p className="mb-6 font-body text-muted-foreground">
-              Your report has been submitted. We’ll take a look as soon as we can.
+              Your report has been submitted. We'll take a look as soon as we can.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Button onClick={resetAll} variant="outline">
@@ -210,6 +243,26 @@ const Help = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            {feedbackType === "Hardware Issue" && (
+              <div>
+                <Label className="font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  Which bike does this issue relate to?
+                </Label>
+                <Select value={selectedBikeId} onValueChange={setSelectedBikeId}>
+                  <SelectTrigger className="mt-1 border-2 border-secondary bg-background font-body">
+                    <SelectValue placeholder={bikes.length ? "Select a bike..." : "Loading bikes..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bikes.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div>
               <Label className="font-display text-xs font-bold uppercase tracking-widest text-muted-foreground">

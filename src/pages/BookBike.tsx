@@ -68,7 +68,10 @@ const BookBike = () => {
   const [studentName, setStudentName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Load schools
+  // Only these schools have bikes assigned for the pilot
+  const SCHOOLS_WITH_BIKES = ["St Andrews", "Kelly's Place", "Sport Waikato"];
+
+  // Load schools (filtered to those with bikes assigned)
   useEffect(() => {
     const fetchSchools = async () => {
       try {
@@ -78,10 +81,16 @@ const BookBike = () => {
         });
         if (res.ok) {
           const data = await res.json();
-          setSchools((data.schools || []).map((s: { id: string; name: string }) => ({ id: s.id, name: s.name })));
+          const all = (data.schools || []) as { id: string; name: string }[];
+          const filtered = all.filter((s) =>
+            SCHOOLS_WITH_BIKES.some((allowed) => s.name.toLowerCase().includes(allowed.toLowerCase()))
+          );
+          setSchools(filtered.length ? filtered : SCHOOLS_WITH_BIKES.map((n) => ({ id: n, name: n })));
+        } else {
+          setSchools(SCHOOLS_WITH_BIKES.map((n) => ({ id: n, name: n })));
         }
       } catch {
-        console.error("Failed to load schools");
+        setSchools(SCHOOLS_WITH_BIKES.map((n) => ({ id: n, name: n })));
       }
     };
     fetchSchools();
@@ -96,15 +105,15 @@ const BookBike = () => {
     const fetchBikes = async () => {
       try {
         const res = await callAirtable("Hardware Assets", "GET", {
-          filterByFormula: `AND({School} = '${selectedSchool}', {Asset Type} = 'Wattbike Proton')`,
+          filterByFormula: `AND({School} = '${selectedSchool.replace(/'/g, "\\'")}', {Asset Type} = 'Bike')`,
         });
         const names = (res.records as HardwareAsset[])
-          .map((r) => String(r.fields["Asset Name"] ?? ""))
-          .filter(Boolean);
-        setBikes(names.length ? names : ["Bike 1", "Bike 2"]);
+          .map((r) => String(r.fields["Asset Name 1"] ?? r.fields["Asset Name"] ?? ""))
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b));
+        setBikes(names);
       } catch {
-        // Fall back to generic names if Airtable unavailable
-        setBikes(["Bike 1", "Bike 2"]);
+        setBikes([]);
       }
     };
     fetchBikes();
