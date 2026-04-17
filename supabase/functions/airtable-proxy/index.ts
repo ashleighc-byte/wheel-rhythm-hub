@@ -31,7 +31,11 @@ Deno.serve(async (req) => {
 
   // Allow unauthenticated GET for public pages (validation, booking page bike lookup, resources page)
   const PUBLIC_VALIDATION_TABLES = ['Organisations', 'Student Registration', 'Survey Questions', 'Hardware Assets', 'Resources Library'];
+  // Allow unauthenticated POST for the public help/issue form
+  const PUBLIC_POST_TABLES = ['Support Tickets (Bug/Issue Form)'];
   if (!authHeader && !nfcToken && req.method === 'GET' && PUBLIC_VALIDATION_TABLES.includes(table)) {
+    isPublicValidation = true;
+  } else if (!authHeader && !nfcToken && req.method === 'POST' && PUBLIC_POST_TABLES.includes(table)) {
     isPublicValidation = true;
   } else if (nfcToken) {
     isNfcAuth = true;
