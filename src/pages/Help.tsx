@@ -31,7 +31,6 @@ const Help = () => {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [onBehalf, setOnBehalf] = useState("");
   const [feedbackType, setFeedbackType] = useState("");
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState("");
