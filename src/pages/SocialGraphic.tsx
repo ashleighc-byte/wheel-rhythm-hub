@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import logo from "@/assets/fw-logo-oval.png";
-import wordmark from "@/assets/fw-wordmark.png";
+import logo from "@/assets/fw-logo-oval-large.png";
+import wordmark from "@/assets/fw-wordmark-large.png";
 import stripeBg from "@/assets/stripe-bg-1.png";
 
 /**
@@ -33,32 +33,32 @@ const SquareGraphic = () => (
       src={logo}
       alt="Freewheeler"
       className="absolute top-12 left-12 object-contain"
-      style={{ height: "140px" }}
+      style={{ height: "240px" }}
     />
 
     {/* Central headline */}
     <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-12">
       <p
         className="font-display font-black uppercase leading-none"
-        style={{ fontSize: "200px", letterSpacing: "0.02em" }}
+        style={{ fontSize: "180px", letterSpacing: "0.02em" }}
       >
         Pedal
       </p>
       <p
         className="font-display font-bold uppercase leading-none mt-4"
-        style={{ fontSize: "110px" }}
+        style={{ fontSize: "100px" }}
       >
         Your Own
       </p>
       <p
         className="font-display font-black uppercase leading-none mt-4"
-        style={{ fontSize: "200px", letterSpacing: "0.02em" }}
+        style={{ fontSize: "180px", letterSpacing: "0.02em" }}
       >
         Path
       </p>
       <p
-        className="font-display uppercase tracking-wider mt-10"
-        style={{ fontSize: "44px" }}
+        className="font-display uppercase tracking-wider mt-8"
+        style={{ fontSize: "40px" }}
       >
         Freewheeler Cycling League
       </p>
@@ -66,22 +66,28 @@ const SquareGraphic = () => (
 
     {/* Season strip */}
     <div
-      className="absolute left-0 right-0 bg-accent text-accent-foreground border-y-[6px] border-secondary text-center py-5"
-      style={{ bottom: "180px" }}
+      className="absolute left-0 right-0 bg-accent text-accent-foreground border-y-[6px] border-secondary text-center py-4"
+      style={{ bottom: "230px" }}
     >
       <p
         className="font-display font-black uppercase tracking-widest"
-        style={{ fontSize: "48px" }}
+        style={{ fontSize: "40px" }}
       >
-        Season Opens 31 Aug 2026
+        Season Opens 31 Aug 2026 · Limited to 24 Riders
       </p>
     </div>
 
     {/* CTA strip */}
-    <div className="absolute bottom-0 left-0 right-0 bg-secondary text-secondary-foreground text-center py-8">
+    <div className="absolute bottom-0 left-0 right-0 bg-secondary text-secondary-foreground text-center py-6">
       <p
-        className="font-display font-black uppercase tracking-widest"
-        style={{ fontSize: "56px" }}
+        className="font-display font-black uppercase tracking-widest leading-tight"
+        style={{ fontSize: "44px" }}
+      >
+        Register Online
+      </p>
+      <p
+        className="font-display font-black uppercase tracking-widest leading-tight"
+        style={{ fontSize: "52px" }}
       >
         freewheelerleague.com
       </p>
@@ -106,57 +112,65 @@ const StoryGraphic = () => (
 
     {/* Logo top centre */}
     <div className="absolute top-20 left-0 right-0 flex justify-center">
-      <img src={logo} alt="Freewheeler" className="object-contain" style={{ height: "200px" }} />
+      <img src={logo} alt="Freewheeler" className="object-contain" style={{ height: "320px" }} />
     </div>
 
     {/* Headline + content */}
     <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-12">
       <p
         className="font-display font-black uppercase leading-none"
-        style={{ fontSize: "200px", letterSpacing: "0.02em" }}
+        style={{ fontSize: "180px", letterSpacing: "0.02em" }}
       >
         Pedal
       </p>
       <p
         className="font-display font-bold uppercase leading-none mt-6"
-        style={{ fontSize: "120px" }}
+        style={{ fontSize: "110px" }}
       >
         Your Own
       </p>
       <p
         className="font-display font-black uppercase leading-none mt-6"
-        style={{ fontSize: "200px", letterSpacing: "0.02em" }}
+        style={{ fontSize: "180px", letterSpacing: "0.02em" }}
       >
         Path
       </p>
 
-      <div className="mt-20 bg-accent text-accent-foreground border-[6px] border-secondary px-10 py-5">
+      <div className="mt-16 bg-accent text-accent-foreground border-[6px] border-secondary px-10 py-5 max-w-[900px]">
         <p
-          className="font-display font-black uppercase tracking-wider"
-          style={{ fontSize: "48px" }}
+          className="font-display font-black uppercase tracking-wider leading-tight"
+          style={{ fontSize: "44px" }}
         >
-          7 Waikato Schools Competing
+          A New Cycling League is coming to the Mighty Waikato
         </p>
       </div>
 
       <p
-        className="font-display font-bold uppercase tracking-widest mt-12"
-        style={{ fontSize: "56px" }}
+        className="font-display font-bold uppercase tracking-widest mt-10"
+        style={{ fontSize: "48px" }}
       >
         Season: 31 Aug – 6 Nov 2026
       </p>
 
-      <p
-        className="font-display font-black uppercase tracking-widest mt-10"
-        style={{ fontSize: "60px" }}
-      >
-        freewheelerleague.com
-      </p>
+      <div className="mt-10 bg-secondary text-secondary-foreground px-12 py-6">
+        <p
+          className="font-display font-black uppercase tracking-widest leading-tight"
+          style={{ fontSize: "44px" }}
+        >
+          Register Online · Limited to 24 Riders
+        </p>
+        <p
+          className="font-display font-black uppercase tracking-widest leading-tight mt-2"
+          style={{ fontSize: "56px" }}
+        >
+          freewheelerleague.com
+        </p>
+      </div>
     </div>
 
     {/* Wordmark bottom */}
-    <div className="absolute bottom-20 left-0 right-0 flex justify-center">
-      <img src={wordmark} alt="Freewheeler" className="object-contain" style={{ height: "120px" }} />
+    <div className="absolute bottom-16 left-0 right-0 flex justify-center px-12">
+      <img src={wordmark} alt="Freewheeler" className="object-contain max-w-full" style={{ height: "200px" }} />
     </div>
   </div>
 );
