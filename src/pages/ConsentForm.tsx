@@ -116,7 +116,7 @@ const ConsentForm = () => {
               No email address, full surname, or caregiver contact details are stored by Sport
               Waikato. All data is held securely and deleted within 90 days of the season
               ending (by 4 February 2027), in accordance with the Privacy Act 2020 and Sport
-              Waikato's Karawhiua Digital Safety Management Plan.
+              Waikato's Digital Safety Management Plan.
             </p>
             <p className="mt-2">
               Students interact with MyWhoosh (a third-party cycling simulation app). Students
