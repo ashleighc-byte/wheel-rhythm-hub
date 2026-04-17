@@ -30,6 +30,10 @@ import ConsentForm from "./pages/ConsentForm";
 import MouTemplate from "./pages/MouTemplate";
 import BikeInstructions from "./pages/BikeInstructions";
 import TeacherGuide from "./pages/TeacherGuide";
+import ParentFaq from "./pages/ParentFaq";
+import SocialGraphic from "./pages/SocialGraphic";
+import EmailInitialOutreach from "./pages/EmailInitialOutreach";
+import EmailMouFollowup from "./pages/EmailMouFollowup";
 
 
 const queryClient = new QueryClient();
@@ -96,6 +100,7 @@ const App = () => (
             <Route path="/leaderboards" element={<ProtectedRoute><Leaderboards /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/info" element={<ProtectedRoute><Info /></ProtectedRoute>} />
+<<<<<<< HEAD
             <Route path="/og-download" element={<ProtectedRoute><OgImageDownload /></ProtectedRoute>} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/terms" element={<Terms />} />
@@ -115,6 +120,31 @@ const App = () => (
             <Route path="/resources/newsletter-blurb" element={<NewsletterBlurb />} />
             <Route path="/tap/:token" element={<NfcTap />} />
             <Route path="*" element={<NotFound />} />
+=======
+             {/* TeacherDashboard route removed */}
+              <Route path="/og-download" element={<ProtectedRoute><OgImageDownload /></ProtectedRoute>} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/programme-overview" element={<ProgrammeOverview />} />
+              <Route path="/book" element={<BookBike />} />
+              <Route path="/resources" element={<Resources />} />
+              <Route path="/studentregistration" element={<StudentRegistration />} />
+              <Route path="/admin/flowchart" element={<AdminRoute><AdminFlowchart /></AdminRoute>} />
+              <Route path="/admin/registrations" element={<AdminRoute><AdminRegistrations /></AdminRoute>} />
+              <Route path="/print/bracelet-card" element={<PrintBraceletCard />} />
+              <Route path="/print/a3-poster" element={<A3Poster />} />
+              <Route path="/print/consent-form" element={<ConsentForm />} />
+              <Route path="/print/mou-template" element={<MouTemplate />} />
+              <Route path="/print/bike-instructions" element={<BikeInstructions />} />
+              <Route path="/print/teacher-guide" element={<TeacherGuide />} />
+              <Route path="/print/parent-faq" element={<ParentFaq />} />
+              <Route path="/print/social-graphic" element={<SocialGraphic />} />
+              <Route path="/resources/newsletter-blurb" element={<NewsletterBlurb />} />
+              <Route path="/resources/email-initial-outreach" element={<EmailInitialOutreach />} />
+              <Route path="/resources/email-mou-followup" element={<EmailMouFollowup />} />
+              <Route path="/tap/:token" element={<NfcTap />} />
+             <Route path="*" element={<NotFound />} />
+>>>>>>> 6ed4010434d16a843aa1dd79e288549718ef7447
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

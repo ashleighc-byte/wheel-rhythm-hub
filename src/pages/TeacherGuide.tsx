@@ -30,10 +30,7 @@ const TeacherGuide = () => {
   return (
     <div className="min-h-screen bg-muted">
       <style>{`
-        @page {
-          size: A4 portrait;
-          margin: 18mm 15mm 18mm 15mm;
-        }
+        @page { size: A4 portrait; margin: 18mm 15mm; }
         @media print {
           html, body { background: white !important; margin: 0; padding: 0; color: black !important; }
           .no-print { display: none !important; }
@@ -47,13 +44,6 @@ const TeacherGuide = () => {
           }
           .guide-page * { color: black !important; }
           .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
-          .print-header, .print-footer {
-            position: fixed;
-            left: 0;
-            right: 0;
-          }
-          .print-header { top: 0; }
-          .print-footer { bottom: 0; }
         }
         .guide-page {
           width: 210mm;
@@ -61,7 +51,6 @@ const TeacherGuide = () => {
         }
       `}</style>
 
-      {/* Screen-only controls */}
       <div className="no-print container mx-auto max-w-4xl px-4 py-6 flex items-center justify-between">
         <Link
           to="/resources"
@@ -79,7 +68,6 @@ const TeacherGuide = () => {
 
       <div className="flex justify-center pb-12 print:pb-0">
         <div className="guide-page bg-white text-black p-12 shadow-lg font-body text-[10.5pt] leading-relaxed">
-          {/* Header */}
           <header className="flex items-start gap-4 border-b-2 border-black pb-3">
             <img src={logo} alt="Freewheeler" className="h-16 w-auto object-contain" />
             <div className="flex-1">
@@ -166,7 +154,6 @@ const TeacherGuide = () => {
             <p><strong>Sport Waikato contact:</strong> [ADD CONTACT NAME + EMAIL BEFORE PRINTING]</p>
           </Section>
 
-          {/* Footer */}
           <footer className="mt-10 pt-3 border-t border-black flex items-center justify-between text-[9pt]">
             <img src={logo} alt="" className="h-8 w-auto object-contain" />
             <span>Freewheeler Cycling League · Delivered by Sport Waikato · freewheelerleague.com</span>
