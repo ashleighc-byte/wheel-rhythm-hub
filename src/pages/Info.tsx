@@ -1,660 +1,166 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
-import { useAuth } from "@/hooks/useAuth";
-import { CheckCircle2, Circle, Bike, ClipboardList, Heart, AlertTriangle, Target, BarChart3, Calendar, Zap, Flame, Trophy } from "lucide-react";
-import SessionFeedbackForm from "@/components/SessionFeedbackForm";
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import ReportIssueForm from "@/components/ReportIssueForm";
-import { fetchStudents } from "@/lib/airtable";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import brandPedalPath from "@/assets/brand-pedal-your-path.png";
-import brandWordmark from "@/assets/fw-wordmark.png";
-import brandBikeIcon from "@/assets/brand-bike-icon.png";
-import stripeBg from "@/assets/stripe-bg-3.png";
+import { Bike, Zap, Mountain, Sparkles, CalendarRange, Trophy, School } from "lucide-react";
+import { callAirtable } from "@/lib/airtable";
 
-const timelinePhases = [
-  {
-    phase: "Phase 1",
-    title: "Registration & Onboarding",
-    items: [
-      "Student permission forms completed",
-      "Students registered on the website",
-      "NFC bracelet packs delivered to schools",
-    ],
-  },
-  {
-    phase: "Phase 2",
-    title: "Active Pilot Period",
-    items: [
-      "Students ride and log sessions using NFC bracelets",
-      "Points and milestones tracked automatically",
-      "Bike booking system available for scheduling",
-    ],
-  },
-  {
-    phase: "Phase 3",
-    title: "Evaluation & Review",
-    items: [
-      "Participation data analysis",
-      "Student engagement review",
-      "Data summary report created",
-    ],
-  },
-  {
-    phase: "Phase 4",
-    title: "Future Planning",
-    items: [
-      "Refinements based on evidence",
-      "Decision on scale-up to connect leaderboards between schools",
-    ],
-  },
+const pointRules = [
+  { icon: Bike, label: "Base ride completion", points: "10 pts" },
+  { icon: Sparkles, label: "7-day streak bonus", points: "+5 pts" },
+  { icon: Trophy, label: "New track first attempt", points: "+3 pts" },
+  { icon: Zap, label: "Top speed > 30 km/h", points: "+2 pts" },
+  { icon: Mountain, label: "Elevation > 200m gain", points: "+2 pts" },
 ];
 
-// ── Student-facing Info page ──────────────────────────────────────────────────
+const seasonBlocks = [
+  { label: "Block 1", dates: "Mon 31 Aug – Thu 25 Sep 2026", tone: "primary" as const },
+  { label: "Mid-season break", dates: "Fri 26 Sep – Sun 11 Oct 2026", tone: "muted" as const },
+  { label: "Block 2", dates: "Mon 12 Oct – Fri 6 Nov 2026", tone: "primary" as const },
+];
 
-const StudentInfo = () => {
-  const { user } = useAuth();
-  const [logOpen, setLogOpen] = useState(false);
-  const [reportOpen, setReportOpen] = useState(false);
-  const [sessionCount, setSessionCount] = useState(0);
-
-  useEffect(() => {
-    if (!user?.email) return;
-    fetchStudents(user.email)
-      .then((res) => {
-        if (res.records.length > 0) {
-          setSessionCount(Number(res.records[0].fields["Count (Session Reflections)"] ?? 0));
-        }
-      })
-      .catch(console.error);
-  }, [user?.email]);
-
-  const rideStatus: "done" | "in-progress" | "empty" = sessionCount >= 10 ? "done" : sessionCount >= 1 ? "in-progress" : "empty";
-
-  const checklist = [
-    {
-      status: rideStatus,
-      label: "Log Your Ride After Every Session",
-      description: "Every time you jump on the bike, log your data — it keeps your stats up and helps the programme.",
-      action: { type: "button" as const, text: "Log a Ride", onClick: () => setLogOpen(true) },
-    },
-  ];
-
-  const renderStatusIcon = (status: "done" | "in-progress" | "empty") => {
-    if (status === "done") return <CheckCircle2 className="h-6 w-6 text-primary" />;
-    if (status === "in-progress") return <div className="h-6 w-6 rounded-full border-[3px] border-primary bg-primary/30" />;
-    return <Circle className="h-6 w-6 text-muted-foreground/40" />;
-  };
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      {/* Hero */}
-      <section className="bg-secondary py-14 md:py-20 relative overflow-hidden">
-        <div className="absolute inset-0 speed-lines" />
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1 text-center md:text-left">
-              <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
-                What's This All About?
-              </h1>
-              <p className="mt-4 max-w-xl font-body text-lg text-secondary-foreground/70">
-                Everything you need to know — and everything you need to do.
-              </p>
-            </div>
-            <div className="flex-shrink-0 w-64 md:w-96 relative z-20">
-              <img src={brandBikeIcon} alt="Free Wheeler bike icon" className="w-full h-auto drop-shadow-lg" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* What is Free Wheeler */}
-      <section className="bg-background py-12 relative overflow-hidden">
-        <div className="container relative mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-start gap-8">
-            {/* Pedal Your Own Path image - left side */}
-            <div className="flex-shrink-0 w-48 md:w-72 lg:w-80">
-              <motion.img
-                src={brandPedalPath}
-                alt="Pedal Your Own Path"
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="w-full h-auto"
-              />
-            </div>
-            {/* Text content - right side */}
-            <div className="flex-1 space-y-6 font-body text-base leading-relaxed text-foreground/90">
-              <p className="text-xl font-bold text-foreground">
-                Freewheeler is a new way to do sport.
-              </p>
-              <p>
-                A cycling league developed in the Waikato to meet young people where they are. No teams. No trials. No pressure. Just jump on a bike and ride. Track your sessions, build your streak, and see how your school ranks on the leaderboard. Every ride counts.
-              </p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {[
-                  { icon: Bike, label: "Ride at your own pace" },
-                  { icon: BarChart3, label: "Track your progress" },
-                  { icon: Trophy, label: "Compete with your school" },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="border-[3px] border-secondary bg-card p-4 text-center shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce"
-                  >
-                    <item.icon className="mx-auto mb-2 h-6 w-6 text-primary" />
-                    <div className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
-                      {item.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p>
-                This is a pilot across 7 Waikato schools — an 8-week season in Term 2 and Term 3, 2026. No participation fee. Your participation, data, and feedback directly shapes what happens next. If successful, Freewheeler could expand across the Waikato and beyond.
-              </p>
-              <p className="tape-element-green inline-block px-4 py-2 font-display text-lg font-bold uppercase">
-                Pedal Your Own Path
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Points System */}
-      <section className="bg-muted py-12">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-2xl">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center bg-accent">
-                <Zap className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <h2 className="font-display text-2xl font-bold uppercase tracking-wider text-foreground">
-                How Points Work
-              </h2>
-            </div>
-            <div className="space-y-4 font-body text-sm leading-relaxed text-foreground/90">
-              <p className="text-base font-semibold text-foreground">Simple. Every ride counts.</p>
-
-              {/* Session Points */}
-              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">Session Points</p>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <Bike className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>10 points</strong> for every completed ride session</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Streak Bonus */}
-              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-accent">Streak Bonus</p>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <Flame className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                    <span><strong>+5 bonus</strong> when you complete 3 sessions in a week</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Elevation Bonus */}
-              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">Elevation Bonus</p>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <Target className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>+2 pts</strong> for 50–149m elevation</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Target className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>+5 pts</strong> for 150–299m elevation</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Target className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>+10 pts</strong> for 300m+ elevation</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Speed Bonus */}
-              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-accent">Speed Bonus</p>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                    <span><strong>+2 pts</strong> for 20–24 km/h average</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                    <span><strong>+5 pts</strong> for 25–29 km/h average</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                    <span><strong>+10 pts</strong> for 30+ km/h average</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Track Variety Bonus */}
-              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">Track Variety Bonus</p>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <Bike className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>+3 pts</strong> for each unique track/course you ride for the first time</span>
-                  </li>
-                </ul>
-                <p className="mt-2 text-xs text-foreground/60">
-                  The more tracks you try, the more points you earn!
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Your Checklist */}
-      <section className="bg-secondary py-12">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-2xl">
-            <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center bg-primary">
-                <ClipboardList className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <h2 className="font-display text-3xl font-bold uppercase tracking-wider text-secondary-foreground">
-                Your Checklist
-              </h2>
-            </div>
-
-            <div className="space-y-4">
-              {checklist.map((item, i) => (
-                <div
-                  key={i}
-                  className={`border-[3px] bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce ${
-                    item.status === "done" ? "border-primary/40 opacity-75" : "border-secondary"
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="mt-0.5 shrink-0">
-                      {renderStatusIcon(item.status)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
-                          {i + 1}. {item.label}
-                        </span>
-                        {item.status === "done" && (
-                          <span className="bg-primary px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
-                            Done
-                          </span>
-                        )}
-                        {item.status === "in-progress" && (
-                          <span className="bg-accent px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-wider text-accent-foreground">
-                            In Progress
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 font-body text-sm text-foreground/70">{item.description}</p>
-                      {item.action && item.status !== "done" && (
-                        <div className="mt-3">
-                          <button
-                            onClick={item.action.onClick}
-                            className="inline-block border-[2px] border-primary bg-primary px-4 py-2 font-display text-xs font-bold uppercase tracking-wider text-primary-foreground transition-transform hover:-translate-y-0.5"
-                          >
-                            {item.action.text}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Hardware issue button */}
-      <section className="bg-background py-12">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-2xl">
-            <div className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-accent">
-                  <AlertTriangle className="h-5 w-5 text-accent-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
-                    Something Not Working?
-                  </h3>
-                  <p className="mt-1 font-body text-sm text-foreground/70">
-                    Bike broken? App glitch? Hardware issue? Let us know and we'll sort it.
-                  </p>
-                  <button
-                    onClick={() => setReportOpen(true)}
-                    className="mt-4 inline-block border-[2px] border-accent bg-accent px-5 py-2 font-display text-xs font-bold uppercase tracking-wider text-accent-foreground transition-transform hover:-translate-y-0.5"
-                  >
-                    Report an Issue
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t-4 border-primary bg-secondary px-4 py-10">
-        <div className="container mx-auto text-center">
-          <div className="font-display text-lg font-bold uppercase text-accent">
-            Free Wheeler Bike League
-          </div>
-          <p className="mt-2 font-body text-sm text-secondary-foreground/60">
-            Pedal Your Own Path · © 2026
-          </p>
-        </div>
-      </footer>
-
-      <SessionFeedbackForm open={logOpen} onOpenChange={setLogOpen} />
-      <ReportIssueForm open={reportOpen} onOpenChange={setReportOpen} />
-    </div>
-  );
-};
-
-// ── Teacher-facing Info page ──────────────────────────────────────────────────
-
-const TeacherInfo = () => {
-  const [reportOpen, setReportOpen] = useState(false);
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      {/* Hero */}
-      <section className="bg-secondary py-16 md:py-24 relative overflow-hidden">
-        <div className="absolute inset-0 speed-lines" />
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1 text-center md:text-left">
-              <h1 className="font-display text-4xl font-extrabold uppercase tracking-wider text-accent md:text-6xl">
-                Pilot Programme Information
-              </h1>
-              <p className="mt-4 max-w-xl font-body text-lg text-secondary-foreground/70">
-                Everything you need to know about the Free Wheeler Bike League pilot.
-              </p>
-            </div>
-            <div className="flex-shrink-0 w-64 md:w-80">
-              <img src={brandWordmark} alt="Freewheeler" className="w-full h-auto rounded-sm drop-shadow-lg" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pilot Purpose */}
-      <section className="bg-background py-16">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-3xl">
-            <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center bg-primary">
-                <Target className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <h2 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground">
-                Pilot Purpose
-              </h2>
-            </div>
-            <div className="space-y-5 font-body text-base leading-relaxed text-foreground/90">
-              <p className="text-lg font-semibold">
-                Freewheeler is reimagining how rangatahi experience sport.
-              </p>
-              <p>
-                Freewheeler is a new cycling league developed in the Waikato to meet young people where they are. Traditional sport can feel rigid, rule-bound, and limited to certain students. Freewheeler breaks away from those conventions and offers an option that works on their terms — one that lowers barriers for students, reduces the administration load on schools, and creates a sport experience that feels modern, engaging, and inclusive.
-              </p>
-              <p className="font-semibold">This pilot is designed to:</p>
-              <ul className="space-y-2 pl-1">
-                {[
-                  "Increase participation in physical activity — especially for students who are currently less active",
-                  "Provide a flexible, non-traditional way to engage in sport",
-                  "Build confidence through individual progress and achievement",
-                  "Create a sense of belonging through shared movement and friendly competition",
-                  "Gather measurable data to shape the future of the programme",
-                ].map((item) => (
-                  <li key={item} className="flex gap-3">
-                    <span className="mt-1.5 h-2.5 w-2.5 shrink-0 bg-primary" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="tape-element-green inline-block px-4 py-2 font-display text-lg font-bold uppercase">
-                Pedal Your Own Path
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Decorative brand divider – stripe pattern with wordmark */}
-      <div className="relative bg-background py-8 overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={stripeBg} alt="" className="h-full w-full object-cover opacity-15" />
-        </div>
-        <div className="container relative mx-auto flex items-center justify-center px-4">
-          <motion.img
-            src={brandWordmark}
-            alt="Freewheeler"
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, type: "spring" }}
-            className="h-16 w-auto object-contain md:h-24 drop-shadow-lg"
-          />
-        </div>
-      </div>
-
-      {/* Why This Pilot Matters */}
-      <section className="bg-secondary py-16 relative overflow-hidden">
-        {/* Decorative overlay */}
-        <motion.img
-          src={brandPedalPath}
-          alt=""
-          aria-hidden="true"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 0.04 }}
-          viewport={{ once: true }}
-          className="pointer-events-none absolute -right-16 top-8 w-56 md:w-80"
-        />
-        <div className="container relative mx-auto px-4">
-          <div className="mx-auto max-w-3xl">
-            <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center bg-accent">
-                <BarChart3 className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <h2 className="font-display text-3xl font-bold uppercase tracking-wider text-secondary-foreground">
-                Why This Pilot Matters
-              </h2>
-            </div>
-            <div className="space-y-5 font-body text-base leading-relaxed text-secondary-foreground/90">
-              <p>Offering extra-curricular activities is more important than ever, but young people are increasingly drawn to activities that are flexible, social, and less structured. Traditional school sports are under pressure from rising transport costs, stretched staff capacity, busy calendars, and reduced volunteer support.</p>
-              <p className="font-semibold text-accent">Freewheeler offers:</p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {["Low barrier to entry", "Self-paced challenge", "Individual progress tracking", "Inclusive participation", "A new pathway into physical activity"].map((item) => (
-                  <div key={item} className="border-2 border-accent/30 bg-secondary px-4 py-3 font-display text-xs font-bold uppercase tracking-wider text-accent hover-bounce">
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <p className="mt-6 font-semibold text-accent">This pilot will measure:</p>
-              <ul className="space-y-2 pl-1">
-                {[
-                  "Changes in student confidence",
-                  "Changes in enjoyment of physical activity",
-                  "Engagement levels across sessions",
-                  "Participation rates of previously inactive students",
-                  "Student voice and feedback",
-                ].map((item) => (
-                  <li key={item} className="flex gap-3">
-                    <span className="mt-1.5 h-2.5 w-2.5 shrink-0 bg-accent" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Points System */}
-      <section className="bg-muted py-16">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-3xl">
-            <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center bg-accent">
-                <Zap className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <h2 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground">
-                Points System
-              </h2>
-            </div>
-            <div className="space-y-5 font-body text-base leading-relaxed text-foreground/90">
-              <p className="text-lg font-semibold">
-                Students earn points to gamify participation and reward consistency.
-              </p>
-              <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))]">
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <Bike className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>10 points</strong> for every completed ride session</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Flame className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>+5 bonus</strong> when a student logs 3 sessions in a single week</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                    <span><strong>Elevation bonus</strong>: +2 pts (50-149m), +5 pts (150-299m), +10 pts (300m+)</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Zap className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-                    <span><strong>Speed bonus</strong>: +2 pts (20-24 km/h), +5 pts (25-29 km/h), +10 pts (30+ km/h)</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Bike className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span><strong>+3 pts</strong> for each unique track/course ridden</span>
-                  </li>
-                </ul>
-              </div>
-              <p className="text-sm text-foreground/60">
-                Points are tracked on the student dashboard and leaderboards.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pilot Timeline */}
-      <section className="bg-background py-16">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-3xl">
-            <div className="mb-10 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center bg-primary">
-                <Calendar className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <h2 className="font-display text-3xl font-bold uppercase tracking-wider text-foreground">
-                Pilot Timeline
-              </h2>
-            </div>
-            <div className="relative space-y-0">
-              <div className="absolute left-5 top-0 h-full w-1 bg-primary/30" />
-              {timelinePhases.map((phase) => (
-                <div key={phase.phase} className="relative pb-10 pl-14 last:pb-0">
-                  <div className="absolute left-3 top-1 h-5 w-5 border-[3px] border-primary bg-background" />
-                  <div className="border-[3px] border-secondary bg-card p-5 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
-                    <div className="mb-1 font-display text-xs font-bold uppercase tracking-widest text-primary">{phase.phase}</div>
-                    <h3 className="mb-3 font-display text-lg font-bold uppercase text-foreground">{phase.title}</h3>
-                    <ul className="space-y-1.5 font-body text-sm text-foreground/80">
-                      {phase.items.map((item) => (
-                        <li key={item} className="flex gap-2">
-                          <span className="mt-1.5 h-2 w-2 shrink-0 bg-accent" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Hardware / issue reporting */}
-      <section className="bg-background py-12">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-3xl">
-            <div className="border-[3px] border-secondary bg-card p-6 shadow-[4px_4px_0px_hsl(var(--brand-dark))] hover-bounce">
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-accent">
-                  <AlertTriangle className="h-5 w-5 text-accent-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-display text-lg font-bold uppercase tracking-wider text-foreground">
-                    Something Not Working?
-                  </h3>
-                  <p className="mt-1 font-body text-sm text-foreground/70">
-                    Equipment issue? Technical problem? Let us know.
-                  </p>
-                  <button
-                    onClick={() => setReportOpen(true)}
-                    className="mt-4 inline-block border-[2px] border-accent bg-accent px-5 py-2 font-display text-xs font-bold uppercase tracking-wider text-accent-foreground transition-transform hover:-translate-y-0.5"
-                  >
-                    Report an Issue
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Vision */}
-      <section className="bg-secondary py-16">
-        <div className="container mx-auto px-4 text-center">
-          <div className="mx-auto max-w-2xl">
-            <h2 className="font-display text-3xl font-bold uppercase tracking-wider text-accent">
-              The Vision
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl font-body text-base text-secondary-foreground/80">
-              This pilot will help us understand student interest, participation levels, and the potential for a wider rollout. If successful, Freewheeler could expand across the Waikato, opening opportunities for schools to compete regionally, nationally, and potentially internationally — all without leaving the school gates.
-            </p>
-            <p className="tape-element-green mt-6 inline-block px-4 py-2 font-display text-lg font-bold uppercase">
-              Pedal Your Own Path
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t-4 border-primary bg-secondary px-4 py-10">
-        <div className="container mx-auto text-center">
-          <div className="font-display text-lg font-bold uppercase text-accent">
-            Free Wheeler Bike League
-          </div>
-          <p className="mt-2 font-body text-sm text-secondary-foreground/60">
-            Pedal Your Own Path · © 2026
-          </p>
-        </div>
-      </footer>
-
-      <ReportIssueForm open={reportOpen} onOpenChange={setReportOpen} />
-    </div>
-  );
-};
-
-// ── Route selector ────────────────────────────────────────────────────────────
+const cardClass =
+  "border-[3px] border-secondary bg-card shadow-[4px_4px_0px_hsl(var(--brand-dark))]";
 
 const Info = () => {
-  const { role } = useAuth();
-  return role === "admin" ? <TeacherInfo /> : <StudentInfo />;
+  const [schools, setSchools] = useState<string[]>([]);
+  const [loadingSchools, setLoadingSchools] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await callAirtable("Organisations", "GET", { maxRecords: 100 });
+        if (cancelled) return;
+        const names = (res?.records ?? [])
+          .map((r: any) => r.fields?.["Organisation Name"] || r.fields?.["Name"] || r.fields?.["School"])
+          .filter((n: unknown): n is string => typeof n === "string" && n.length > 0);
+        setSchools(Array.from(new Set(names)).sort());
+      } catch {
+        // silent — handled by fallback blurb
+      } finally {
+        if (!cancelled) setLoadingSchools(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+
+      <main className="container mx-auto max-w-5xl px-4 py-10 space-y-12">
+        {/* Section 1: What is Freewheeler? */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className={`${cardClass} p-6 md:p-8`}
+        >
+          <h1 className="font-display text-3xl md:text-4xl font-bold uppercase tracking-wider text-foreground">
+            What is Freewheeler?
+          </h1>
+          <div className="mt-4 space-y-3 font-body text-base leading-relaxed text-foreground">
+            <p>Freewheeler is a cycling league for NZ secondary school students.</p>
+            <p>
+              Students ride smart bikes at school using the MyWhoosh app, logging each ride via an
+              NFC bracelet tap.
+            </p>
+            <p>
+              Points accumulate over an 8-week season and schools compete on a leaderboard.
+            </p>
+          </div>
+        </motion.section>
+
+        {/* Section 2: How Points Work */}
+        <section>
+          <h2 className="font-display text-2xl md:text-3xl font-bold uppercase tracking-wider text-foreground mb-5">
+            How Points Work
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {pointRules.map((rule) => {
+              const Icon = rule.icon;
+              return (
+                <div
+                  key={rule.label}
+                  className={`${cardClass} p-5 flex items-start gap-3 hover-lift`}
+                >
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center border-[2px] border-secondary bg-primary/10">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-body text-sm text-foreground">{rule.label}</p>
+                    <p className="mt-1 font-display text-lg font-bold uppercase tracking-wider text-primary">
+                      {rule.points}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Section 3: Season Dates */}
+        <section>
+          <h2 className="font-display text-2xl md:text-3xl font-bold uppercase tracking-wider text-foreground mb-5 flex items-center gap-2">
+            <CalendarRange className="h-7 w-7 text-primary" />
+            Season Dates
+          </h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            {seasonBlocks.map((block) => (
+              <div
+                key={block.label}
+                className={`${cardClass} p-5 ${
+                  block.tone === "muted" ? "bg-muted" : ""
+                }`}
+              >
+                <p className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  {block.label}
+                </p>
+                <p className="mt-2 font-display text-lg font-bold uppercase tracking-wide text-foreground">
+                  {block.dates}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Section 4: Competing Schools */}
+        <section>
+          <h2 className="font-display text-2xl md:text-3xl font-bold uppercase tracking-wider text-foreground mb-5 flex items-center gap-2">
+            <School className="h-7 w-7 text-primary" />
+            Competing Schools
+          </h2>
+          <div className={`${cardClass} p-6`}>
+            <p className="font-body text-base leading-relaxed text-foreground">
+              You're riding alongside other secondary schools across the Waikato Region. Every
+              ride you log adds to your school's total — climb the leaderboard together and put
+              your school on top.
+            </p>
+
+            {!loadingSchools && schools.length > 0 && (
+              <div className="mt-6">
+                <p className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+                  Schools in the league
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {schools.map((name) => (
+                    <div
+                      key={name}
+                      className="border-[2px] border-secondary bg-background p-3 font-display text-sm font-semibold uppercase tracking-wider text-foreground"
+                    >
+                      {name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
 };
 
 export default Info;
