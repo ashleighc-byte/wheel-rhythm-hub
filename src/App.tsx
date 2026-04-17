@@ -23,6 +23,7 @@ import Resources from "./pages/Resources";
 import AdminFlowchart from "./pages/AdminFlowchart";
 import LeagueInfo from "./pages/LeagueInfo";
 import AdminRegistrations from "./pages/AdminRegistrations";
+import AdminBookings from "./pages/AdminBookings";
 import PrintBraceletCard from "./pages/PrintBraceletCard";
 import A3Poster from "./pages/A3Poster";
 import NewsletterBlurb from "./pages/NewsletterBlurb";
@@ -111,6 +112,7 @@ const App = () => (
             <Route path="/studentregistration" element={<StudentRegistration />} />
             <Route path="/admin/flowchart" element={<AdminRoute><AdminFlowchart /></AdminRoute>} />
             <Route path="/admin/registrations" element={<AdminRoute><AdminRegistrations /></AdminRoute>} />
+            <Route path="/admin/bookings" element={<AdminRoute><AdminBookings /></AdminRoute>} />
             <Route path="/print/bracelet-card" element={<PrintBraceletCard />} />
             <Route path="/print/a3-poster" element={<A3Poster />} />
             <Route path="/print/consent-form" element={<ConsentForm />} />
