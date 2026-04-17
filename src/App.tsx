@@ -26,6 +26,8 @@ import PrintBraceletCard from "./pages/PrintBraceletCard";
 import A3Poster from "./pages/A3Poster";
 import NewsletterBlurb from "./pages/NewsletterBlurb";
 import ConsentForm from "./pages/ConsentForm";
+import MouTemplate from "./pages/MouTemplate";
+import BikeInstructions from "./pages/BikeInstructions";
 
 
 const queryClient = new QueryClient();
