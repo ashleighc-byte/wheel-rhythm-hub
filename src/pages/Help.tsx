@@ -77,7 +77,6 @@ const Help = () => {
       };
 
       if (email.trim()) fields["Email"] = email.trim();
-      if (onBehalf.trim()) fields["Submitted By admin"] = onBehalf.trim();
 
       // Linked record — only when Hardware Issue + a bike is picked
       if (feedbackType === "Hardware Issue" && selectedBikeId) {
