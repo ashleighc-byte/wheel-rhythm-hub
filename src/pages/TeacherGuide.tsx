@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, Printer } from "lucide-react";
 import logo from "@/assets/fw-logo-oval.png";
+import logoLarge from "@/assets/fw-logo-oval-large.png";
 
 const Box = () => (
   <span
@@ -145,18 +146,17 @@ const TeacherGuide = () => {
           <Section number={7} title="Season Dates + Leaderboard">
             <p><strong>Season:</strong> 31 Aug – 6 Nov 2026</p>
             <p><strong>Block 1:</strong> 31 Aug – 25 Sep &nbsp;|&nbsp; <strong>Break:</strong> 26 Sep – 11 Oct &nbsp;|&nbsp; <strong>Block 2:</strong> 12 Oct – 6 Nov</p>
-            <p><strong>Leaderboard</strong> (students view after login): freewheelerleague.com/leaderboards</p>
+            <p className="italic">The leaderboard is not publicly available — students view it after tapping their NFC bracelet.</p>
           </Section>
 
           <Section number={8} title="Contacts + Support">
             <p><strong>Website:</strong> freewheelerleague.com</p>
-            <p><strong>Student issue form:</strong> Report an Issue link in footer of freewheelerleague.com</p>
-            <p><strong>Teacher/staff issue form:</strong> airtable.com/app4IEpE10xJPsLxT/shr6ZnS0qQyFkxCHH</p>
-            <p><strong>Sport Waikato contact:</strong> [ADD CONTACT NAME + EMAIL BEFORE PRINTING]</p>
+            <p><strong>Student issue form:</strong> Students can submit an issue form by scanning their bracelet.</p>
+            <p><strong>Teacher/staff issue form:</strong> freewheelerleague.com/help — any feedback can also be submitted through here.</p>
           </Section>
 
           <footer className="mt-10 pt-3 border-t border-black flex items-center justify-between text-[9pt]">
-            <img src={logo} alt="" className="h-8 w-auto object-contain" />
+            <img src={logoLarge} alt="" className="h-24 w-auto object-contain" />
             <span>Freewheeler Cycling League · Delivered by Sport Waikato · freewheelerleague.com</span>
           </footer>
         </div>
