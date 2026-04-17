@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Download, ExternalLink, Printer, Megaphone, FileText, Mail } from "lucide-react";
 import logoSrc from "@/assets/fw-logo-oval.png";
-import { callAirtable } from "@/lib/airtable";
+
 
 interface Resource {
   id: string;
