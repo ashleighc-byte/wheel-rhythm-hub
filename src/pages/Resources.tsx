@@ -85,7 +85,110 @@ const Resources = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Resources are hand-curated below; no Airtable fetch needed.
+    setResources([
+      // Schools
+      {
+        id: "a3-poster",
+        name: "A3 Promotional Poster",
+        type: "Instruction Poster",
+        audience: "Schools",
+        description: "Print-ready A3 poster to display in your school promoting the Freewheeler league.",
+        url: "/print/a3-poster",
+        status: "Live",
+      },
+      {
+        id: "newsletter-blurb",
+        name: "School Newsletter Blurb",
+        type: "Newsletter Template",
+        audience: "Schools",
+        description: "Pre-written copy to drop into your school newsletter. One-click copy to clipboard.",
+        url: "/resources/newsletter-blurb",
+        status: "Live",
+      },
+      {
+        id: "email-initial",
+        name: "Initial Outreach Email",
+        type: "Email Template",
+        audience: "Schools",
+        description: "Cold-outreach email template to invite a school into the pilot.",
+        url: "/resources/email-initial-outreach",
+        status: "Live",
+      },
+      {
+        id: "email-mou",
+        name: "MoU Follow-up Email",
+        type: "Email Template",
+        audience: "Schools",
+        description: "Follow-up email template to send after sharing the Memorandum of Understanding.",
+        url: "/resources/email-mou-followup",
+        status: "Live",
+      },
+      {
+        id: "mou",
+        name: "Memorandum of Understanding",
+        type: "MoU Template",
+        audience: "Schools",
+        description: "Print-ready MoU template for schools joining the Freewheeler pilot.",
+        url: "/print/mou-template",
+        status: "Live",
+      },
+      {
+        id: "teacher-guide",
+        name: "Teacher Guide",
+        type: "Onboarding Guide",
+        audience: "Schools",
+        description: "Onboarding guide for teachers running Freewheeler sessions.",
+        url: "/print/teacher-guide",
+        status: "Live",
+      },
+      {
+        id: "social-graphic",
+        name: "Social Media Graphic",
+        type: "Social Media",
+        audience: "Schools",
+        description: "Shareable graphic for school social channels.",
+        url: "/print/social-graphic",
+        status: "Live",
+      },
+      // Students
+      {
+        id: "ride-guide",
+        name: "Bike & Ride Instructions",
+        type: "Instruction Poster",
+        audience: "Students",
+        description: "Step-by-step instructions for using the Wattbike + MyWhoosh setup. Print and pin near the bikes.",
+        url: "/print/ride-guide",
+        status: "Live",
+      },
+      {
+        id: "bracelet-card",
+        name: "NFC Bracelet Card",
+        type: "Instruction Poster",
+        audience: "Students",
+        description: "Printable card explaining how to tap the NFC bracelet to log a ride.",
+        url: "/print/bracelet-card",
+        status: "Live",
+      },
+      // Caregivers
+      {
+        id: "consent-form",
+        name: "Parent / Caregiver Consent Form",
+        type: "Consent Form",
+        audience: "Caregivers",
+        description: "Print-ready consent form for caregivers to sign and return to school.",
+        url: "/print/consent-form",
+        status: "Live",
+      },
+      {
+        id: "parent-faq",
+        name: "Parent FAQ",
+        type: "FAQ",
+        audience: "Caregivers",
+        description: "Frequently asked questions for parents and whānau about the Freewheeler programme.",
+        url: "/print/parent-faq",
+        status: "Live",
+      },
+    ]);
     setLoading(false);
   }, []);
 
