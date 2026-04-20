@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createSessionReflection, fetchStudents, updateSessionReflection } from "@/lib/airtable";
+import { createSessionReflection, fetchStudents, updateSessionReflection, buildStudentName } from "@/lib/airtable";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -89,7 +89,7 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
       .then((res) => {
         if (res.records.length > 0) {
           const r = res.records[0];
-          setStudentName(String(r.fields["Full Name"] ?? ""));
+          setStudentName(buildStudentName(r.fields).fullName);
           setStudentRecordId(r.id);
         } else {
           setStudentName(user.email ?? "");
