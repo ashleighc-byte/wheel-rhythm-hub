@@ -10,6 +10,7 @@ const NFC_ALLOWED_TABLES: Record<string, string[]> = {
   'Student Registration': ['GET', 'PATCH'],
   'Session Reflections': ['GET', 'POST'],
   'Organisations': ['GET'],
+  'Schools': ['GET'],
   'Global Dashboard': ['GET'],
   'Support Tickets (Bug/Issue Form)': ['POST'],
   'Survey Questions': ['GET', 'POST'],
@@ -30,7 +31,7 @@ Deno.serve(async (req) => {
   let isPublicValidation = false;
 
   // Allow unauthenticated GET for public pages (validation, booking page bike lookup, resources page)
-  const PUBLIC_VALIDATION_TABLES = ['Organisations', 'Student Registration', 'Survey Questions', 'Hardware Assets', 'Resources Library'];
+  const PUBLIC_VALIDATION_TABLES = ['Organisations', 'Student Registration', 'Survey Questions', 'Hardware Assets', 'Resources Library', 'Schools'];
   // Allow unauthenticated POST for the public help/issue form
   const PUBLIC_POST_TABLES = ['Support Tickets (Bug/Issue Form)'];
   if (!authHeader && !nfcToken && req.method === 'GET' && PUBLIC_VALIDATION_TABLES.includes(table)) {
