@@ -98,14 +98,47 @@ export function buildStudentName(fields: Record<string, any>): { fullName: strin
   return { fullName: "Rider", firstName: "Rider" };
 }
 
-/** Resolve a Student Registration "School" field value to a display name (or empty if it's a raw record ID). */
+// ─── Schools lookup cache ─────────────────────────────────────────────────────
+// The "School" field on Student Registration is a linked record to the Schools
+// table, so the raw value is an Airtable record ID like "recXXXX". We cache a
+// id → name map so resolveSchoolName can return the human-readable name.
+let schoolsMapPromise: Promise<Map<string, string>> | null = null;
+let schoolsMap: Map<string, string> = new Map();
+
+export async function loadSchoolsMap(force = false): Promise<Map<string, string>> {
+  if (force) schoolsMapPromise = null;
+  if (!schoolsMapPromise) {
+    schoolsMapPromise = (async () => {
+      try {
+        const res = await callAirtable("Schools", "GET");
+        const map = new Map<string, string>();
+        for (const r of res.records) {
+          const name = String(
+            r.fields["School Name"] ?? r.fields["Name"] ?? ""
+          ).trim();
+          if (name) map.set(r.id, name);
+        }
+        schoolsMap = map;
+        return map;
+      } catch (err) {
+        console.warn("Failed to load Schools table:", err);
+        return schoolsMap;
+      }
+    })();
+  }
+  return schoolsMapPromise;
+}
+
+/** Resolve a Student Registration "School" field value to a display name. */
 export function resolveSchoolName(fields: Record<string, any>): string {
   const raw = fields["School"];
   const value = Array.isArray(raw) ? raw[0] : raw;
   if (!value) return "";
   const str = String(value).trim();
-  // School field is a linked record — value will be an Airtable record ID. Hide it.
-  if (isValidRecordId(str)) return "";
+  if (isValidRecordId(str)) {
+    // Look up the linked Schools record name from cache (call loadSchoolsMap first).
+    return schoolsMap.get(str) ?? "";
+  }
   return str;
 }
 
