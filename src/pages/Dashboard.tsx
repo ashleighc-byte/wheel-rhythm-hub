@@ -354,7 +354,7 @@ const Dashboard = () => {
               const computed = riderPointsMap.get(s.id);
               return {
                 id: s.id,
-                name: String(s.fields["Full Name"] ?? ""),
+                name: buildStudentName(s.fields).fullName,
                 sessions: computed?.sessions ?? 0,
                 totalPoints: computed?.totalPoints ?? 0,
                 totalDistance: computed?.totalDistance ?? 0,
