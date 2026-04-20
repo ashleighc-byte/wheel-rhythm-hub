@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchStudents, fetchSessionReflections, callAirtable,
-  isValidRecordId, fetchStudentsByIds
+  isValidRecordId, fetchStudentsByIds, buildStudentName, resolveSchoolName
 } from "@/lib/airtable";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 // Brand assets imported via BrandBikeIcon component
@@ -250,18 +250,18 @@ const Dashboard = () => {
       const rec = studentsRes.records[0];
       const f = rec.fields;
       const rawSchool = f["School"];
-      // School is a plain text field like "Sport Waikato"
-      const mySchoolName = rawSchool ? String(Array.isArray(rawSchool) ? rawSchool[0] : rawSchool) : "";
+      // School may be a linked-record ID array; resolveSchoolName hides raw IDs
+      const mySchoolName = resolveSchoolName(f);
       const sessionIds = f["Session Reflections"] as string[] | undefined;
 
       // Fetch sessions (skip Organisations table — use school name directly)
       const sessionsRes = await fetchSessionReflections(sessionIds);
 
-      let localSchoolId = mySchoolName; // use school name as ID
+      let localSchoolId = String(Array.isArray(rawSchool) ? rawSchool[0] ?? "" : rawSchool ?? "") || mySchoolName;
       setSchoolName(mySchoolName);
-      setMySchoolId(mySchoolName);
+      setMySchoolId(localSchoolId);
 
-      const riderName = String(f["Full Name"] ?? nfcSession?.fullName ?? "Rider");
+      const { fullName: riderName } = buildStudentName(f);
 
       // Parse sessions into RideSession format with app-calculated points
       const mappedSessions: RideSession[] = sessionsRes.records
@@ -354,7 +354,7 @@ const Dashboard = () => {
               const computed = riderPointsMap.get(s.id);
               return {
                 id: s.id,
-                name: String(s.fields["Full Name"] ?? ""),
+                name: buildStudentName(s.fields).fullName,
                 sessions: computed?.sessions ?? 0,
                 totalPoints: computed?.totalPoints ?? 0,
                 totalDistance: computed?.totalDistance ?? 0,

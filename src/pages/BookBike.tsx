@@ -30,7 +30,7 @@ import logoSrc from "@/assets/fw-logo-oval.png";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
-import { callAirtable } from "@/lib/airtable";
+import { callAirtable, buildStudentName } from "@/lib/airtable";
 
 // 30-minute slots, 8:00 am – 4:30 pm (last slot starts at 16:30)
 const TIME_SLOTS: string[] = [];
@@ -155,13 +155,8 @@ const BookBike = () => {
           filterByFormula: formula,
         });
         const list: StudentOption[] = (res.records as HardwareAsset[])
-          .map((r) => {
-            const first = String(r.fields["First Name"] ?? "").trim();
-            const last = String(r.fields["Last Name"] ?? "").trim();
-            const full = String(r.fields["Full Name"] ?? `${first} ${last}`).trim();
-            return { id: r.id, name: full };
-          })
-          .filter((s) => s.name)
+          .map((r) => ({ id: r.id, name: buildStudentName(r.fields).fullName }))
+          .filter((s) => s.name && s.name !== "Rider")
           .sort((a, b) => a.name.localeCompare(b.name));
         setStudents(list);
       } catch (err) {

@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, ShieldX, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { callAirtable, escapeFormulaValue } from "@/lib/airtable";
+import { callAirtable, escapeFormulaValue, buildStudentName } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import NfcOnboardingTour from "@/components/NfcOnboardingTour";
@@ -83,10 +83,11 @@ const NfcTap = () => {
         }
 
         // Set NFC session in auth context
+        const { fullName, firstName: derivedFirst } = buildStudentName(f);
         setNfcSession({
           studentId: rec.id,
-          fullName: String(f["Full Name"] ?? "Rider"),
-          firstName: String(f["First Name"] ?? String(f["Full Name"] ?? "Rider").split(" ")[0]),
+          fullName,
+          firstName: derivedFirst,
           nfcToken: token,
         });
 

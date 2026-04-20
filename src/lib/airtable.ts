@@ -81,6 +81,34 @@ export function isValidRecordId(id: string): boolean {
   return /^rec[a-zA-Z0-9]{10,20}$/.test(id);
 }
 
+/** Build a display name from a Student Registration record's fields. Falls back gracefully. */
+export function buildStudentName(fields: Record<string, any>): { fullName: string; firstName: string } {
+  // "First Name" is canonical; "First  Name" (two spaces) exists as a legacy duplicate
+  const first = String(fields["First Name"] ?? fields["First  Name"] ?? "").trim();
+  const lastInitial = String(fields["Last Name Initial"] ?? "").trim().replace(/\.$/, "");
+  const legacyFull = String(fields["Full Name"] ?? "").trim();
+
+  if (first) {
+    const fullName = lastInitial ? `${first} ${lastInitial}.` : first;
+    return { fullName, firstName: first };
+  }
+  if (legacyFull && !isValidRecordId(legacyFull)) {
+    return { fullName: legacyFull, firstName: legacyFull.split(" ")[0] };
+  }
+  return { fullName: "Rider", firstName: "Rider" };
+}
+
+/** Resolve a Student Registration "School" field value to a display name (or empty if it's a raw record ID). */
+export function resolveSchoolName(fields: Record<string, any>): string {
+  const raw = fields["School"];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (!value) return "";
+  const str = String(value).trim();
+  // School field is a linked record — value will be an Airtable record ID. Hide it.
+  if (isValidRecordId(str)) return "";
+  return str;
+}
+
 interface AirtableRecord {
   id: string;
   fields: Record<string, any>;
