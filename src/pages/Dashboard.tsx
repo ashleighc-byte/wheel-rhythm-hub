@@ -250,7 +250,8 @@ const Dashboard = () => {
       const rec = studentsRes.records[0];
       const f = rec.fields;
       const rawSchool = f["School"];
-      // School may be a linked-record ID array; resolveSchoolName hides raw IDs
+      // Preload Schools lookup so resolveSchoolName can resolve linked record IDs to names
+      await loadSchoolsMap();
       const mySchoolName = resolveSchoolName(f);
       const sessionIds = f["Session Reflections"] as string[] | undefined;
 
