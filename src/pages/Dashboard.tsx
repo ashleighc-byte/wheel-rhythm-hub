@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchStudents, fetchSessionReflections, callAirtable,
-  isValidRecordId, fetchStudentsByIds, buildStudentName, resolveSchoolName
+  isValidRecordId, fetchStudentsByIds, buildStudentName, resolveSchoolName, loadSchoolsMap
 } from "@/lib/airtable";
 import { formatFriendlyDate } from "@/lib/dateFormat";
 // Brand assets imported via BrandBikeIcon component
