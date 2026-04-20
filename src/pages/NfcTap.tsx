@@ -83,10 +83,11 @@ const NfcTap = () => {
         }
 
         // Set NFC session in auth context
+        const { fullName, firstName: derivedFirst } = buildStudentName(f);
         setNfcSession({
           studentId: rec.id,
-          fullName: String(f["Full Name"] ?? "Rider"),
-          firstName: String(f["First Name"] ?? String(f["Full Name"] ?? "Rider").split(" ")[0]),
+          fullName,
+          firstName: derivedFirst,
           nfcToken: token,
         });
 
