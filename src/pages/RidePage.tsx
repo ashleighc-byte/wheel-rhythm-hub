@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, Flag, StopCircle, CheckCircle,
-  AlertTriangle, ExternalLink, Info,
+  AlertTriangle, Map, Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,14 +11,15 @@ import { useWattbikeBluetooth } from "@/hooks/useWattbikeBluetooth";
 import BluetoothConnect from "@/components/ride/BluetoothConnect";
 import RouteSelector from "@/components/ride/RouteSelector";
 import LiveMetricsDisplay, { getPowerZone, formatTime } from "@/components/ride/LiveMetrics";
-import ElevationProfile from "@/components/ride/ElevationProfile";
+import RouteMap from "@/components/ride/RouteMap";
+import RideScene from "@/components/ride/RideScene";
 import SessionFeedbackForm from "@/components/SessionFeedbackForm";
 import { getElevationForDistance, type Route } from "@/data/routes";
 import logoSrc from "@/assets/fw-logo-oval.png";
 
 type Stage = "pre-ride" | "riding" | "complete";
+type ViewMode = "map" | "scene";
 
-// Motivational prompts that cycle every 30 seconds while riding
 const RIDE_PROMPTS = [
   "Keep pedalling — every km counts!",
   "You're earning points right now.",
@@ -38,7 +39,7 @@ export default function RidePage() {
   const [promptIdx, setPromptIdx] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
-  const [showBiketerraInfo, setShowBiketerraInfo] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("map");
   const [completedSummary, setCompletedSummary] = useState<{
     duration_minutes: number;
     distance_km: number;
@@ -48,29 +49,28 @@ export default function RidePage() {
     courseMap: string;
   } | null>(null);
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const promptRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const ble = useWattbikeBluetooth();
   const isConnected = ble.status === "connected" || ble.status === "riding";
   const riderName = nfcSession?.firstName ?? user?.email?.split("@")[0] ?? "Rider";
-
   const zone = getPowerZone(ble.metrics.power);
 
   // Timer + prompt cycle while riding
   useEffect(() => {
     if (stage === "riding") {
-      timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+      timerRef.current  = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
       promptRef.current = setInterval(
         () => setPromptIdx((i) => (i + 1) % RIDE_PROMPTS.length),
-        30_000
+        30_000,
       );
     } else {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current)  clearInterval(timerRef.current);
       if (promptRef.current) clearInterval(promptRef.current);
     }
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current)  clearInterval(timerRef.current);
       if (promptRef.current) clearInterval(promptRef.current);
     };
   }, [stage]);
@@ -95,10 +95,6 @@ export default function RidePage() {
   const handleFeedbackClose = (open: boolean) => {
     setShowFeedback(open);
     if (!open) navigate("/dashboard");
-  };
-
-  const openBiketerra = () => {
-    window.open("https://biketerra.com", "_blank", "noopener");
   };
 
   // ── Riding stage: full-screen immersive ──────────────────────────────────────
@@ -131,7 +127,7 @@ export default function RidePage() {
               animate={{
                 width: `${Math.min(
                   (ble.metrics.distance / selectedRoute.distance_km) * 100,
-                  100
+                  100,
                 )}%`,
               }}
               transition={{ duration: 0.5 }}
@@ -143,12 +139,52 @@ export default function RidePage() {
           {/* Zone banner + speed */}
           <LiveMetricsDisplay metrics={ble.metrics} elapsedSeconds={elapsedSeconds} />
 
-          {/* Elevation chart */}
+          {/* Map / Scene toggle + visualisation */}
           {selectedRoute && (
-            <ElevationProfile
-              route={selectedRoute}
-              distanceRiddenKm={ble.metrics.distance}
-            />
+            <div className="space-y-2">
+              {/* Toggle row */}
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("map")}
+                  className={`flex flex-1 items-center justify-center gap-1.5 border-[2px] py-1.5 font-display text-xs uppercase tracking-wider transition-colors ${
+                    viewMode === "map"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-secondary bg-card text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Map className="h-3.5 w-3.5" />
+                  Map
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("scene")}
+                  className={`flex flex-1 items-center justify-center gap-1.5 border-[2px] py-1.5 font-display text-xs uppercase tracking-wider transition-colors ${
+                    viewMode === "scene"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-secondary bg-card text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Layers className="h-3.5 w-3.5" />
+                  Scene
+                </button>
+              </div>
+
+              {/* Visualisation */}
+              {viewMode === "map" ? (
+                <RouteMap
+                  route={selectedRoute}
+                  distanceRiddenKm={ble.metrics.distance}
+                />
+              ) : (
+                <RideScene
+                  route={selectedRoute}
+                  distanceRiddenKm={ble.metrics.distance}
+                  speedKmh={ble.metrics.speed}
+                  powerW={ble.metrics.power}
+                />
+              )}
+            </div>
           )}
 
           {/* Motivational prompt */}
@@ -253,58 +289,9 @@ export default function RidePage() {
                   Ready to Ride, {riderName}?
                 </h1>
                 <p className="mt-1 font-body text-sm text-muted-foreground">
-                  Pick your route, connect your Wattbike, then hit Start.
-                  Your ride data is captured automatically — no photos needed.
+                  Pick a route, connect your Wattbike, then hit Start.
+                  Your ride data and live map are all right here — no other apps needed.
                 </p>
-              </div>
-
-              {/* BikeTerra callout */}
-              <div className="border-[2px] border-secondary bg-card p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-display text-sm uppercase tracking-wider text-foreground">
-                      Want 3D Visuals?
-                    </p>
-                    <p className="mt-1 font-body text-xs text-muted-foreground">
-                      Open BikeTerra in a second window for the 3D ride experience.
-                      Use Freewheeler (this screen) on your tablet to see your live
-                      data and auto-log your session.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowBiketerraInfo(!showBiketerraInfo)}
-                    className="flex-shrink-0 text-muted-foreground hover:text-foreground"
-                  >
-                    <Info className="h-4 w-4" />
-                  </button>
-                </div>
-
-                <AnimatePresence>
-                  {showBiketerraInfo && (
-                    <motion.p
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-3 font-body text-xs text-muted-foreground border-t border-secondary pt-3"
-                    >
-                      On your Chromebook or Android tablet: open BikeTerra in one
-                      browser window and Freewheeler in another. Connect the Wattbike
-                      to <strong>Freewheeler</strong> via Bluetooth (this app captures
-                      your stats). BikeTerra can run as the visual backdrop without
-                      needing a Bluetooth connection.
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-
-                <Button
-                  variant="outline"
-                  onClick={openBiketerra}
-                  className="mt-3 w-full border-[2px] border-secondary font-display text-sm uppercase tracking-wider gap-2"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Open BikeTerra
-                </Button>
               </div>
 
               {/* Step 1: Route */}
@@ -423,13 +410,13 @@ export default function RidePage() {
         prefilledData={
           completedSummary
             ? {
-                distance_km: completedSummary.distance_km,
-                duration_minutes: completedSummary.duration_minutes,
-                avg_speed_kmh: completedSummary.avg_speed_kmh,
-                elevation_m: completedSummary.elevation_m,
-                avg_power_watts: completedSummary.avg_power_watts,
-                courseMap: completedSummary.courseMap,
-                rideSource: "bluetooth",
+                distance_km:       completedSummary.distance_km,
+                duration_minutes:  completedSummary.duration_minutes,
+                avg_speed_kmh:     completedSummary.avg_speed_kmh,
+                elevation_m:       completedSummary.elevation_m,
+                avg_power_watts:   completedSummary.avg_power_watts,
+                courseMap:         completedSummary.courseMap,
+                rideSource:        "bluetooth",
               }
             : undefined
         }
