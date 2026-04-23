@@ -527,6 +527,21 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
+        {/* ═══ START RIDE BUTTON ═══ */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mb-6"
+        >
+          <Link
+            to="/ride"
+            className="tape-element-green flex w-full items-center justify-center gap-3 py-4 text-lg md:text-xl"
+          >
+            <Bike className="h-6 w-6" />
+            START RIDE
+          </Link>
+        </motion.div>
 
         {/* ═══ GAMIFICATION QUICK STATS ═══ */}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
