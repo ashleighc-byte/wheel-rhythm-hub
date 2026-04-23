@@ -15,12 +15,14 @@ export interface RideSession {
   duration_minutes: number;
   elevation_m: number;
   avg_speed_kmh: number;
+  avg_power_watts?: number; // from Wattbike BLE (Bluetooth sessions only)
   feelingBefore: number;
   feelingAfter: number;
   reflection: string;
   screenshotUrl?: string;
   points: number; // calculated
   courseMap?: string; // track/course name
+  rideSource?: 'bluetooth' | 'manual';
 }
 
 // ── Points Calculation ────────────────────────────────────
@@ -35,8 +37,9 @@ export function calculateSessionPoints(session: {
   distance_km: number;
   elevation_m: number;
   avg_speed_kmh: number;
+  avg_power_watts?: number;
 }): number {
-  const { duration_minutes, distance_km, elevation_m, avg_speed_kmh } = session;
+  const { duration_minutes, distance_km, elevation_m, avg_speed_kmh, avg_power_watts } = session;
   if (duration_minutes <= 0 && distance_km <= 0) return 0;
 
   let pts = 10; // base
@@ -50,6 +53,13 @@ export function calculateSessionPoints(session: {
   if (avg_speed_kmh >= 30) pts += 10;
   else if (avg_speed_kmh >= 25) pts += 5;
   else if (avg_speed_kmh >= 20) pts += 2;
+
+  // Power bonus (Bluetooth sessions only — rewards effort regardless of speed)
+  if (avg_power_watts) {
+    if (avg_power_watts >= 200) pts += 10;
+    else if (avg_power_watts >= 150) pts += 5;
+    else if (avg_power_watts >= 100) pts += 2;
+  }
 
   return pts;
 }

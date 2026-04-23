@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, ShieldX, BarChart2 } from "lucide-react";
+import { Loader2, ShieldX, BarChart2, Bike, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { callAirtable, escapeFormulaValue, buildStudentName } from "@/lib/airtable";
 import { useAuth } from "@/hooks/useAuth";
@@ -203,10 +203,19 @@ const NfcTap = () => {
             </div>
             <div className="flex w-full flex-col gap-3">
               <Button
-                onClick={() => setShowSessionForm(true)}
-                className="tape-element-green w-full font-display text-lg uppercase tracking-wider py-4"
+                onClick={() => navigate("/ride")}
+                className="tape-element-green w-full font-display text-lg uppercase tracking-wider py-4 gap-2"
               >
-                Log a Ride
+                <Bike className="h-5 w-5" />
+                Start Ride
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowSessionForm(true)}
+                className="w-full border-2 border-secondary font-display uppercase tracking-wider gap-2"
+              >
+                <ClipboardList className="h-4 w-4" />
+                Log Manually
               </Button>
               <Button
                 variant="outline"

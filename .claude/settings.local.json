@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(ls:*)",
-      "mcp__claude_ai_Airtable__list_tables_for_base"
+      "mcp__claude_ai_Airtable__list_tables_for_base",
+      "Bash(grep -E \"\\\\.\\(tsx?|json\\)$\")",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:biketerra.com)",
+      "WebFetch(domain:docs.biketerra.com)",
+      "WebSearch",
+      "WebFetch(domain:freewheelerleague.com)"
     ]
   }
 }

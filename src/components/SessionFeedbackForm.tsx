@@ -12,9 +12,20 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
 import logoSrc from "@/assets/fw-logo-oval.png";
 
+export interface PrefilledRideData {
+  distance_km?: number;
+  duration_minutes?: number;
+  avg_speed_kmh?: number;
+  elevation_m?: number;
+  avg_power_watts?: number;
+  courseMap?: string;
+  rideSource?: 'bluetooth' | 'manual';
+}
+
 interface SessionFeedbackFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  prefilledData?: PrefilledRideData;
 }
 
 function StarRating({
@@ -60,7 +71,7 @@ function StarRating({
   );
 }
 
-const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) => {
+const SessionFeedbackForm = ({ open, onOpenChange, prefilledData }: SessionFeedbackFormProps) => {
   const { user, nfcSession } = useAuth();
   const navigate = useNavigate();
   const [studentName, setStudentName] = useState("");
@@ -159,6 +170,26 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
 
       if (attachmentUrl) {
         fields["Use the ipad to take a screenshot of your session time and upload it here."] = [{ url: attachmentUrl }];
+      }
+
+      // Performance data from Bluetooth or manual entry
+      if (prefilledData) {
+        if (prefilledData.distance_km !== undefined) fields["Distance (km)"] = prefilledData.distance_km;
+        if (prefilledData.duration_minutes !== undefined) fields["Duration (min)"] = prefilledData.duration_minutes;
+        if (prefilledData.avg_speed_kmh !== undefined) fields["Avg Speed (km/h)"] = prefilledData.avg_speed_kmh;
+        if (prefilledData.elevation_m !== undefined) fields["Elevation (m)"] = prefilledData.elevation_m;
+        if (prefilledData.avg_power_watts !== undefined) fields["Avg Power (W)"] = prefilledData.avg_power_watts;
+        if (prefilledData.courseMap) fields["Course Name"] = prefilledData.courseMap;
+        fields["Ride Source"] = prefilledData.rideSource === 'bluetooth' ? 'Bluetooth' : 'Manual';
+        // Keep legacy JSON blob for backward compat with computeAllRiderPoints
+        fields["Session Data Table"] = JSON.stringify({
+          distance_km: prefilledData.distance_km ?? 0,
+          duration_hh_mm_ss: prefilledData.duration_minutes
+            ? `${Math.floor(prefilledData.duration_minutes / 60)}:${String(Math.round(prefilledData.duration_minutes % 60)).padStart(2, '0')}:00`
+            : '0:00:00',
+          avg_speed_kmh: prefilledData.avg_speed_kmh ?? 0,
+          elevation_m: prefilledData.elevation_m ?? 0,
+        });
       }
 
       const createResponse = await createSessionReflection(fields, nfcSession?.nfcToken);
@@ -281,8 +312,56 @@ const SessionFeedbackForm = ({ open, onOpenChange }: SessionFeedbackFormProps) =
                 </div>
               </div>
 
-              {/* Screenshot upload */}
-              <div>
+              {/* Bluetooth ride summary — shown when data pre-filled */}
+              {prefilledData && (
+                <div className="border-[2px] border-primary bg-primary/10 p-3">
+                  <p className="mb-2 font-display text-xs uppercase tracking-wider text-primary">
+                    Ride Data (Auto-captured)
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    {prefilledData.distance_km !== undefined && (
+                      <div>
+                        <p className="font-display text-lg text-foreground">{prefilledData.distance_km} km</p>
+                        <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wide">Distance</p>
+                      </div>
+                    )}
+                    {prefilledData.duration_minutes !== undefined && (
+                      <div>
+                        <p className="font-display text-lg text-foreground">{Math.round(prefilledData.duration_minutes)} min</p>
+                        <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wide">Duration</p>
+                      </div>
+                    )}
+                    {prefilledData.elevation_m !== undefined && (
+                      <div>
+                        <p className="font-display text-lg text-foreground">{prefilledData.elevation_m} m</p>
+                        <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wide">Elevation</p>
+                      </div>
+                    )}
+                    {prefilledData.avg_speed_kmh !== undefined && (
+                      <div>
+                        <p className="font-display text-lg text-foreground">{prefilledData.avg_speed_kmh} km/h</p>
+                        <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wide">Avg Speed</p>
+                      </div>
+                    )}
+                    {prefilledData.avg_power_watts !== undefined && prefilledData.avg_power_watts > 0 && (
+                      <div>
+                        <p className="font-display text-lg text-foreground">{prefilledData.avg_power_watts} W</p>
+                        <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wide">Avg Power</p>
+                      </div>
+                    )}
+                    {prefilledData.courseMap && (
+                      <div className="col-span-3 text-left">
+                        <p className="font-body text-xs text-muted-foreground">
+                          Route: <span className="text-foreground">{prefilledData.courseMap}</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Screenshot upload — hidden for Bluetooth sessions */}
+              <div className={prefilledData?.rideSource === 'bluetooth' ? 'hidden' : ''}>
                 <Label className="mb-2 block font-display text-sm uppercase tracking-wider text-foreground">
                   Session Screenshot <span className="font-body text-xs normal-case tracking-normal text-muted-foreground">(optional)</span>
                 </Label>

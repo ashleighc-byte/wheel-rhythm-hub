@@ -35,7 +35,11 @@ import ParentFaq from "./pages/ParentFaq";
 import SocialGraphic from "./pages/SocialGraphic";
 import EmailInitialOutreach from "./pages/EmailInitialOutreach";
 import EmailMouFollowup from "./pages/EmailMouFollowup";
+<<<<<<< Updated upstream
 import Help from "./pages/Help";
+=======
+import RidePage from "./pages/RidePage";
+>>>>>>> Stashed changes
 
 
 const queryClient = new QueryClient();
@@ -110,6 +114,7 @@ const App = () => (
             <Route path="/book" element={<BookBike />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/studentregistration" element={<StudentRegistration />} />
+            <Route path="/ride" element={<ProtectedRoute><RidePage /></ProtectedRoute>} />
             <Route path="/admin/flowchart" element={<AdminRoute><AdminFlowchart /></AdminRoute>} />
             <Route path="/admin/registrations" element={<AdminRoute><AdminRegistrations /></AdminRoute>} />
             <Route path="/admin/bookings" element={<AdminRoute><AdminBookings /></AdminRoute>} />
@@ -125,7 +130,10 @@ const App = () => (
             <Route path="/resources/newsletter-blurb" element={<NewsletterBlurb />} />
             <Route path="/resources/email-initial-outreach" element={<EmailInitialOutreach />} />
             <Route path="/resources/email-mou-followup" element={<EmailMouFollowup />} />
+<<<<<<< Updated upstream
             <Route path="/help" element={<Help />} />
+=======
+>>>>>>> Stashed changes
             <Route path="/tap/:token" element={<NfcTap />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

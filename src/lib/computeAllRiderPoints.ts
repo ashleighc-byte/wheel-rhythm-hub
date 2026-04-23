@@ -77,12 +77,21 @@ export async function computeAllRiderPoints(studentIds?: string[]): Promise<Map<
           ? (rawData as any).value
           : rawData
       );
+      // Read from new direct fields first, then fall back to legacy rollup/JSON blob
       const durationStr = String(s.fields["Total minutes"] ?? parsed?.duration_hh_mm_ss ?? "0:00");
-      const duration_minutes = parseDurationToMinutes(s.fields["Rollup Minutes"] ?? durationStr);
-      const distance_km = Number(s.fields["Total km "] ?? parsed?.distance_km ?? 0);
-      const elevation_m = Number(s.fields["Total Elevation"] ?? parsed?.elevation_m ?? 0);
+      const duration_minutes = parseDurationToMinutes(
+        s.fields["Duration (min)"] ?? s.fields["Rollup Minutes"] ?? durationStr
+      );
+      const distance_km = Number(
+        s.fields["Distance (km)"] ?? s.fields["Total km "] ?? parsed?.distance_km ?? 0
+      );
+      const elevation_m = Number(
+        s.fields["Elevation (m)"] ?? s.fields["Total Elevation"] ?? parsed?.elevation_m ?? 0
+      );
+      const avg_speed_kmh = Number(s.fields["Avg Speed (km/h)"] ?? parsed?.speed_kmh ?? 0);
+      const avg_power_watts = s.fields["Avg Power (W)"] ? Number(s.fields["Avg Power (W)"]) : undefined;
 
-      const input = { duration_minutes, distance_km, elevation_m, avg_speed_kmh: 0 };
+      const input = { duration_minutes, distance_km, elevation_m, avg_speed_kmh, avg_power_watts };
       if (!isValidSession(input)) continue;
 
       totalMinutes += duration_minutes;
