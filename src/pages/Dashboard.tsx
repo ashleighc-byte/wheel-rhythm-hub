@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Clock, MapPin, TrendingUp, Trophy, Plus, Zap,
+  Clock, MapPin, TrendingUp, Trophy, Plus, Zap, Bike,
   Frown, Meh, Smile, Laugh, Flame, Target, Award, Star,
   ChevronRight, Timer, Calendar, Sparkles, Mountain, Repeat,
   Gauge, ClipboardCheck, AlertTriangle, CheckCircle2, X, BarChart3
