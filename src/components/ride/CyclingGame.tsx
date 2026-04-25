@@ -7,6 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useWattbikeBluetooth } from '@/hooks/useWattbikeBluetooth';
 
+// Minimal Web Bluetooth type stubs (full definitions are in useWattbikeBluetooth)
+type BluetoothDevice = any;
+type BluetoothRemoteGATTCharacteristic = any;
+
 // All GLB/OBJ assets served from /public/assets/game/
 const A = (f: string) => `/assets/game/${f}`;
 
@@ -83,6 +87,10 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   const startTime    = useRef(0);
   const bleDevice    = useRef<BluetoothDevice | null>(null);
   const bleChar      = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
+  const lastUpload   = useRef(0);
+
+  // Wattbike BLE hook (used to reflect status in the UI)
+  const ble = useWattbikeBluetooth();
 
   // Multiplayer
   const playerId    = useRef(Math.random().toString(36).substr(2, 9));
