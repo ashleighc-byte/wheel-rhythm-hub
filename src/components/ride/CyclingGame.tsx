@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useWattbikeBluetooth } from '@/hooks/useWattbikeBluetooth';
 
 const KENNEY = 'https://raw.githubusercontent.com/KenneyNL/Starter-Kit-Racing/master/Models/GLTF%20format/';
 const ASSETS = {
@@ -284,38 +285,38 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
     });
   }
 
-  // ── BLE ──────────────────────────────────────────────────────────────────────
+  // ── BLE — uses the shared Wattbike hook ──────────────────────────────────────
+  const ble = useWattbikeBluetooth();
+  const bleConnected = ble.status === 'connected' || ble.status === 'riding';
+
+  // Whenever live BLE metrics change, push them into the game refs so the
+  // animation loop picks them up. Simulation is only used when no device is connected.
+  useEffect(() => {
+    if (!bleConnected) return;
+    simMode.current = false;
+    setSim(false);
+    const m = metrics.current;
+    m.speed    = ble.metrics.speed;
+    m.power    = ble.metrics.power;
+    m.cadence  = ble.metrics.cadence;
+    m.distance = ble.metrics.distance;
+    m.elevation = elevAt(m.distance);
+  }, [bleConnected, ble.metrics.speed, ble.metrics.power, ble.metrics.cadence, ble.metrics.distance]);
+
   async function connectBike() {
-    if (!navigator.bluetooth) { alert('Web Bluetooth is not supported in this browser'); return; }
-    try {
-      setStatus('Searching for bike...');
-      bleDevice.current = await navigator.bluetooth.requestDevice({ filters: [{ services: [0x1826] }] });
-      const server = await bleDevice.current.gatt!.connect();
-      const svc    = await server.getPrimaryService(0x1826);
-      bleChar.current  = await svc.getCharacteristic(0x2AD2);
-      await bleChar.current.startNotifications();
-      bleChar.current.addEventListener('characteristicvaluechanged', handleBleData as EventListener);
-      simMode.current = false; setSim(false);
-      setStatus(`Connected: ${bleDevice.current.name ?? 'Bike'}`);
-    } catch { setStatus('BLE failed — simulation active'); }
+    setStatus('Searching for bike...');
+    await ble.connect();
   }
 
-  function handleBleData(event: Event) {
-    const char = event.target as BluetoothRemoteGATTCharacteristic;
-    if (!char.value) return;
-    const v = char.value;
-    const flags = v.getUint16(0, true);
-    let idx = 2;
-    const m = metrics.current;
-    if (flags & 0x01) { m.speed   = v.getUint16(idx, true) / 100;          idx += 2; }
-    if (flags & 0x02)                                                        idx += 2;
-    if (flags & 0x04) { m.cadence = v.getUint16(idx, true) * 0.5;          idx += 2; }
-    if (flags & 0x08)                                                        idx += 2;
-    if (flags & 0x10) { m.distance = getUint24LE(v, idx) / 1000;           idx += 3; }
-    if (flags & 0x20)                                                        idx += 2;
-    if (flags & 0x40)   m.power    = v.getInt16(idx, true);
-    m.elevation = elevAt(m.distance);
-  }
+  // Reflect BLE status in the on-screen status pill
+  useEffect(() => {
+    if (ble.status === 'connecting')   setStatus('Searching for bike...');
+    else if (ble.status === 'connected' || ble.status === 'riding')
+      setStatus(`Connected: ${ble.deviceName || 'Wattbike'}`);
+    else if (ble.status === 'error' || ble.status === 'unsupported')
+      setStatus(ble.error || 'BLE unavailable — simulation active');
+    else if (ble.status === 'disconnected') setStatus('Bike disconnected — simulation active');
+  }, [ble.status, ble.deviceName, ble.error]);
 
   // ── Simulation ───────────────────────────────────────────────────────────────
   function simulate(dt: number) {
@@ -498,8 +499,6 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
       cancelAnimationFrame(rafId.current);
       clearInterval(hudInterval);
       window.removeEventListener('resize', onResize);
-      bleChar.current?.removeEventListener('characteristicvaluechanged', handleBleData as EventListener);
-      if (bleDevice.current?.gatt?.connected) bleDevice.current.gatt.disconnect();
       if (channelRef.current) supabase.removeChannel(channelRef.current);
       ren.dispose();
       ren.domElement.remove();
