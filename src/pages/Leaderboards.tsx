@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Bike, Clock, Zap, MapPin, Mountain, ChevronDown, ChevronUp, Trophy, Map } from "lucide-react";
+import { Bike, Clock, Zap, MapPin, Mountain, ChevronDown, ChevronUp, Trophy, Map, Gamepad2 } from "lucide-react";
 import brandPedalPath from "@/assets/brand-pedal-your-path.png";
 import Navbar from "@/components/Navbar";
 import BrandBikeIcon from "@/components/BrandBikeIcon";
@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, callAirtable } from "@/lib/airtable";
 import { getCachedTopRiders, getCachedSchoolRankings, getCachedPopularTracks, getCachedGlobalStats, type CachedRider, type CachedPopularTrack } from "@/lib/leaderboardCache";
 import { pluraliseUnit } from "@/lib/dateFormat";
+import { supabase } from "@/integrations/supabase/client";
 
 function formatTime(timeStr: string): string {
   const parts = timeStr.split(":");
@@ -337,6 +338,9 @@ const Leaderboards = () => {
                     </div>
                   </div>
                 )}
+
+                {/* 3D Game Rides */}
+                <GameRidesTable />
               </div>
 
               {/* Right: School Rankings sidebar */}
