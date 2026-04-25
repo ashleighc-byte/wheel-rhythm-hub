@@ -35,8 +35,8 @@ export default function GamePage() {
   }) => {
     const userId = session?.user?.id;
     if (userId) {
-      // Save ride to game_rides table (see Supabase migration below)
-      const { error } = await supabase.from('game_rides' as never).insert({
+      // Save ride to game_rides table
+      const { error } = await (supabase.from('game_rides' as any) as any).insert({
         user_id:          userId,
         route_id:         route.id,
         route_name:       route.name,
