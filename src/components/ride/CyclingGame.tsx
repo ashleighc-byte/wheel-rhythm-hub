@@ -33,11 +33,6 @@ interface Props {
   onBack?: () => void;
 }
 
-// Read three consecutive bytes as a little-endian 24-bit unsigned int
-function getUint24LE(view: DataView, offset: number): number {
-  return view.getUint8(offset) + (view.getUint8(offset + 1) << 8) + (view.getUint8(offset + 2) << 16);
-}
-
 export default function CyclingGame({ route, playerName = 'Rider', onComplete, onBack }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const miniRef      = useRef<HTMLCanvasElement>(null);
@@ -65,8 +60,6 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   const terrainPts   = useRef<{ x: number; y: number }[]>([]);
   const totalDist    = useRef(route.dist);
   const startTime    = useRef(0);
-  const bleDevice    = useRef<BluetoothDevice | null>(null);
-  const bleChar      = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
 
   // Multiplayer refs
   const playerId    = useRef(Math.random().toString(36).substr(2, 9));
