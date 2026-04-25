@@ -37,7 +37,7 @@ import EmailInitialOutreach from "./pages/EmailInitialOutreach";
 import EmailMouFollowup from "./pages/EmailMouFollowup";
 import Help from "./pages/Help";
 import RidePage from "./pages/RidePage";
-
+import GamePage from "./pages/GamePage";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +112,7 @@ const App = () => (
             <Route path="/resources" element={<Resources />} />
             <Route path="/studentregistration" element={<StudentRegistration />} />
             <Route path="/ride" element={<ProtectedRoute><RidePage /></ProtectedRoute>} />
+            <Route path="/game/:routeId" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
             <Route path="/admin/flowchart" element={<AdminRoute><AdminFlowchart /></AdminRoute>} />
             <Route path="/admin/registrations" element={<AdminRoute><AdminRegistrations /></AdminRoute>} />
             <Route path="/admin/bookings" element={<AdminRoute><AdminBookings /></AdminRoute>} />
