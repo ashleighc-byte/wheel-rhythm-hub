@@ -80,6 +80,51 @@ export type Database = {
         }
         Relationships: []
       }
+      game_rides: {
+        Row: {
+          avg_cadence_rpm: number
+          avg_power_watts: number
+          avg_speed_kmh: number
+          completed_at: string
+          distance_km: number
+          duration_seconds: number
+          elevation_gain_m: number
+          id: string
+          route_id: string
+          route_name: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          avg_cadence_rpm?: number
+          avg_power_watts?: number
+          avg_speed_kmh?: number
+          completed_at?: string
+          distance_km?: number
+          duration_seconds?: number
+          elevation_gain_m?: number
+          id?: string
+          route_id: string
+          route_name: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          avg_cadence_rpm?: number
+          avg_power_watts?: number
+          avg_speed_kmh?: number
+          completed_at?: string
+          distance_km?: number
+          duration_seconds?: number
+          elevation_gain_m?: number
+          id?: string
+          route_id?: string
+          route_name?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       leaderboard_cache: {
         Row: {
           cache_key: string
