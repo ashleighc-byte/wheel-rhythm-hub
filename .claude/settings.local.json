@@ -8,7 +8,13 @@
       "WebFetch(domain:biketerra.com)",
       "WebFetch(domain:docs.biketerra.com)",
       "WebSearch",
-      "WebFetch(domain:freewheelerleague.com)"
+      "WebFetch(domain:freewheelerleague.com)",
+      "Bash(cp 'C:/Users/grant/Downloads/kenney_toy-car-kit/Models/GLB format/tree-pine.glb' C:/Users/grant/OneDrive/Documents/GitHub/wheel-rhythm-hub/public/assets/game/treePine.glb)",
+      "Bash(cp 'C:/Users/grant/Downloads/kenney_toy-car-kit/Models/GLB format/tree.glb' C:/Users/grant/OneDrive/Documents/GitHub/wheel-rhythm-hub/public/assets/game/treeOak.glb)",
+      "Bash(cp 'C:/Users/grant/Downloads/kenney_toy-car-kit/Models/GLB format/tree.glb' C:/Users/grant/OneDrive/Documents/GitHub/wheel-rhythm-hub/public/assets/game/treePalm.glb)",
+      "Bash(cp 'C:/Users/grant/Downloads/kenney_modular-buildings/Models/GLB format/building-sample-house-a.glb' C:/Users/grant/OneDrive/Documents/GitHub/wheel-rhythm-hub/public/assets/game/buildingSmall.glb)",
+      "Bash(cp 'C:/Users/grant/Downloads/kenney_modular-buildings/Models/GLB format/building-sample-tower-a.glb' C:/Users/grant/OneDrive/Documents/GitHub/wheel-rhythm-hub/public/assets/game/buildingLarge.glb)",
+      "Bash(git add *)"
     ]
   }
 }

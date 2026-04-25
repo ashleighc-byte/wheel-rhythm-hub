@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Bike, Clock, Zap, MapPin, Mountain, ChevronDown, ChevronUp, Trophy, Map } from "lucide-react";
+import { Bike, Clock, Zap, MapPin, Mountain, ChevronDown, ChevronUp, Trophy, Map, Gamepad2 } from "lucide-react";
 import brandPedalPath from "@/assets/brand-pedal-your-path.png";
 import Navbar from "@/components/Navbar";
 import BrandBikeIcon from "@/components/BrandBikeIcon";
@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchStudents, callAirtable } from "@/lib/airtable";
 import { getCachedTopRiders, getCachedSchoolRankings, getCachedPopularTracks, getCachedGlobalStats, type CachedRider, type CachedPopularTrack } from "@/lib/leaderboardCache";
 import { pluraliseUnit } from "@/lib/dateFormat";
+import { supabase } from "@/integrations/supabase/client";
 
 function formatTime(timeStr: string): string {
   const parts = timeStr.split(":");
@@ -337,6 +338,9 @@ const Leaderboards = () => {
                     </div>
                   </div>
                 )}
+
+                {/* 3D Game Rides */}
+                <GameRidesTable />
               </div>
 
               {/* Right: School Rankings sidebar */}
@@ -431,6 +435,184 @@ function SchoolRankingsTable() {
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+// ── Game Rides leaderboard (3D cycling game) ───────────────────────────────────
+interface GameRideRow {
+  id: string;
+  user_id: string;
+  route_id: string;
+  route_name: string;
+  distance_km: number;
+  avg_speed_kmh: number;
+  avg_power_watts: number;
+  duration_seconds: number;
+  completed_at: string;
+}
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatDateShort(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-NZ", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function GameRidesTable() {
+  const [rides, setRides] = useState<GameRideRow[]>([]);
+  const [riderNames, setRiderNames] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [routeFilter, setRouteFilter] = useState<string>("all");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await (supabase.from("game_rides" as any) as any)
+          .select("id, user_id, route_id, route_name, distance_km, avg_speed_kmh, avg_power_watts, duration_seconds, completed_at")
+          .order("avg_speed_kmh", { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        setRides((data ?? []) as GameRideRow[]);
+      } catch (err) {
+        console.error("GameRidesTable load error:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // Resolve user_id → email/name via Airtable Student Registration when possible
+  useEffect(() => {
+    if (!rides.length) return;
+    (async () => {
+      try {
+        const all = await callAirtable("Student Registration", "GET");
+        const map: Record<string, string> = {};
+        for (const r of all.records) {
+          const email = String(r.fields["Email"] ?? "").toLowerCase().trim();
+          const first = String(r.fields["First Name"] ?? "").trim();
+          const lastI = String(r.fields["Last Name Initial"] ?? "").trim().replace(/\.$/, "");
+          const name = first ? (lastI ? `${first} ${lastI}.` : first) : email;
+          if (email) map[email] = name;
+        }
+        setRiderNames(map);
+      } catch {
+        /* non-fatal */
+      }
+    })();
+  }, [rides.length]);
+
+  const routeOptions = useMemo(() => {
+    const seen: Record<string, string> = {};
+    rides.forEach(r => { seen[r.route_id] = r.route_name; });
+    return Object.entries(seen);
+  }, [rides]);
+
+  const filtered = useMemo(
+    () => (routeFilter === "all" ? rides : rides.filter(r => r.route_id === routeFilter)),
+    [rides, routeFilter],
+  );
+
+  if (!loading && rides.length === 0) return null;
+
+  return (
+    <div className="overflow-hidden border-[3px] border-secondary bg-card shadow-[6px_6px_0px_hsl(var(--brand-dark))]">
+      <div className="leaderboard-header flex items-center gap-2 px-6 py-4">
+        <Gamepad2 className="h-5 w-5" />
+        <h3 className="text-lg tracking-wider md:text-xl">3D Game Rides</h3>
+      </div>
+
+      {routeOptions.length > 1 && (
+        <div className="flex flex-wrap gap-1 border-b-[2px] border-secondary bg-muted px-3 py-2">
+          <button
+            type="button"
+            onClick={() => setRouteFilter("all")}
+            className={`border-[2px] px-3 py-1 font-display text-[10px] uppercase tracking-wider transition-colors ${
+              routeFilter === "all"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-secondary bg-card text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            All Routes
+          </button>
+          {routeOptions.map(([id, name]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setRouteFilter(id)}
+              className={`border-[2px] px-3 py-1 font-display text-[10px] uppercase tracking-wider transition-colors ${
+                routeFilter === id
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-secondary bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="overflow-x-auto">
+        {loading ? (
+          <div className="flex items-center justify-center px-6 py-8 font-body text-sm text-muted-foreground">
+            Loading game rides...
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b-[2px] border-secondary bg-muted">
+                <th className="px-4 py-3 text-left font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">#</th>
+                <th className="px-4 py-3 text-left font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Rider</th>
+                <th className="hidden md:table-cell px-4 py-3 text-left font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Route</th>
+                <th className="px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Dist</th>
+                <th className="px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Avg km/h</th>
+                <th className="hidden sm:table-cell px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Avg W</th>
+                <th className="hidden sm:table-cell px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Time</th>
+                <th className="hidden lg:table-cell px-4 py-3 text-center font-display text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-muted">
+              {filtered.map((r, i) => {
+                const name = riderNames[r.user_id?.toLowerCase?.() ?? ""] ?? `Rider ${i + 1}`;
+                return (
+                  <motion.tr
+                    key={r.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.03, duration: 0.25 }}
+                    className="transition-colors hover:bg-muted/50"
+                  >
+                    <td className="px-4 py-3">
+                      <div className={`rank-badge text-xs ${i < 3 ? "bg-accent text-accent-foreground" : ""}`}>
+                        {i + 1}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-display text-sm font-bold uppercase text-foreground">{name}</span>
+                    </td>
+                    <td className="hidden md:table-cell px-4 py-3 font-body text-sm text-muted-foreground">{r.route_name}</td>
+                    <td className="px-4 py-3 text-center font-body text-sm text-muted-foreground">{Number(r.distance_km).toFixed(2)} km</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="flex items-center justify-center gap-1 font-display text-sm font-bold text-primary">
+                        <Zap className="h-3 w-3" /> {Number(r.avg_speed_kmh).toFixed(1)}
+                      </span>
+                    </td>
+                    <td className="hidden sm:table-cell px-4 py-3 text-center font-body text-sm text-muted-foreground">{r.avg_power_watts} W</td>
+                    <td className="hidden sm:table-cell px-4 py-3 text-center font-body text-sm text-muted-foreground">{formatDuration(r.duration_seconds)}</td>
+                    <td className="hidden lg:table-cell px-4 py-3 text-center font-body text-xs text-muted-foreground">{formatDateShort(r.completed_at)}</td>
+                  </motion.tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

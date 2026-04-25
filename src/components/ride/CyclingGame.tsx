@@ -5,6 +5,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useWattbikeBluetooth } from '@/hooks/useWattbikeBluetooth';
 
 // All GLB/OBJ assets served from /public/assets/game/
 const A = (f: string) => `/assets/game/${f}`;
@@ -50,8 +51,9 @@ interface Props {
   onBack?: () => void;
 }
 
-function getUint24LE(v: DataView, o: number) {
-  return v.getUint8(o) + (v.getUint8(o + 1) << 8) + (v.getUint8(o + 2) << 16);
+// Read three consecutive bytes as a little-endian 24-bit unsigned int
+function getUint24LE(view: DataView, offset: number): number {
+  return view.getUint8(offset) + (view.getUint8(offset + 1) << 8) + (view.getUint8(offset + 2) << 16);
 }
 
 export default function CyclingGame({ route, playerName = 'Rider', onComplete, onBack }: Props) {
@@ -72,16 +74,15 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   const envObjs     = useRef<THREE.Object3D[]>([]);
   const rafId       = useRef(0);
 
-  // Mutable game state refs (read inside animation loop)
-  const gameActive  = useRef(false);
-  const simMode     = useRef(true);
-  const metrics     = useRef<Metrics>({ speed: 0, power: 0, cadence: 0, distance: 0, elevation: 0 });
-  const terrainPts  = useRef<{ x: number; y: number }[]>([]);
-  const totalDist   = useRef(route.dist);
-  const startTime   = useRef(0);
-  const lastUpload  = useRef(0);
-  const bleDevice   = useRef<BluetoothDevice | null>(null);
-  const bleChar     = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
+  // Game logic refs
+  const gameActive   = useRef(false);
+  const simMode      = useRef(true);
+  const metrics      = useRef<Metrics>({ speed: 0, power: 0, cadence: 0, distance: 0, elevation: 0 });
+  const terrainPts   = useRef<{ x: number; y: number }[]>([]);
+  const totalDist    = useRef(route.dist);
+  const startTime    = useRef(0);
+  const bleDevice    = useRef<BluetoothDevice | null>(null);
+  const bleChar      = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
 
   // Multiplayer
   const playerId    = useRef(Math.random().toString(36).substr(2, 9));
@@ -444,9 +445,9 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
     });
   }
 
-  // ── BLE ───────────────────────────────────────────────────────────────────
+  // ── BLE ──────────────────────────────────────────────────────────────────────
   async function connectBike() {
-    if (!navigator.bluetooth) { alert('Web Bluetooth not supported in this browser'); return; }
+    if (!navigator.bluetooth) { alert('Web Bluetooth is not supported in this browser'); return; }
     try {
       setStatus('Searching for bike...');
       bleDevice.current = await navigator.bluetooth.requestDevice({ filters: [{ services: [0x1826] }] });
@@ -454,26 +455,43 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
       const svc    = await server.getPrimaryService(0x1826);
       bleChar.current  = await svc.getCharacteristic(0x2AD2);
       await bleChar.current.startNotifications();
-      bleChar.current.addEventListener('characteristicvaluechanged', handleBle as EventListener);
+      bleChar.current.addEventListener('characteristicvaluechanged', handleBleData as EventListener);
       simMode.current = false; setSim(false);
-      setStatus(`Connected: ${bleDevice.current.name ?? 'Wattbike'}`);
+      setStatus(`Connected: ${bleDevice.current.name ?? 'Bike'}`);
     } catch { setStatus('BLE failed — simulation active'); }
   }
 
-  function handleBle(event: Event) {
-    const v = (event.target as BluetoothRemoteGATTCharacteristic).value!;
+  function handleBleData(event: Event) {
+    const char = event.target as BluetoothRemoteGATTCharacteristic;
+    if (!char.value) return;
+    const v = char.value;
     const flags = v.getUint16(0, true);
     let idx = 2;
     const m = metrics.current;
-    if (flags & 0x01) { m.speed    = v.getUint16(idx, true) / 100;     idx += 2; }
-    if (flags & 0x02)                                                    idx += 2;
-    if (flags & 0x04) { m.cadence  = v.getUint16(idx, true) * 0.5;     idx += 2; }
-    if (flags & 0x08)                                                    idx += 2;
-    if (flags & 0x10) { m.distance = getUint24LE(v, idx) / 1000;       idx += 3; }
-    if (flags & 0x20)                                                    idx += 2;
+    if (flags & 0x01) { m.speed   = v.getUint16(idx, true) / 100;          idx += 2; }
+    if (flags & 0x02)                                                        idx += 2;
+    if (flags & 0x04) { m.cadence = v.getUint16(idx, true) * 0.5;          idx += 2; }
+    if (flags & 0x08)                                                        idx += 2;
+    if (flags & 0x10) { m.distance = getUint24LE(v, idx) / 1000;           idx += 3; }
+    if (flags & 0x20)                                                        idx += 2;
     if (flags & 0x40)   m.power    = v.getInt16(idx, true);
     m.elevation = elevAt(m.distance);
+  }, [bleConnected, ble.metrics.speed, ble.metrics.power, ble.metrics.cadence, ble.metrics.distance]);
+
+  async function connectBike() {
+    setStatus('Searching for bike...');
+    await ble.connect();
   }
+
+  // Reflect BLE status in the on-screen status pill
+  useEffect(() => {
+    if (ble.status === 'connecting')   setStatus('Searching for bike...');
+    else if (ble.status === 'connected' || ble.status === 'riding')
+      setStatus(`Connected: ${ble.deviceName || 'Wattbike'}`);
+    else if (ble.status === 'error' || ble.status === 'unsupported')
+      setStatus(ble.error || 'BLE unavailable — simulation active');
+    else if (ble.status === 'disconnected') setStatus('Bike disconnected — simulation active');
+  }, [ble.status, ble.deviceName, ble.error]);
 
   // ── Simulation ────────────────────────────────────────────────────────────
   function simulate(dt: number) {
@@ -661,7 +679,7 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
       cancelAnimationFrame(rafId.current);
       clearInterval(hudInterval);
       window.removeEventListener('resize', onResize);
-      bleChar.current?.removeEventListener('characteristicvaluechanged', handleBle as EventListener);
+      bleChar.current?.removeEventListener('characteristicvaluechanged', handleBleData as EventListener);
       if (bleDevice.current?.gatt?.connected) bleDevice.current.gatt.disconnect();
       if (channelRef.current) supabase.removeChannel(channelRef.current);
       ren.dispose();
