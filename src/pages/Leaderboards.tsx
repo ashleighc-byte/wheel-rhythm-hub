@@ -509,9 +509,9 @@ function GameRidesTable() {
   }, [rides.length]);
 
   const routeOptions = useMemo(() => {
-    const set = new Map<string, string>();
-    rides.forEach(r => set.set(r.route_id, r.route_name));
-    return Array.from(set.entries());
+    const seen: Record<string, string> = {};
+    rides.forEach(r => { seen[r.route_id] = r.route_name; });
+    return Object.entries(seen);
   }, [rides]);
 
   const filtered = useMemo(
