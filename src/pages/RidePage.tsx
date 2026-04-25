@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, Flag, StopCircle, CheckCircle,
-  AlertTriangle, Map, Layers,
+  AlertTriangle, Map, Layers, Gamepad2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -301,6 +301,19 @@ export default function RidePage() {
                 </h2>
                 <RouteSelector selected={selectedRoute} onSelect={setSelectedRoute} />
               </section>
+
+              {/* Optional: Play 3D Game with this route */}
+              {selectedRoute && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(`/game/${selectedRoute.id}`)}
+                  className="w-full border-[3px] border-primary bg-primary/5 py-5 font-display text-base uppercase tracking-wider text-primary gap-2 hover:bg-primary/10"
+                >
+                  <Gamepad2 className="h-5 w-5" />
+                  🎮 Play 3D Game
+                </Button>
+              )}
 
               {/* Step 2: Bluetooth */}
               <section>
