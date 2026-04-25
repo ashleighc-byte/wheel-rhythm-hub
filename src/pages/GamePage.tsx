@@ -12,7 +12,10 @@ export default function GamePage() {
   const { session } = useAuth();
   const { toast } = useToast();
 
-  const route = GAME_ROUTES.find(r => r.id === routeId);
+  // Exact ID match first, then normalised-name fallback so slug variants don't 404
+  const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const route = GAME_ROUTES.find(r => r.id === routeId)
+    ?? GAME_ROUTES.find(r => slugify(r.name) === routeId);
 
   // Full-screen — hide body scroll
   useEffect(() => {
