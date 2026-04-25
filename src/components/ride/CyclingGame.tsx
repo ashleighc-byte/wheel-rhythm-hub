@@ -476,11 +476,6 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
     if (flags & 0x20)                                                        idx += 2;
     if (flags & 0x40)   m.power    = v.getInt16(idx, true);
     m.elevation = elevAt(m.distance);
-  }, [bleConnected, ble.metrics.speed, ble.metrics.power, ble.metrics.cadence, ble.metrics.distance]);
-
-  async function connectBike() {
-    setStatus('Searching for bike...');
-    await ble.connect();
   }
 
   // Reflect BLE status in the on-screen status pill
