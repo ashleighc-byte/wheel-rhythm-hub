@@ -138,15 +138,19 @@ Deno.serve(async (req) => {
     const prevSchoolMap = new Map<string, number>();
     for (const s of prevSchoolArr) prevSchoolMap.set(s.name, s.rank);
 
-    // Fetch all data from Airtable in parallel
-    const [students, sessions, schools] = await Promise.all([
+    // Fetch all data from Airtable in parallel.
+    // The "School" field on Student Registration is actually a linked record
+    // pointing to the Hardware Assets table (where the school's row holds
+    // the readable name in "Asset Name 1"). We also try a dedicated Schools
+    // table as a fallback for any rows linked there instead.
+    const [students, sessions, hardwareAssets, schools] = await Promise.all([
       fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Student Registration'),
       fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Session Reflections'),
+      fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Hardware Assets').catch(() => [] as any[]),
       fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Schools').catch(() => [] as any[]),
     ]);
 
-    // Build school id → name lookup. The Schools table field is literally
-    // "\uFEFFSchool Name" (BOM-prefixed) — handle either form just in case.
+    // Build linked-id → name lookup from both tables.
     const schoolNameById = new Map<string, string>();
     for (const sc of schools) {
       const f = sc.fields ?? {};
@@ -154,6 +158,14 @@ Deno.serve(async (req) => {
         f['School Name'] ?? f['\uFEFFSchool Name'] ?? f['Name'] ?? ''
       ).trim();
       if (name) schoolNameById.set(sc.id, name);
+    }
+    for (const ha of hardwareAssets) {
+      const f = ha.fields ?? {};
+      const name = String(f['Asset Name 1'] ?? f['School Name'] ?? '').trim();
+      // Only treat it as a school if the name doesn't look like a piece of
+      // gear (iPad / bike) — schools are entries like "Sport Waikato".
+      if (!name || /\bipad\b|\bbike\b|—|charger/i.test(name)) continue;
+      if (!schoolNameById.has(ha.id)) schoolNameById.set(ha.id, name);
     }
     const resolveSchool = (raw: any): string => {
       if (!raw) return '';
