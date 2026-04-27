@@ -36,6 +36,7 @@ import stripeBg from "@/assets/stripe-bg-2.png";
 import { computeAllRiderPoints } from "@/lib/computeAllRiderPoints";
 import { getMilestoneBadgeImage } from "@/lib/milestoneBadges";
 import MtRuapehuTracker from "@/components/MtRuapehuTracker";
+import { supabase } from "@/integrations/supabase/client";
 import {
   calculateSessionPoints, parseDurationToMinutes, isValidSession,
   computeStreaks, getStreakBonusPoints, computeRiderTotals,
@@ -307,17 +308,62 @@ const Dashboard = () => {
         })
         .sort((a, b) => b.date.localeCompare(a.date));
 
-      setRideSessions(mappedSessions);
+      // Pull in 3D Game rides for the current user from Supabase and merge
+      // them with Airtable session reflections so dashboard stats, the chart
+      // and Recent Rides reflect everything the rider has done.
+      let gameSessions: RideSession[] = [];
+      if (user?.id) {
+        try {
+          const { data: gameRows } = await (supabase
+            .from('game_rides' as any)
+            .select('*')
+            .eq('user_id', user.id)
+            .order('completed_at', { ascending: false }) as any);
+          gameSessions = ((gameRows ?? []) as any[]).map((g) => {
+            const distance_km = Number(g.distance_km ?? 0);
+            const duration_minutes = Number(g.duration_seconds ?? 0) / 60;
+            const elevation_m = Number(g.elevation_gain_m ?? 0);
+            const avg_speed_kmh = Number(g.avg_speed_kmh ?? 0);
+            const points = calculateSessionPoints({
+              duration_minutes, distance_km, elevation_m, avg_speed_kmh,
+            });
+            return {
+              id: `game_${g.id}`,
+              riderId: rec.id,
+              riderName,
+              schoolId: localSchoolId,
+              schoolName: mySchoolName,
+              date: String(g.completed_at ?? '').slice(0, 10),
+              distance_km,
+              duration_minutes,
+              elevation_m,
+              avg_speed_kmh: Math.round(avg_speed_kmh * 10) / 10,
+              feelingBefore: 0,
+              feelingAfter: 0,
+              reflection: '',
+              screenshotUrl: undefined,
+              points,
+              courseMap: `🎮 ${String(g.route_name ?? 'Game Ride')}`,
+            } satisfies RideSession;
+          });
+        } catch (err) {
+          console.error('Game rides fetch error:', err);
+        }
+      }
+
+      const allSessions = [...mappedSessions, ...gameSessions]
+        .sort((a, b) => b.date.localeCompare(a.date));
+      setRideSessions(allSessions);
 
       // Compute rider totals using gamification engine
-      const totals = computeRiderTotals(rec.id, riderName, localSchoolId, mySchoolName, mappedSessions);
+      const totals = computeRiderTotals(rec.id, riderName, localSchoolId, mySchoolName, allSessions);
 
       // Compute challenges & achievements
-      const ch = computeChallenges(totals, mappedSessions);
+      const ch = computeChallenges(totals, allSessions);
       const completedChallengeIds = ch.filter(c => c.completed).map(c => c.id);
       totals.completedChallenges = completedChallengeIds;
 
-      const grand = computeGrandTotalPoints(mappedSessions, totals.streakMilestones, ch);
+      const grand = computeGrandTotalPoints(allSessions, totals.streakMilestones, ch);
       totals.totalPoints = grand;
       // Recompute level with grand total
       const { current, next } = getLevel(grand);
