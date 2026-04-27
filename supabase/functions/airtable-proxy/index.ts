@@ -126,6 +126,16 @@ Deno.serve(async (req) => {
 
         if (!response.ok) {
           const errText = await response.text();
+          // Graceful fallback: a 403/404 on GET usually means the token can't
+          // see this table or the record/filter matches nothing the token is
+          // scoped to. Return an empty result set so the caller can treat it
+          // as "no match" instead of blank-screening the UI.
+          if (response.status === 403 || response.status === 404) {
+            console.warn(`Airtable GET ${table} returned ${response.status}: ${errText}`);
+            return new Response(JSON.stringify({ records: [], fallback: true, reason: `airtable_${response.status}` }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
           throw new Error(`Airtable API error [${response.status}]: ${errText}`);
         }
 
