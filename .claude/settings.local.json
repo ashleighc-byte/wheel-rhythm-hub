@@ -17,7 +17,19 @@
       "Bash(git add *)",
       "Bash(npx tsc *)",
       "Bash(python3 -c \"import zipfile; z=zipfile.ZipFile\\('Bicycle.zip'\\); print\\('\\\\n'.join\\(z.namelist\\(\\)\\)\\)\")",
-      "Bash(powershell -command \"Expand-Archive -LiteralPath 'C:\\\\Users\\\\grant\\\\Downloads\\\\Bicycle.zip' -DestinationPath 'C:\\\\Users\\\\grant\\\\Downloads\\\\BicycleUnzip' -Force; Get-ChildItem 'C:\\\\Users\\\\grant\\\\Downloads\\\\BicycleUnzip' -Recurse | Select-Object FullName\")"
+      "Bash(powershell -command \"Expand-Archive -LiteralPath 'C:\\\\Users\\\\grant\\\\Downloads\\\\Bicycle.zip' -DestinationPath 'C:\\\\Users\\\\grant\\\\Downloads\\\\BicycleUnzip' -Force; Get-ChildItem 'C:\\\\Users\\\\grant\\\\Downloads\\\\BicycleUnzip' -Recurse | Select-Object FullName\")",
+      "Bash(curl -s https://raw.githubusercontent.com/RayznGames/BicycleSystem/main/README.md)",
+      "Bash(curl -s https://raw.githubusercontent.com/RayznGames/BicycleSystem/master/README.md)",
+      "Bash(curl -s https://raw.githubusercontent.com/RayznGames/BicycleSystem/main/package.json)",
+      "Bash(curl -s https://raw.githubusercontent.com/RayznGames/BicycleSystem/master/package.json)",
+      "Bash(curl -s https://raw.githubusercontent.com/sckorpio/Bit-BIKE/main/README.md)",
+      "Bash(curl -s https://raw.githubusercontent.com/sckorpio/Bit-BIKE/master/README.md)",
+      "Bash(curl -s https://api.github.com/repos/RayznGames/BicycleSystem/contents)",
+      "Bash(curl -s https://api.github.com/repos/sckorpio/Bit-BIKE/contents)",
+      "Bash(curl -s https://api.github.com/repos/sckorpio/Bit-BIKE/contents/Bit_Bike)",
+      "Bash(curl -s https://api.github.com/repos/sckorpio/Bit-BIKE/contents/Bit_Bike/Assets)",
+      "Bash(curl -s https://api.github.com/repos/RayznGames/BicycleSystem/contents/Assets)",
+      "Bash(xargs grep *)"
     ]
   }
 }

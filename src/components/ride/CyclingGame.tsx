@@ -13,6 +13,12 @@ const A = (f: string) => `/assets/game/${f}`;
 
 const LANE_OFFSETS = [0, 2.5, -2.5, 5, -5]; // lateral offset (m) for lanes 1–5
 
+const KOM_SEGMENTS = [
+  { id: 1, name: 'Sprint 1', start: 0.22, end: 0.27 },
+  { id: 2, name: 'Sprint 2', start: 0.52, end: 0.57 },
+  { id: 3, name: 'KOM',      start: 0.74, end: 0.80 },
+] as const;
+
 const ASSETS = {
   treePine:      A('treePine.glb'),
   treeOak:       A('treeOak.glb'),
@@ -92,7 +98,6 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   const rendererRef   = useRef<THREE.WebGLRenderer | null>(null);
   const clock         = useRef(new THREE.Clock());
   const bikeGroup     = useRef(new THREE.Group());
-  const hbarGroup     = useRef(new THREE.Group());
   const frontWheel    = useRef<THREE.Object3D | null>(null);
   const backWheel     = useRef<THREE.Object3D | null>(null);
   const dustPts       = useRef<THREE.Points | null>(null);
@@ -115,6 +120,19 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   const lastUpload      = useRef(0);
   const distanceBaseRef = useRef(0);
   const elapsedRef      = useRef(0);
+
+  // Ghost rider
+  const ghostGroup    = useRef<THREE.Group | null>(null);
+  const ghostRecord   = useRef<Array<{ t: number; dist: number }>>([]);
+  const ghostPlayback = useRef<Array<{ t: number; dist: number }>>([]);
+  const ghostElapsed  = useRef(0);
+
+  // Zone bonus + draft + KOM
+  const zoneHoldTimer = useRef(0);
+  const zoneBonus     = useRef(0);
+  const draftRef      = useRef(false);
+  const segStartRef   = useRef<Record<number, number | null>>({ 1: null, 2: null, 3: null });
+  const segBestRef    = useRef<Record<number, number | null>>({ 1: null, 2: null, 3: null });
 
   // Multiplayer
   const playerId      = useRef(Math.random().toString(36).substr(2, 9));
@@ -142,21 +160,47 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   const [roomStatus, setRoomStatus] = useState<'idle' | 'waiting' | 'countdown' | 'racing' | 'finished'>('idle');
   const [countdown, setCountdown]   = useState<number | null>(null);
   const [isHost, setIsHost]         = useState(false);
+  const [segAlert, setSegAlert]     = useState<{ name: string; msg: string; pb: boolean } | null>(null);
+  const [draftBoost, setDraftBoost]   = useState(false);
+  const [zoneBonusPct, setZoneBonusPct] = useState(0);
+  const [gradientPct, setGradientPct]   = useState(0);
 
   // ── Terrain elevation profile ─────────────────────────────────────────────
+  // Each profile is a normalized elevation curve (0 = start, 1 = peak gain fraction).
+  // Values represent elevation at equal-spaced distance intervals along the route.
   function genTerrain() {
+    const PROFILES: Record<string, number[]> = {
+      'waikato-river':         [0,.12,.18,.14,.22,.18,.28,.22,.17,.12,.06,0],
+      'taupo-lakefront':       [0,.18,.35,.28,.48,.38,.55,.44,.60,.50,.65,.52,.42,0],
+      'hamilton-city-sprint':  [0,.08,.14,.10,.18,.14,.20,.16,.12,.08,0],
+      'cambridge-countryside': [0,.12,.28,.42,.36,.52,.44,.60,.48,.56,.68,.58,.46,0],
+      'rotorua-redwoods':      [0,.20,.38,.30,.50,.62,.48,.72,.58,.78,.68,.82,.72,.62,.50,0],
+      'mount-maunganui':       [0,.08,.22,.18,.40,.35,.58,.48,.70,.58,.48,.35,.22,0],
+      'bay-of-plenty-beach':   [0,.06,.10,.08,.12,.10,.14,.12,.10,.08,.06,0],
+      'hawkes-bay-wine':       [0,.15,.32,.50,.40,.62,.50,.72,.60,.50,.68,.56,.42,0],
+      'napier-coastal':        [0,.07,.14,.10,.18,.14,.22,.16,.12,.08,0],
+      'coromandel-peninsula':  [0,.15,.35,.55,.70,.88,1,.82,.68,.55,.70,.84,.92,.78,.60,0],
+      'tongariro-northern':    [0,.06,.14,.24,.36,.48,.60,.70,.80,.88,.93,.97,1,.96,.92,.88,.84,.80,0],
+      'whakapapa-climb':       [0,.06,.12,.20,.28,.37,.46,.55,.63,.71,.78,.84,.90,.95,.98,1,0],
+    };
+    const profile = PROFILES[route.id];
     const n = 200;
     const pts: { x: number; y: number }[] = [];
     for (let i = 0; i <= n; i++) {
-      let y = 0;
-      if      (route.terrain === 'flat')    y = Math.sin(i * 0.5) * 2 + Math.cos(i * 0.3);
-      else if (route.terrain === 'rolling') y = Math.sin(i * 0.8) * 8 + Math.cos(i * 0.4) * 5;
-      else                                  y = Math.sin(i * 0.7) * 20 + Math.cos(i * 0.2) * 15;
-      pts.push({ x: i * (route.dist / n), y });
+      const t = i / n;
+      let elev = 0;
+      if (profile) {
+        const raw = t * (profile.length - 1);
+        const lo  = Math.floor(raw), hi = Math.min(lo + 1, profile.length - 1);
+        elev = (profile[lo] + (profile[hi] - profile[lo]) * (raw - lo)) * route.elevGain;
+        elev += (Math.random() - 0.5) * Math.max(1, route.elevGain * 0.015); // micro-variation
+      } else {
+        if (route.terrain === 'flat')         elev = Math.sin(t * Math.PI * 4) * 0.15 * route.elevGain;
+        else if (route.terrain === 'rolling') elev = (t * 0.5 + Math.sin(t * Math.PI * 3) * 0.35) * route.elevGain;
+        else                                  elev = (t * 0.6 + Math.sin(t * Math.PI * 2) * 0.25) * route.elevGain;
+      }
+      pts.push({ x: t * route.dist, y: Math.max(0, elev) });
     }
-    const gain = pts.reduce((g, p, i) => (i > 0 && p.y > pts[i - 1].y ? g + p.y - pts[i - 1].y : g), 0);
-    if (gain > 0) { const s = route.elevGain / gain; pts.forEach(p => (p.y *= s)); }
-    let run = 0; pts.forEach(p => { run += p.y; p.y = run; });
     terrainPts.current = pts;
     totalDist.current  = route.dist;
   }
@@ -217,6 +261,8 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
       // Re-measure after scaling and shift so the bottom sits at y=0
       const bbox2 = new THREE.Box3().setFromObject(obj);
       obj.position.y = -bbox2.min.y;
+      // Blender GLTF exports with -Z forward; flip 180° so the bike faces +Z (Three.js forward)
+      obj.rotation.y = Math.PI;
 
       obj.traverse(c => {
         if (!(c instanceof THREE.Mesh)) return;
@@ -256,24 +302,16 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
     add(new THREE.SphereGeometry(0.15),                  0xffccaa, 1.25);
   }
 
-  function buildHandlebars(): THREE.Group {
-    const g = new THREE.Group();
-    const hcurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-0.3, -0.4, -0.8),
-      new THREE.Vector3(0,    -0.3, -0.8),
-      new THREE.Vector3( 0.3, -0.4, -0.8),
-    ]);
-    g.add(new THREE.Mesh(
-      new THREE.TubeGeometry(hcurve, 8, 0.02, 4, false),
-      new THREE.MeshStandardMaterial({ color: 0xcccccc }),
-    ));
-    const gripMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-    const gripGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.15, 8);
-    [-0.3, 0.3].forEach(x => {
-      const grip = new THREE.Mesh(gripGeo, gripMat);
-      grip.position.set(x, -0.4, -0.8); g.add(grip);
-    });
-    return g;
+  // ── Ghost rider interpolation helper ─────────────────────────────────────
+  function interpolateGhost(record: Array<{ t: number; dist: number }>, t: number): number {
+    if (!record.length) return 0;
+    if (t <= record[0].t) return record[0].dist;
+    const last = record[record.length - 1];
+    if (t >= last.t) return last.dist;
+    let lo = 0, hi = record.length - 1;
+    while (lo + 1 < hi) { const mid = (lo + hi) >> 1; if (record[mid].t <= t) lo = mid; else hi = mid; }
+    const a = record[lo], b = record[hi];
+    return a.dist + (b.dist - a.dist) * ((t - a.t) / (b.t - a.t));
   }
 
   function animatePedalling(dt: number) {
@@ -627,12 +665,21 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
     else if (ble.status === 'disconnected')                 setStatus('Bike disconnected — simulation active');
   }, [ble.status, ble.deviceName, ble.error]);
 
-  // ── Simulation ────────────────────────────────────────────────────────────
+  // ── Simulation (gradient-adjusted, CARLA-style physics) ───────────────────
   function simulate(dt: number) {
     const m = metrics.current;
-    m.power    = 150 + Math.sin(Date.now() / 3000) * 30 + Math.random() * 10;
-    m.speed    = (m.power / 250) * 35 * (0.9 + Math.random() * 0.2);
-    m.cadence  = 80 + Math.sin(Date.now() / 2000) * 10;
+    m.power   = 150 + Math.sin(Date.now() / 3000) * 30 + Math.random() * 10;
+    m.cadence = 80  + Math.sin(Date.now() / 2000) * 10;
+
+    // Gradient — rise/run over a 50m look-ahead
+    const lookKm   = 0.05;
+    const rise     = elevAt(m.distance + lookKm) - elevAt(m.distance);
+    const grad     = rise / (lookKm * 1000);                            // m/m decimal
+    const upFactor = Math.max(0.25, 1 / (1 + Math.max(0, grad)  * 5)); // climbing slows
+    const dnFactor = grad < -0.005 ? Math.min(1 + Math.abs(grad) * 2.5, 1.35) : 1; // descent boosts
+
+    const base = (m.power / 250) * 35 * upFactor * dnFactor * (0.92 + Math.random() * 0.16);
+    m.speed     = base * (1 + zoneBonus.current) * (draftRef.current ? 1.08 : 1);
     m.distance += (m.speed * dt) / 3600;
     m.elevation = elevAt(m.distance);
   }
@@ -648,6 +695,7 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
       obj.scale.setScalar(1.1 / longest);
       const bbox2 = new THREE.Box3().setFromObject(obj);
       obj.position.y = -bbox2.min.y;
+      obj.rotation.y = Math.PI; // same Blender→Three.js forward-axis fix
       obj.traverse(c => { if (c instanceof THREE.Mesh) c.castShadow = true; });
       group.add(obj);
     }, undefined, () => {
@@ -743,9 +791,18 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
 
   // ── Game controls ─────────────────────────────────────────────────────────
   function startRide() {
-    metrics.current.distance = 0;
-    distanceBaseRef.current  = 0;
-    elapsedRef.current       = 0;
+    metrics.current.distance  = 0;
+    distanceBaseRef.current   = 0;
+    elapsedRef.current        = 0;
+    ghostRecord.current       = [];
+    ghostElapsed.current      = 0;
+    zoneHoldTimer.current     = 0;
+    zoneBonus.current         = 0;
+    draftRef.current          = false;
+    segStartRef.current       = { 1: null, 2: null, 3: null };
+    if (ghostPlayback.current.length > 0 && ghostGroup.current) {
+      ghostGroup.current.visible = true;
+    }
     gameActive.current = true; setActive(true);
     startTime.current  = Date.now();
     setStatus('Riding...');
@@ -772,8 +829,8 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
     const W = containerRef.current.clientWidth;
     const H = containerRef.current.clientHeight;
 
-    // Player 1 camera (first-person, child of bikeGroup)
-    const cam = new THREE.PerspectiveCamera(65, W / H, 0.3, 600);
+    // Player 1 camera — first-person cockpit, wider FOV for immersion
+    const cam = new THREE.PerspectiveCamera(75, W / H, 0.3, 600);
     cameraRef.current = cam;
 
     // Player 2 camera (free-floating, follows first other rider)
@@ -816,9 +873,48 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
     water.visible = false; water.name = 'water';
     s.add(water);
 
-    // Rider model
+    // Load rider model into bikeGroup but do NOT add bikeGroup to the scene.
+    // First-person view means the local player never sees their own bike.
+    // bikeGroup is still updated every frame as a position/rotation tracker.
     loadRider(bikeGroup.current, name, '#f80');
-    s.add(bikeGroup.current);
+
+    // ── Ghost rider — semi-transparent Bicycle.glb of personal best ──────
+    const ghostG = new THREE.Group();
+    new GLTFLoader().load(ASSETS.bicycle, (gltf) => {
+      const gObj = gltf.scene;
+      const bb   = new THREE.Box3().setFromObject(gObj);
+      const sz   = new THREE.Vector3(); bb.getSize(sz);
+      gObj.scale.setScalar(1.1 / (Math.max(sz.x, sz.y, sz.z) || 1));
+      const bb2 = new THREE.Box3().setFromObject(gObj); gObj.position.y = -bb2.min.y;
+      gObj.rotation.y = Math.PI;
+      gObj.traverse(c => {
+        if (c instanceof THREE.Mesh) {
+          c.material = new THREE.MeshStandardMaterial({ color: 0x88aaff, transparent: true, opacity: 0.38, depthWrite: false });
+        }
+      });
+      ghostG.add(gObj);
+    }, undefined, () => {
+      ghostG.add(new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.3, 0.9, 4, 8),
+        new THREE.MeshStandardMaterial({ color: 0x88aaff, transparent: true, opacity: 0.38, depthWrite: false }),
+      ));
+    });
+    ghostG.add(makeNametag('GHOST', '#88f'));
+    ghostG.visible = false;
+    s.add(ghostG);
+    ghostGroup.current = ghostG;
+
+    // Load persisted ghost playback and segment bests from localStorage
+    try {
+      const storedGhost = localStorage.getItem(`ghost_${route.id}`);
+      if (storedGhost) ghostPlayback.current = JSON.parse(storedGhost);
+    } catch {}
+    KOM_SEGMENTS.forEach(seg => {
+      try {
+        const v = localStorage.getItem(`kom_${route.id}_${seg.id}`);
+        if (v) segBestRef.current[seg.id] = parseFloat(v);
+      } catch {}
+    });
 
     initParticles(s);
     buildEnv(s);
@@ -835,12 +931,9 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
     const startLook = curve.getPoint(0.03);
     bikeGroup.current.position.set(startPt.x, startPt.y + 0.5, startPt.z);
     bikeGroup.current.rotation.y = Math.atan2(startTan.x, startTan.z);
-    cam.position.set(
-      startPt.x - startTan.x * 1.2,
-      startPt.y + 2.0,
-      startPt.z - startTan.z * 1.2,
-    );
-    cam.lookAt(startLook.x, startLook.y + 0.6, startLook.z);
+    // First-person: camera sits at rider eye height, looking forward along the spline
+    cam.position.set(startPt.x, startPt.y + 1.5, startPt.z);
+    cam.lookAt(startLook.x, startLook.y + 1.5, startLook.z);
 
     const onResize = () => {
       if (!containerRef.current) return;
@@ -860,7 +953,6 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
 
     // ── Animation loop ────────────────────────────────────────────────────
     let lastBroadcast = 0;
-    const _camTarget   = new THREE.Vector3();
     const _prevTangent = new THREE.Vector3(0, 0, 1);
 
     const animate = () => {
@@ -871,7 +963,60 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
       // ── Game logic (only when active) ──────────────────────────────────
       if (gameActive.current) {
         if (simMode.current) simulate(dt);
-        elapsedRef.current += dt;
+        elapsedRef.current   += dt;
+        ghostElapsed.current += dt;
+
+        // Zone bonus: zone 3+ (≥115 W) held for 5 s builds up to +12 % speed bonus
+        if (m.power >= 115) {
+          zoneHoldTimer.current = Math.min(zoneHoldTimer.current + dt, 5);
+        } else {
+          zoneHoldTimer.current = 0;
+        }
+        if (zoneHoldTimer.current >= 5) {
+          zoneBonus.current = Math.min(zoneBonus.current + 0.05 * dt, 0.12);
+        } else {
+          zoneBonus.current = Math.max(zoneBonus.current - 0.08 * dt, 0);
+        }
+
+        // Draft slipstream: within 5 m behind another rider → +8 % (applied in simulate)
+        draftRef.current = false;
+        for (const r of Object.values(otherRiders.current)) {
+          const gap = r.lastDist - m.distance;
+          if (gap > 0 && gap < 0.005) { draftRef.current = true; break; }
+        }
+
+        // Ghost recording — sample every 0.5 s
+        const lastSample = ghostRecord.current[ghostRecord.current.length - 1];
+        if (!lastSample || ghostElapsed.current - lastSample.t >= 0.5) {
+          ghostRecord.current.push({ t: ghostElapsed.current, dist: m.distance });
+        }
+
+        // KOM segment detection: enter → start timer, exit → save PB + show alert
+        const prog = m.distance / totalDist.current;
+        KOM_SEGMENTS.forEach(seg => {
+          const inSeg = prog >= seg.start && prog <= seg.end;
+          if (inSeg && segStartRef.current[seg.id] === null) {
+            segStartRef.current[seg.id] = ghostElapsed.current;
+          } else if (!inSeg && segStartRef.current[seg.id] !== null) {
+            const segTime  = ghostElapsed.current - segStartRef.current[seg.id]!;
+            segStartRef.current[seg.id] = null;
+            const prevBest = segBestRef.current[seg.id];
+            const isPb     = prevBest === null || segTime < prevBest;
+            if (isPb) {
+              segBestRef.current[seg.id] = segTime;
+              try { localStorage.setItem(`kom_${route.id}_${seg.id}`, String(segTime)); } catch {}
+            }
+            const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+            setSegAlert({
+              name: seg.name,
+              msg:  isPb
+                ? `NEW PB: ${fmt(segTime)}`
+                : `${fmt(segTime)}${prevBest ? ` | Best: ${fmt(prevBest)}` : ''}`,
+              pb: isPb,
+            });
+            setTimeout(() => setSegAlert(null), 4000);
+          }
+        });
 
         if (m.distance >= totalDist.current) {
           m.distance = totalDist.current;
@@ -886,6 +1031,19 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
           const placement  = racers > 1 ? Math.round(50 * (1 - (myPosition - 1) / racers)) : 0;
           channelRef.current?.send({ type: 'broadcast', event: 'finish', payload: { id: playerId.current } });
           setRoomStatus('finished');
+
+          // Ghost PB save: overwrite stored ghost only if this run was faster
+          try {
+            const storedGhost = localStorage.getItem(`ghost_${route.id}`);
+            const prevBestTime = storedGhost
+              ? (JSON.parse(storedGhost) as Array<{ t: number; dist: number }>).at(-1)?.t ?? Infinity
+              : Infinity;
+            if (ghostElapsed.current < prevBestTime) {
+              localStorage.setItem(`ghost_${route.id}`, JSON.stringify(ghostRecord.current));
+            }
+          } catch {}
+          if (ghostGroup.current) ghostGroup.current.visible = false;
+
           onComplete?.({
             ...m,
             duration:        Math.round((Date.now() - startTime.current) / 1000),
@@ -896,8 +1054,8 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
           });
         }
 
-        // Dynamic FOV: widens at speed
-        cam.fov = THREE.MathUtils.lerp(cam.fov, 65 + Math.min(m.speed, 50) * 0.3, 0.05);
+        // Dynamic FOV: subtle widening at speed for first-person rush feeling
+        cam.fov = THREE.MathUtils.lerp(cam.fov, 75 + Math.min(m.speed, 50) * 0.12, 0.05);
         cam.updateProjectionMatrix();
 
         const bpos = bikeGroup.current.position;
@@ -924,27 +1082,33 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
         const tLook   = Math.min(t + 0.025, 1);
         const ptLook  = curve.getPoint(tLook);
 
-        // Bike moves along spline
+        // Bike position tracking (particles, multiplayer minimap, etc.)
         bikeGroup.current.position.set(pt.x, pt.y + 0.5, pt.z);
         bikeGroup.current.rotation.y = Math.atan2(tangent.x, tangent.z);
 
-        // Chase camera: 1.2 m behind and 2 m above the rider
-        _camTarget.set(
-          pt.x - tangent.x * 1.2,
-          pt.y + 2.0,
-          pt.z - tangent.z * 1.2,
-        );
-        cam.position.lerp(_camTarget, 0.12);
+        // First-person cockpit: place camera at rider eye height, no chase offset
+        cam.position.set(pt.x, pt.y + 1.5, pt.z);
 
-        // Banking: tilt the camera up-vector into corners (correct way to bank
-        // a lookAt camera — does not fight with any rotation property)
+        // Banking: lean the camera into corners like a real rider
         const lateralChange = tangent.x - _prevTangent.x;
-        const bankAngle = THREE.MathUtils.clamp(-lateralChange * 10, -0.35, 0.35);
+        const bankAngle = THREE.MathUtils.clamp(-lateralChange * 8, -0.25, 0.25);
         cam.up.set(Math.sin(bankAngle), Math.cos(bankAngle), 0);
         _prevTangent.copy(tangent);
 
-        // lookAt AFTER setting up, so banking is baked into the orientation
-        cam.lookAt(ptLook.x, ptLook.y + 0.6, ptLook.z);
+        // lookAt AFTER setting up-vector so banking is baked in
+        cam.lookAt(ptLook.x, ptLook.y + 1.5, ptLook.z);
+
+        // Ghost rider position — interpolate its distance from the stored PB recording
+        if (ghostGroup.current?.visible && ghostPlayback.current.length > 0) {
+          const ghostDist = interpolateGhost(ghostPlayback.current, ghostElapsed.current);
+          const gt   = Math.min(ghostDist / totalDist.current, 1);
+          const gPt  = curve.getPoint(gt);
+          const gTan = curve.getTangent(gt);
+          const gNorm = new THREE.Vector3(-gTan.z, 0, gTan.x).normalize();
+          ghostGroup.current.position.copy(gPt).addScaledVector(gNorm, 2.5);
+          ghostGroup.current.position.y = gPt.y + 0.5;
+          ghostGroup.current.rotation.y = Math.atan2(gTan.x, gTan.z);
+        }
       }
 
       // ── Split-screen or single render ─────────────────────────────────
@@ -995,6 +1159,12 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
     const hudInterval = setInterval(() => {
       setHud({ ...metrics.current });
       setElapsed(Math.floor(elapsedRef.current));
+      setDraftBoost(draftRef.current);
+      setZoneBonusPct(Math.round(zoneBonus.current * 100));
+      const cm = metrics.current;
+      const lookKm = 0.05;
+      const rise   = elevAt(cm.distance + lookKm) - elevAt(cm.distance);
+      setGradientPct(Math.round((rise / (lookKm * 1000)) * 100));
     }, 100);
 
     return () => {
@@ -1015,12 +1185,13 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   const hudItems: [string, string | number, string][] = [
-    ['Time',      fmtTime(elapsed),          ''],
-    ['Speed',     hud.speed.toFixed(1),      'km/h'],
-    ['Power',     Math.round(hud.power),     'W'],
-    ['Distance',  hud.distance.toFixed(2),   'km'],
-    ['Cadence',   Math.round(hud.cadence),   'rpm'],
-    ['Elevation', Math.round(hud.elevation), 'm'],
+    ['Time',      fmtTime(elapsed),                                     ''],
+    ['Speed',     hud.speed.toFixed(1),                                 'km/h'],
+    ['Power',     Math.round(hud.power),                                'W'],
+    ['Distance',  hud.distance.toFixed(2),                              'km'],
+    ['Cadence',   Math.round(hud.cadence),                              'rpm'],
+    ['Elevation', Math.round(hud.elevation),                            'm'],
+    ['Grade',     (gradientPct >= 0 ? '+' : '') + gradientPct,         '%'],
   ];
 
   return (
@@ -1045,6 +1216,38 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
         </>
       )}
 
+      {/* First-person handlebar cockpit overlay — constrained to player 1's viewport in split-screen */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: splitScreen ? '50%' : 0, height: '30%', pointerEvents: 'none', zIndex: 5 }}>
+        {/* Vignette gradient to blend road into cockpit */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 85%)' }} />
+        {/* Drop-bar handlebar silhouette */}
+        <svg viewBox="0 0 1000 240" preserveAspectRatio="xMidYMax meet" style={{ width: '100%', height: '100%', display: 'block' }}>
+          {/* Stem */}
+          <rect x="492" y="18" width="16" height="90" rx="6" fill="#3a3a3a"/>
+          <rect x="480" y="100" width="40" height="18" rx="5" fill="#2e2e2e"/>
+          {/* Top bar / hoods section */}
+          <path d="M 215 125 Q 370 102 500 104 Q 630 102 785 125"
+                stroke="#4d4d4d" strokeWidth="20" fill="none" strokeLinecap="round"/>
+          {/* Left drop curve */}
+          <path d="M 215 125 Q 188 138 183 172 Q 175 210 192 230 Q 204 242 228 238"
+                stroke="#424242" strokeWidth="18" fill="none" strokeLinecap="round"/>
+          {/* Right drop curve */}
+          <path d="M 785 125 Q 812 138 817 172 Q 825 210 808 230 Q 796 242 772 238"
+                stroke="#424242" strokeWidth="18" fill="none" strokeLinecap="round"/>
+          {/* Left brake lever */}
+          <path d="M 252 118 Q 240 132 237 158" stroke="#2a2a2a" strokeWidth="14" fill="none" strokeLinecap="round"/>
+          {/* Right brake lever */}
+          <path d="M 748 118 Q 760 132 763 158" stroke="#2a2a2a" strokeWidth="14" fill="none" strokeLinecap="round"/>
+          {/* Brake cable hints */}
+          <line x1="237" y1="158" x2="232" y2="215" stroke="#1a1a1a" strokeWidth="3" opacity="0.7"/>
+          <line x1="763" y1="158" x2="768" y2="215" stroke="#1a1a1a" strokeWidth="3" opacity="0.7"/>
+          {/* Left hand / glove */}
+          <ellipse cx="210" cy="236" rx="38" ry="14" fill="#181818" opacity="0.95"/>
+          {/* Right hand / glove */}
+          <ellipse cx="790" cy="236" rx="38" ry="14" fill="#181818" opacity="0.95"/>
+        </svg>
+      </div>
+
       {/* HUD — top left */}
       <div style={{ position: 'absolute', top: 20, left: 20, background: 'rgba(10,15,30,0.88)', backdropFilter: 'blur(10px)', borderRadius: 16, padding: '10px 18px', display: 'flex', gap: 22, border: '1px solid rgba(255,255,255,0.2)', pointerEvents: 'none', zIndex: 10 }}>
         {hudItems.map(([label, val, unit]) => (
@@ -1055,6 +1258,29 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
           </div>
         ))}
       </div>
+
+      {/* Zone bonus pill */}
+      {zoneBonusPct > 0 && (
+        <div style={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', background: 'rgba(255,120,0,0.88)', padding: '4px 14px', borderRadius: 20, fontSize: 13, fontWeight: 'bold', zIndex: 15, pointerEvents: 'none', letterSpacing: 1 }}>
+          ⚡ ZONE BONUS +{zoneBonusPct}%
+        </div>
+      )}
+
+      {/* Draft slipstream pill */}
+      {draftBoost && (
+        <div style={{ position: 'absolute', top: zoneBonusPct > 0 ? 52 : 20, left: '50%', transform: 'translateX(-50%)', background: 'rgba(30,120,255,0.88)', padding: '4px 14px', borderRadius: 20, fontSize: 13, fontWeight: 'bold', zIndex: 15, pointerEvents: 'none', letterSpacing: 1 }}>
+          🌬️ DRAFTING +8%
+        </div>
+      )}
+
+      {/* KOM segment alert */}
+      {segAlert && (
+        <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)', background: segAlert.pb ? 'rgba(200,160,0,0.92)' : 'rgba(30,30,50,0.92)', border: `2px solid ${segAlert.pb ? '#ffd700' : '#4488ff'}`, padding: '10px 24px', borderRadius: 16, fontSize: 15, fontWeight: 'bold', zIndex: 20, pointerEvents: 'none', textAlign: 'center', minWidth: 200 }}>
+          <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 2 }}>{segAlert.name}</div>
+          <div>{segAlert.msg}</div>
+          {segAlert.pb && <div style={{ fontSize: 11, marginTop: 3, color: '#fff' }}>🏆 Personal Best!</div>}
+        </div>
+      )}
 
       {/* Countdown overlay */}
       {countdown !== null && (
