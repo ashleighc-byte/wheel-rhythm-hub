@@ -354,30 +354,82 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   // ── Curved road ribbon along the spline ───────────────────────────────────
   function createCurvedRoad(s: THREE.Scene, curve: THREE.CatmullRomCurve3) {
     const N = 240, roadW = 6;
-    const positions: number[] = [], indices: number[] = [], uvs: number[] = [];
-    for (let i = 0; i <= N; i++) {
-      const t       = i / N;
-      const pt      = curve.getPoint(t);
-      const tangent = curve.getTangent(t);
-      const normal  = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-      const L = pt.clone().addScaledVector(normal, -roadW / 2);
-      const R = pt.clone().addScaledVector(normal,  roadW / 2);
-      L.y = pt.y - 0.01; R.y = pt.y - 0.01;
-      positions.push(L.x, L.y, L.z, R.x, R.y, R.z);
-      uvs.push(0, t, 1, t);
-    }
-    for (let i = 0; i < N; i++) {
-      const a = i * 2, b = a + 1, c = a + 2, d = a + 3;
-      indices.push(a, c, b, b, c, d);
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geo.setAttribute('uv',       new THREE.Float32BufferAttribute(uvs, 2));
-    geo.setIndex(indices);
-    geo.computeVertexNormals();
-    const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x555566 }));
-    mesh.receiveShadow = true; mesh.name = 'road';
-    s.add(mesh); envObjs.current.push(mesh);
+
+    // Helper to build a ribbon strip of given width offset/half-width along the curve
+    const buildRibbon = (halfW: number, yOffset: number, color: number, dashed = false) => {
+      const positions: number[] = [], indices: number[] = [], uvs: number[] = [];
+      for (let i = 0; i <= N; i++) {
+        const t       = i / N;
+        const pt      = curve.getPoint(t);
+        const tangent = curve.getTangent(t);
+        const normal  = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+        const L = pt.clone().addScaledVector(normal, -halfW);
+        const R = pt.clone().addScaledVector(normal,  halfW);
+        L.y = pt.y + yOffset; R.y = pt.y + yOffset;
+        positions.push(L.x, L.y, L.z, R.x, R.y, R.z);
+        uvs.push(0, t * N * 0.5, 1, t * N * 0.5);
+      }
+      for (let i = 0; i < N; i++) {
+        // Skip every other quad for a dashed look
+        if (dashed && i % 6 >= 3) continue;
+        const a = i * 2, b = a + 1, c = a + 2, d = a + 3;
+        indices.push(a, c, b, b, c, d);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('uv',       new THREE.Float32BufferAttribute(uvs, 2));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+      const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.95, metalness: 0 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.receiveShadow = true;
+      return mesh;
+    };
+
+    // 1. Asphalt — dark charcoal, clearly contrasting against the green/sand ground
+    const road = buildRibbon(roadW / 2, 0.02, 0x2a2a2e);
+    road.name = 'road';
+    s.add(road); envObjs.current.push(road);
+
+    // 2. White edge lines (left + right)
+    const edgeL = buildRibbon(roadW / 2, 0.04, 0xffffff);
+    const edgeR = buildRibbon(roadW / 2, 0.04, 0xffffff);
+    // narrow them to ~0.15m strips by scaling the ribbon's geometry along its normal direction
+    // simpler approach: build dedicated thin ribbons
+    s.remove(edgeL); s.remove(edgeR);
+
+    const buildStrip = (offset: number, halfW: number, color: number, dashed = false) => {
+      const positions: number[] = [], indices: number[] = [], uvs: number[] = [];
+      for (let i = 0; i <= N; i++) {
+        const t       = i / N;
+        const pt      = curve.getPoint(t);
+        const tangent = curve.getTangent(t);
+        const normal  = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+        const center = pt.clone().addScaledVector(normal, offset);
+        const L = center.clone().addScaledVector(normal, -halfW);
+        const R = center.clone().addScaledVector(normal,  halfW);
+        L.y = pt.y + 0.04; R.y = pt.y + 0.04;
+        positions.push(L.x, L.y, L.z, R.x, R.y, R.z);
+        uvs.push(0, t, 1, t);
+      }
+      for (let i = 0; i < N; i++) {
+        if (dashed && i % 6 >= 3) continue;
+        const a = i * 2, b = a + 1, c = a + 2, d = a + 3;
+        indices.push(a, c, b, b, c, d);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('uv',       new THREE.Float32BufferAttribute(uvs, 2));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+      return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color }));
+    };
+
+    const left  = buildStrip(-roadW / 2 + 0.15, 0.12, 0xffffff);
+    const right = buildStrip( roadW / 2 - 0.15, 0.12, 0xffffff);
+    const center = buildStrip(0, 0.10, 0xffe14a, true); // dashed yellow centerline
+    s.add(left); s.add(right); s.add(center);
+    envObjs.current.push(left, right, center);
   }
 
   // ── Special decorative geometry ───────────────────────────────────────────
