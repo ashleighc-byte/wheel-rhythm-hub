@@ -1380,6 +1380,28 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
         {(roomStatus === 'countdown' || roomStatus === 'racing') && (
           <Button variant="destructive" size="sm" onClick={stopRide} disabled={!active}>⏹ Pause</Button>
         )}
+        {(roomStatus === 'countdown' || roomStatus === 'racing' || active) && (
+          <Button
+            size="sm"
+            onClick={() => {
+              if (!confirm('End ride now and save your current stats to the leaderboard?')) return;
+              const m = metrics.current;
+              setRoomStatus('finished');
+              setActive(false);
+              onComplete?.({
+                ...m,
+                duration:        Math.round((Date.now() - startTime.current) / 1000),
+                roomCode:        roomCodeRef.current || undefined,
+                finishPosition:  undefined,
+                totalRacers:     totalRacersRef.current,
+                placementPoints: 0,
+              });
+            }}
+            style={{ background: '#ffd700', color: '#0a0f1e', fontWeight: 700 }}
+          >
+            🏁 End & Save
+          </Button>
+        )}
         {roomStatus === 'finished' && (
           <span style={{ color: '#4f4', fontSize: 12 }}>Race complete!</span>
         )}
