@@ -11,6 +11,8 @@ type BluetoothRemoteGATTCharacteristic = any;
 
 const A = (f: string) => `/assets/game/${f}`;
 
+const LANE_OFFSETS = [0, 2.5, -2.5, 5, -5]; // lateral offset (m) for lanes 1–5
+
 const ASSETS = {
   treePine:      A('treePine.glb'),
   treeOak:       A('treeOak.glb'),
@@ -42,7 +44,7 @@ type Metrics = { speed: number; power: number; cadence: number; distance: number
 interface Props {
   route: GameRoute;
   playerName?: string;
-  onComplete?: (data: Metrics & { duration: number }) => void;
+  onComplete?: (data: Metrics & { duration: number; roomCode?: string; finishPosition?: number; totalRacers?: number; placementPoints?: number }) => void;
   onBack?: () => void;
 }
 
@@ -117,8 +119,13 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   // Multiplayer
   const playerId      = useRef(Math.random().toString(36).substr(2, 9));
   const channelRef    = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const otherRiders   = useRef<Record<string, { group: THREE.Group; lastDist: number; name: string }>>({});
-  const splitRef      = useRef(false);
+  const otherRiders   = useRef<Record<string, { group: THREE.Group; lastDist: number; name: string; lane: number }>>({});
+  const splitRef       = useRef(false);
+  const isHostRef      = useRef(false);
+  const nextLaneRef    = useRef(2);
+  const finishOrderRef = useRef<string[]>([]);
+  const roomCodeRef    = useRef('');
+  const totalRacersRef = useRef(1);
 
   const ble = useWattbikeBluetooth();
 
@@ -131,7 +138,10 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   const [status, setStatus]       = useState(`Route: ${route.name} – ${route.desc}`);
   const [name, setName]           = useState(playerName);
   const [roomInput, setRoomInput] = useState('');
-  const [roomLabel, setRoomLabel] = useState('');
+  const [roomLabel, setRoomLabel]   = useState('');
+  const [roomStatus, setRoomStatus] = useState<'idle' | 'waiting' | 'countdown' | 'racing' | 'finished'>('idle');
+  const [countdown, setCountdown]   = useState<number | null>(null);
+  const [isHost, setIsHost]         = useState(false);
 
   // ── Terrain elevation profile ─────────────────────────────────────────────
   function genTerrain() {
@@ -196,14 +206,23 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   function loadRider(group: THREE.Group, tagName: string, tagColor?: string) {
     new GLTFLoader().load(ASSETS.bicycle, (gltf) => {
       const obj = gltf.scene;
-      obj.scale.setScalar(0.9);
-      obj.position.set(0, 0, 0);
+
+      // Auto-scale: measure bounding box and fit to ~1.1 m tall regardless of Blender export units
+      const bbox = new THREE.Box3().setFromObject(obj);
+      const size = new THREE.Vector3();
+      bbox.getSize(size);
+      const longestAxis = Math.max(size.x, size.y, size.z) || 1;
+      obj.scale.setScalar(1.1 / longestAxis);
+
+      // Re-measure after scaling and shift so the bottom sits at y=0
+      const bbox2 = new THREE.Box3().setFromObject(obj);
+      obj.position.y = -bbox2.min.y;
+
       obj.traverse(c => {
         if (!(c instanceof THREE.Mesh)) return;
         c.castShadow = true;
         c.receiveShadow = true;
         const n = c.name.toLowerCase();
-        // Identify wheels for spin animation
         if (n.includes('wheel') || n.includes('tyre') || n.includes('tire')) {
           if (!frontWheel.current) frontWheel.current = c;
           else if (!backWheel.current) backWheel.current = c;
@@ -212,7 +231,6 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
       group.add(obj);
       group.add(makeNametag(tagName, tagColor));
     }, undefined, () => {
-      // Fallback if GLB fails to load
       fallbackRider(group);
       addPrimitiveWheels(group);
       group.add(makeNametag(tagName, tagColor));
@@ -620,14 +638,19 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
   }
 
   // ── Multiplayer ───────────────────────────────────────────────────────────
-  function spawnOtherRider(id: string, riderName: string, s: THREE.Scene) {
+  function spawnOtherRider(id: string, riderName: string, s: THREE.Scene, lane = 2) {
     const group = new THREE.Group();
     new GLTFLoader().load(ASSETS.bicycle, (gltf) => {
-      const obj = gltf.scene; obj.scale.setScalar(0.9);
+      const obj = gltf.scene;
+      const bbox = new THREE.Box3().setFromObject(obj);
+      const size = new THREE.Vector3(); bbox.getSize(size);
+      const longest = Math.max(size.x, size.y, size.z) || 1;
+      obj.scale.setScalar(1.1 / longest);
+      const bbox2 = new THREE.Box3().setFromObject(obj);
+      obj.position.y = -bbox2.min.y;
       obj.traverse(c => { if (c instanceof THREE.Mesh) c.castShadow = true; });
       group.add(obj);
     }, undefined, () => {
-      // Fallback blue capsule
       group.add(new THREE.Mesh(
         new THREE.CapsuleGeometry(0.3, 0.9, 4, 8),
         new THREE.MeshStandardMaterial({ color: 0x4444ff }),
@@ -635,40 +658,87 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
     });
     group.add(makeNametag(riderName, '#4af'));
     s.add(group);
-    otherRiders.current[id] = { group, lastDist: 0, name: riderName };
-    // Activate split-screen on first join
+    otherRiders.current[id] = { group, lastDist: 0, name: riderName, lane };
     if (!splitRef.current) { splitRef.current = true; setSplitScreen(true); }
   }
 
-  function joinOrCreateRoom(code: string) {
+  function joinOrCreateRoom(code: string, hosting = false) {
     if (channelRef.current) supabase.removeChannel(channelRef.current);
+    roomCodeRef.current    = code;
+    isHostRef.current      = hosting;
+    nextLaneRef.current    = 2;
+    totalRacersRef.current = 1;
+    finishOrderRef.current = [];
+
     const ch = supabase
       .channel(`cycling:${code}`, { config: { broadcast: { self: false } } })
-      .on('broadcast', { event: 'pos' }, ({ payload }: { payload: { id: string; name: string; dist: number } }) => {
-        const { id, name: riderName, dist } = payload;
+      .on('broadcast', { event: 'pos' }, ({ payload }: { payload: { id: string; name: string; dist: number; lane?: number } }) => {
+        const { id, name: riderName, dist, lane: riderLane } = payload;
         const s = sceneRef.current; if (!s) return;
-        if (!otherRiders.current[id]) spawnOtherRider(id, riderName, s);
+        if (!otherRiders.current[id]) {
+          const assignedLane = riderLane ?? nextLaneRef.current++;
+          spawnOtherRider(id, riderName, s, assignedLane);
+          totalRacersRef.current++;
+        }
 
         const rider = otherRiders.current[id];
         rider.lastDist = dist;
 
-        // Position other rider along the same spline
         const curve = pathCurve.current;
         if (curve) {
-          const t = Math.min(dist / totalDist.current, 1);
+          const t       = Math.min(dist / totalDist.current, 1);
           const pt      = curve.getPoint(t);
           const tangent = curve.getTangent(t);
           const normal  = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-          // Offset 2 m to the side so bikes don't overlap
-          rider.group.position.copy(pt).addScaledVector(normal, 2);
+          const offset  = LANE_OFFSETS[Math.min(rider.lane - 1, 4)];
+          rider.group.position.copy(pt).addScaledVector(normal, offset);
           rider.group.position.y = pt.y + 0.5;
           rider.group.rotation.y = Math.atan2(tangent.x, tangent.z);
         }
       })
+      .on('broadcast', { event: 'countdown' }, ({ payload }: { payload: { count: number } }) => {
+        if (hosting) return; // host drives its own countdown state
+        if (payload.count > 0) {
+          setCountdown(payload.count);
+          setRoomStatus('countdown');
+        } else {
+          setCountdown(null);
+          setRoomStatus('racing');
+          startRide();
+        }
+      })
+      .on('broadcast', { event: 'finish' }, ({ payload }: { payload: { id: string } }) => {
+        if (!finishOrderRef.current.includes(payload.id)) {
+          finishOrderRef.current.push(payload.id);
+        }
+      })
       .subscribe();
+
     channelRef.current = ch;
     setRoomLabel(`Room: ${code}`);
-    setStatus('Multiplayer connected — share the code!');
+    setRoomStatus('waiting');
+    setStatus('Multiplayer — share the code!');
+  }
+
+  // ── Race countdown (host only) ────────────────────────────────────────────
+  function startCountdown() {
+    if (!isHostRef.current) return;
+    setRoomStatus('countdown');
+    let count = 3;
+    const tick = () => {
+      if (count > 0) {
+        setCountdown(count);
+        channelRef.current?.send({ type: 'broadcast', event: 'countdown', payload: { count } });
+        count--;
+        setTimeout(tick, 1000);
+      } else {
+        setCountdown(null);
+        channelRef.current?.send({ type: 'broadcast', event: 'countdown', payload: { count: 0 } });
+        setRoomStatus('racing');
+        startRide();
+      }
+    };
+    tick();
   }
 
   // ── Game controls ─────────────────────────────────────────────────────────
@@ -746,22 +816,31 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
     water.visible = false; water.name = 'water';
     s.add(water);
 
-    // Rider model + handlebars
+    // Rider model
     loadRider(bikeGroup.current, name, '#f80');
     s.add(bikeGroup.current);
-
-    hbarGroup.current = buildHandlebars();
 
     initParticles(s);
     buildEnv(s);
 
-    // Mount first-person camera inside the bike group
-    bikeGroup.current.add(cam);
-    cam.position.set(0, 1.6, -0.5);
-    cam.rotation.set(0, Math.PI, 0); // face forward (+Z of group = direction of travel)
+    // Camera is a direct scene child (not parented to bikeGroup).
+    // This avoids Euler-angle compound-rotation bugs when the bike turns.
+    // It is positioned each frame via lookAt from behind the rider.
+    s.add(cam);
 
-    cam.add(hbarGroup.current);
-    hbarGroup.current.position.set(0, 0, 0);
+    // Position bike and camera at the spline start right away so the
+    // user sees the track immediately — before pressing Start.
+    const startPt  = curve.getPoint(0);
+    const startTan = curve.getTangent(0);
+    const startLook = curve.getPoint(0.03);
+    bikeGroup.current.position.set(startPt.x, startPt.y + 0.5, startPt.z);
+    bikeGroup.current.rotation.y = Math.atan2(startTan.x, startTan.z);
+    cam.position.set(
+      startPt.x - startTan.x * 1.2,
+      startPt.y + 2.0,
+      startPt.z - startTan.z * 1.2,
+    );
+    cam.lookAt(startLook.x, startLook.y + 0.6, startLook.z);
 
     const onResize = () => {
       if (!containerRef.current) return;
@@ -781,8 +860,7 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
 
     // ── Animation loop ────────────────────────────────────────────────────
     let lastBroadcast = 0;
-    const _up    = new THREE.Vector3(0, 1, 0);
-    const _q     = new THREE.Quaternion();
+    const _camTarget   = new THREE.Vector3();
     const _prevTangent = new THREE.Vector3(0, 0, 1);
 
     const animate = () => {
@@ -790,6 +868,7 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
       const dt = clock.current.getDelta();
       const m  = metrics.current;
 
+      // ── Game logic (only when active) ──────────────────────────────────
       if (gameActive.current) {
         if (simMode.current) simulate(dt);
         elapsedRef.current += dt;
@@ -798,31 +877,29 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
           m.distance = totalDist.current;
           gameActive.current = false; setActive(false);
           setStatus('Route complete! 🎉');
-          onComplete?.({ ...m, duration: Math.round((Date.now() - startTime.current) / 1000) });
+          // Finish-order tracking for multiplayer placement scoring
+          if (!finishOrderRef.current.includes(playerId.current)) {
+            finishOrderRef.current.push(playerId.current);
+          }
+          const myPosition = finishOrderRef.current.indexOf(playerId.current) + 1;
+          const racers     = Math.max(totalRacersRef.current, myPosition);
+          const placement  = racers > 1 ? Math.round(50 * (1 - (myPosition - 1) / racers)) : 0;
+          channelRef.current?.send({ type: 'broadcast', event: 'finish', payload: { id: playerId.current } });
+          setRoomStatus('finished');
+          onComplete?.({
+            ...m,
+            duration:        Math.round((Date.now() - startTime.current) / 1000),
+            roomCode:        roomCodeRef.current || undefined,
+            finishPosition:  myPosition,
+            totalRacers:     racers,
+            placementPoints: placement,
+          });
         }
 
-        // Move bike along spline ─────────────────────────────────────────
-        const t = Math.min(m.distance / totalDist.current, 1);
-        const pt      = curve.getPoint(t);
-        const tangent = curve.getTangent(t);
-
-        bikeGroup.current.position.set(pt.x, pt.y + 0.5, pt.z);
-
-        // Orient bike to face along the tangent
-        _q.setFromUnitVectors(_up, _up); // reset
-        bikeGroup.current.rotation.y = Math.atan2(tangent.x, tangent.z);
-
-        // Camera bank (lean into corners) ───────────────────────────────
-        const lateralChange = tangent.x - _prevTangent.x;
-        cam.rotation.z = THREE.MathUtils.lerp(cam.rotation.z, -lateralChange * 14, 0.12);
-        _prevTangent.copy(tangent);
-
-        // Dynamic FOV: widen slightly at high speed
-        const targetFov = 65 + Math.min(m.speed, 50) * 0.3;
-        cam.fov = THREE.MathUtils.lerp(cam.fov, targetFov, 0.05);
+        // Dynamic FOV: widens at speed
+        cam.fov = THREE.MathUtils.lerp(cam.fov, 65 + Math.min(m.speed, 50) * 0.3, 0.05);
         cam.updateProjectionMatrix();
 
-        // Particles follow bike ─────────────────────────────────────────
         const bpos = bikeGroup.current.position;
         const pOff = new THREE.Vector3(0, 0.2, -1);
         if (dustPts.current?.visible)   { dustPts.current.position.copy(bpos).add(pOff);   dustPts.current.rotation.y   += 0.02; }
@@ -833,10 +910,41 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
 
         const now = Date.now();
         if (channelRef.current && now - lastBroadcast > 200) {
-          channelRef.current.send({ type: 'broadcast', event: 'pos', payload: { id: playerId.current, name, dist: m.distance } });
+          channelRef.current.send({ type: 'broadcast', event: 'pos', payload: { id: playerId.current, name, dist: m.distance, lane: 1 } });
           lastBroadcast = now;
         }
         if (now - lastUpload.current > 5000 && m.distance > 0) lastUpload.current = now;
+      }
+
+      // ── Bike + camera always update (pre-Start preview + during ride) ───
+      {
+        const t       = Math.min(m.distance / totalDist.current, 1);
+        const pt      = curve.getPoint(t);
+        const tangent = curve.getTangent(t);
+        const tLook   = Math.min(t + 0.025, 1);
+        const ptLook  = curve.getPoint(tLook);
+
+        // Bike moves along spline
+        bikeGroup.current.position.set(pt.x, pt.y + 0.5, pt.z);
+        bikeGroup.current.rotation.y = Math.atan2(tangent.x, tangent.z);
+
+        // Chase camera: 1.2 m behind and 2 m above the rider
+        _camTarget.set(
+          pt.x - tangent.x * 1.2,
+          pt.y + 2.0,
+          pt.z - tangent.z * 1.2,
+        );
+        cam.position.lerp(_camTarget, 0.12);
+
+        // Banking: tilt the camera up-vector into corners (correct way to bank
+        // a lookAt camera — does not fight with any rotation property)
+        const lateralChange = tangent.x - _prevTangent.x;
+        const bankAngle = THREE.MathUtils.clamp(-lateralChange * 10, -0.35, 0.35);
+        cam.up.set(Math.sin(bankAngle), Math.cos(bankAngle), 0);
+        _prevTangent.copy(tangent);
+
+        // lookAt AFTER setting up, so banking is baked into the orientation
+        cam.lookAt(ptLook.x, ptLook.y + 0.6, ptLook.z);
       }
 
       // ── Split-screen or single render ─────────────────────────────────
@@ -948,6 +1056,13 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
         ))}
       </div>
 
+      {/* Countdown overlay */}
+      {countdown !== null && (
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 128, fontWeight: 900, color: 'white', textShadow: '0 0 60px rgba(255,165,0,0.9)', zIndex: 50, pointerEvents: 'none', lineHeight: 1 }}>
+          {countdown}
+        </div>
+      )}
+
       {/* Mini-map */}
       <canvas ref={miniRef} width={160} height={100}
         style={{ position: 'absolute', top: 120, right: 20, background: 'rgba(0,0,0,0.7)', border: '2px solid #3f6188', borderRadius: 10, zIndex: 15 }} />
@@ -972,8 +1087,24 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
       {/* Controls */}
       <div style={{ position: 'absolute', bottom: 25, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 10, zIndex: 10, alignItems: 'center', background: 'rgba(0,0,0,0.65)', padding: '10px 20px', borderRadius: 30, border: '1px solid rgba(255,255,255,0.2)' }}>
         <Button variant="outline" size="sm" onClick={connectBike}>🔗 Connect Bike</Button>
-        <Button size="sm" onClick={startRide} disabled={active}>▶ Start</Button>
-        <Button variant="destructive" size="sm" onClick={stopRide} disabled={!active}>⏹ Pause</Button>
+        {roomStatus === 'idle' && (
+          <>
+            <Button size="sm" onClick={startRide} disabled={active}>▶ Start</Button>
+            <Button variant="destructive" size="sm" onClick={stopRide} disabled={!active}>⏹ Pause</Button>
+          </>
+        )}
+        {roomStatus === 'waiting' && isHost && (
+          <Button size="sm" onClick={startCountdown}>🏁 Start Race</Button>
+        )}
+        {roomStatus === 'waiting' && !isHost && (
+          <span style={{ color: '#aac8ff', fontSize: 12 }}>Waiting for host...</span>
+        )}
+        {(roomStatus === 'countdown' || roomStatus === 'racing') && (
+          <Button variant="destructive" size="sm" onClick={stopRide} disabled={!active}>⏹ Pause</Button>
+        )}
+        {roomStatus === 'finished' && (
+          <span style={{ color: '#4f4', fontSize: 12 }}>Race complete!</span>
+        )}
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ccc', fontSize: '0.9rem', cursor: 'pointer' }}>
           <input type="checkbox" checked={sim} onChange={e => { setSim(e.target.checked); simMode.current = e.target.checked; }} /> Sim
         </label>
@@ -988,9 +1119,11 @@ export default function CyclingGame({ route, playerName = 'Rider', onComplete, o
           style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid #3f6188', color: 'white' }} />
         <Button size="sm" onClick={() => {
           const code = 'RACE-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-          setRoomInput(code); joinOrCreateRoom(code);
+          setRoomInput(code); setIsHost(true); joinOrCreateRoom(code, true);
         }}>🎮 Create Room</Button>
-        <Button size="sm" variant="outline" onClick={() => { if (roomInput) joinOrCreateRoom(roomInput); }}>
+        <Button size="sm" variant="outline" onClick={() => {
+          if (roomInput) { setIsHost(false); joinOrCreateRoom(roomInput, false); }
+        }}>
           🚪 Join Room
         </Button>
         {roomLabel && <div style={{ color: '#aac8ff', fontSize: 12 }}>{roomLabel}</div>}

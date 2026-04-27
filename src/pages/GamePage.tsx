@@ -35,10 +35,11 @@ export default function GamePage() {
   const handleComplete = async (data: {
     distance: number; speed: number; power: number;
     cadence: number; elevation: number; duration: number;
+    roomCode?: string; finishPosition?: number; totalRacers?: number; placementPoints?: number;
   }) => {
     const userId = session?.user?.id;
     if (userId) {
-      // Save ride to game_rides table
+      // Save ride to game_rides table (triggers award_game_ride_points)
       const { error } = await (supabase.from('game_rides' as any) as any).insert({
         user_id:          userId,
         route_id:         route.id,
@@ -50,6 +51,7 @@ export default function GamePage() {
         elevation_gain_m: Math.round(data.elevation),
         duration_seconds: data.duration,
         source:           'game',
+        placement_points: data.placementPoints ?? 0,
       });
 
       if (error) {
@@ -69,6 +71,21 @@ export default function GamePage() {
             elevation_gain_m: data.elevation,
             duration_seconds: data.duration,
           },
+        });
+      }
+
+      // Persist race result if this was a multiplayer session
+      if (data.roomCode) {
+        await (supabase.from('game_race_results' as any) as any).insert({
+          room_code:           data.roomCode,
+          route_id:            route.id,
+          route_name:          route.name,
+          user_id:             userId,
+          lane:                1,
+          finish_position:     data.finishPosition ?? null,
+          finish_time_seconds: data.duration,
+          total_racers:        data.totalRacers ?? 1,
+          placement_points:    data.placementPoints ?? 0,
         });
       }
 
