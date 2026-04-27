@@ -139,10 +139,38 @@ Deno.serve(async (req) => {
     for (const s of prevSchoolArr) prevSchoolMap.set(s.name, s.rank);
 
     // Fetch all data from Airtable in parallel
-    const [students, sessions] = await Promise.all([
+    const [students, sessions, schools] = await Promise.all([
       fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Student Registration'),
       fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Session Reflections'),
+      fetchAllAirtable(AIRTABLE_BASE_ID, AIRTABLE_API_KEY, 'Schools').catch(() => [] as any[]),
     ]);
+
+    // Build school id → name lookup. The Schools table field is literally
+    // "\uFEFFSchool Name" (BOM-prefixed) — handle either form just in case.
+    const schoolNameById = new Map<string, string>();
+    for (const sc of schools) {
+      const f = sc.fields ?? {};
+      const name = String(
+        f['School Name'] ?? f['\uFEFFSchool Name'] ?? f['Name'] ?? ''
+      ).trim();
+      if (name) schoolNameById.set(sc.id, name);
+    }
+    const resolveSchool = (raw: any): string => {
+      if (!raw) return '';
+      const first = Array.isArray(raw) ? raw[0] : raw;
+      const str = String(first ?? '').trim();
+      if (!str) return '';
+      // If it's a record id, look it up; otherwise use as-is
+      if (/^rec[A-Za-z0-9]{14,}$/.test(str)) return schoolNameById.get(str) ?? str;
+      return str;
+    };
+    const buildName = (f: any): string => {
+      const first = String(f['First Name'] ?? '').trim();
+      const last = String(f['Last Name'] ?? '').trim();
+      const initial = last ? last[0].toUpperCase() : '';
+      if (first && initial) return `${first} ${initial}`;
+      return first || last || '';
+    };
 
     // Filter active students: NFC Status = "Bracelet Received"
     const activeStudents = students.filter((s: any) => {
@@ -199,10 +227,10 @@ Deno.serve(async (req) => {
     }
 
     // School rankings — only schools with active students, deduplicated by name
-    // School field is a plain string, not a linked record
+    // School field is a linked-record array; resolve via Schools table
     const schoolDataByName = new Map<string, { riders: number; points: number }>();
     for (const s of activeStudents) {
-      const sName = String(s.fields['School'] ?? '').trim();
+      const sName = resolveSchool(s.fields['School']);
       if (!sName) continue;
       const prev = schoolDataByName.get(sName) ?? { riders: 0, points: 0 };
       const computed = riderPoints.get(s.id);
@@ -218,9 +246,9 @@ Deno.serve(async (req) => {
     const topRiders = activeStudents
       .map((s: any) => {
         const computed = riderPoints.get(s.id);
-        const schoolName = String(s.fields['School'] ?? '').trim();
+        const schoolName = resolveSchool(s.fields['School']);
         return {
-          name: String(s.fields['Full Name'] ?? ''),
+          name: buildName(s.fields),
           school: schoolName,
           schoolId: '',
           sessions: computed?.sessions ?? 0,
