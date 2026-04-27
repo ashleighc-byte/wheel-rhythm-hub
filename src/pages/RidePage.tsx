@@ -8,7 +8,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useWattbikeBluetooth } from "@/hooks/useWattbikeBluetooth";
-import BluetoothConnect from "@/components/ride/BluetoothConnect";
 import RouteSelector from "@/components/ride/RouteSelector";
 import LiveMetricsDisplay, { getPowerZone, formatTime } from "@/components/ride/LiveMetrics";
 import RouteMap from "@/components/ride/RouteMap";
@@ -53,7 +52,6 @@ export default function RidePage() {
   const promptRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const ble = useWattbikeBluetooth();
-  const isConnected = ble.status === "connected" || ble.status === "riding";
   const riderName = nfcSession?.firstName ?? user?.email?.split("@")[0] ?? "Rider";
   const zone = getPowerZone(ble.metrics.power);
 
@@ -289,61 +287,26 @@ export default function RidePage() {
                   Ready to Ride, {riderName}?
                 </h1>
                 <p className="mt-1 font-body text-sm text-muted-foreground">
-                  Pick a route, connect your Wattbike, then hit Start.
-                  Your ride data and live map are all right here — no other apps needed.
+                  Pick a route, then jump into the 3D game — connect your Wattbike and go solo or multiplayer from inside the ride.
                 </p>
               </div>
 
-              {/* Step 1: Route */}
               <section>
                 <h2 className="mb-3 font-display text-sm uppercase tracking-wider text-foreground">
-                  1 — Choose a Route
+                  Choose a Route
                 </h2>
                 <RouteSelector selected={selectedRoute} onSelect={setSelectedRoute} />
               </section>
 
-              {/* Optional: Play 3D Game with this route */}
               {selectedRoute && (
                 <Button
                   type="button"
-                  variant="outline"
                   onClick={() => navigate(`/game/${selectedRoute.id}`)}
-                  className="w-full border-[3px] border-primary bg-primary/5 py-5 font-display text-base uppercase tracking-wider text-primary gap-2 hover:bg-primary/10"
+                  className="tape-element-green w-full py-5 font-display text-lg uppercase tracking-wider gap-2"
                 >
                   <Gamepad2 className="h-5 w-5" />
                   🎮 Play 3D Game
                 </Button>
-              )}
-
-              {/* Step 2: Bluetooth */}
-              <section>
-                <h2 className="mb-3 font-display text-sm uppercase tracking-wider text-foreground">
-                  2 — Connect Your Wattbike
-                </h2>
-                <BluetoothConnect
-                  status={ble.status}
-                  deviceName={ble.deviceName}
-                  error={ble.error}
-                  isSupported={ble.isSupported}
-                  onConnect={ble.connect}
-                  onDisconnect={ble.disconnect}
-                />
-              </section>
-
-              {/* Start */}
-              <Button
-                onClick={handleStartRide}
-                disabled={!selectedRoute || !isConnected}
-                className="tape-element-green w-full py-5 font-display text-lg uppercase tracking-wider gap-2"
-              >
-                <Flag className="h-5 w-5" />
-                Start Ride
-              </Button>
-
-              {selectedRoute && !isConnected && (
-                <p className="text-center font-body text-xs text-muted-foreground">
-                  Connect your Wattbike above to enable the Start button.
-                </p>
               )}
             </motion.div>
           )}
